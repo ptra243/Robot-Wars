@@ -1,0 +1,291 @@
+.travel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.travel-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  background: rgba(2, 8, 20, 0.82);
+  backdrop-filter: blur(6px);
+}
+
+/** Shop: dim only — must use “Leave shop” to close. */
+.travel-overlay__backdrop--dim {
+  cursor: default;
+}
+
+.travel-overlay__panel {
+  position: relative;
+  z-index: 1;
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(90vh, 720px);
+  overflow: auto;
+  padding: 28px 24px 24px;
+  background:
+    linear-gradient(180deg, rgba(12, 24, 48, 0.96) 0%, rgba(6, 12, 28, 0.98) 100%);
+  border: 1px solid rgba(0, 200, 255, 0.25);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 24px 48px rgba(0, 0, 0, 0.55);
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+  color: #d0e8ff;
+}
+
+.travel-overlay__title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 0 14px rgba(0, 200, 255, 0.45);
+}
+
+.travel-overlay__sub {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(200, 220, 255, 0.75);
+}
+
+.travel-overlay__message {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(220, 235, 255, 0.9);
+}
+
+.travel-overlay__shop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.travel-overlay__cards-heading {
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  color: rgba(0, 200, 255, 0.55);
+  margin-bottom: 10px;
+}
+
+.travel-overlay__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.travel-overlay__card {
+  text-align: left;
+  padding: 12px 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.travel-overlay__card:hover:not(:disabled) {
+  border-color: rgba(0, 200, 255, 0.45);
+  background: rgba(0, 200, 255, 0.06);
+}
+
+.travel-overlay__card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.travel-overlay__card-tier {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba(0, 200, 255, 0.65);
+  margin-bottom: 4px;
+}
+
+.travel-overlay__card-name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.travel-overlay__card-desc {
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(200, 215, 235, 0.8);
+}
+
+.travel-overlay__card--full {
+  padding: 0;
+  overflow: hidden;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.travel-overlay__card-art {
+  position: relative;
+  height: 98px;
+  background-size: cover;
+  background-position: center;
+}
+
+.travel-overlay__card-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 10, 24, 0.08) 0%, rgba(5, 10, 24, 0.58) 100%);
+}
+
+.travel-overlay__card-tier-badge,
+.travel-overlay__card-cost-badge {
+  position: absolute;
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  background: rgba(8, 16, 38, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+}
+
+.travel-overlay__card-tier-badge {
+  top: 8px;
+  left: 8px;
+}
+
+.travel-overlay__card-cost-badge {
+  top: 8px;
+  right: 8px;
+}
+
+.travel-overlay__card-body {
+  padding: 10px 10px 12px;
+}
+
+.travel-overlay__btn {
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.travel-overlay__btn--ghost {
+  border: 1px solid rgba(0, 200, 255, 0.35);
+  background: rgba(0, 200, 255, 0.08);
+  color: #bfefff;
+}
+
+.travel-overlay__btn--ghost:hover:not(:disabled) {
+  background: rgba(0, 200, 255, 0.15);
+}
+
+.travel-overlay__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.travel-overlay__dismiss {
+  margin-top: 20px;
+  width: 100%;
+  padding: 10px 16px;
+  font: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e8f4ff;
+  cursor: pointer;
+}
+
+.travel-overlay__dismiss:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.travel-overlay__upgrade {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 12px;
+  margin: 12px 0 8px;
+}
+
+.travel-overlay__upgrade-card {
+  flex: 1 1 160px;
+  max-width: 220px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.travel-overlay__upgrade-card--after {
+  border-color: rgba(0, 255, 160, 0.35);
+  box-shadow: 0 0 16px rgba(0, 255, 160, 0.12);
+}
+
+.travel-overlay__upgrade-arrow {
+  display: flex;
+  align-items: center;
+  font-size: 28px;
+  color: rgba(0, 200, 255, 0.65);
+}
+
+.travel-overlay__gold-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin: 8px 0;
+  border: 1px solid rgba(255, 210, 60, 0.35);
+  background: rgba(255, 180, 0, 0.06);
+}
+
+.travel-overlay__gold-strip--loss {
+  border-color: rgba(255, 100, 100, 0.35);
+  background: rgba(255, 60, 60, 0.06);
+}
+
+.travel-overlay__gold-icon {
+  font-size: 18px;
+}
+
+.travel-overlay__gold-label {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.travel-overlay__gold-total {
+  font-size: 13px;
+  color: rgba(200, 220, 255, 0.7);
+}
+
+.travel-overlay__single-card {
+  padding: 12px;
+  margin-top: 8px;
+  border: 1px solid rgba(0, 200, 255, 0.25);
+  background: rgba(0, 200, 255, 0.05);
+}
+
+.travel-overlay__single-card--loss {
+  border-color: rgba(255, 120, 120, 0.35);
+  background: rgba(255, 80, 80, 0.06);
+}
+
+.travel-overlay__p {
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
+.travel-overlay__p--muted {
+  color: rgba(200, 215, 235, 0.65);
+}

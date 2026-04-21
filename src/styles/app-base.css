@@ -1,0 +1,369 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  max-height: 100vh;
+  box-sizing: border-box;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+}
+
+.app-shell--fullscreen {
+  height: 100%;
+  max-height: 100vh;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.game-viewport {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-status-bar {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--status-bar-bg);
+  border-top: 1px solid var(--border);
+}
+
+.topbar,
+.summary-grid,
+.workspace {
+  width: 100%;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #7dd3fc;
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  max-width: 72ch;
+}
+
+.seed-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.seed-controls label,
+.panel-heading,
+.stat-grid div,
+.summary-card,
+.hand-card,
+.queue-slot {
+  display: flex;
+  flex-direction: column;
+}
+
+.seed-controls input {
+  margin-top: 6px;
+  width: 120px;
+}
+
+.panel,
+.arena-panel {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+}
+.panel-heading span,
+.stat-grid span,
+.hand-card span,
+.hand-card small,
+.queue-slot small {
+  color: var(--muted);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(360px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.arena-panel {
+  padding: 12px;
+  min-height: 584px;
+}
+
+.arena-panel--deck,
+.arena-panel--battle {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  min-height: unset;
+  padding: 0;
+  overflow: hidden;
+}
+
+.battle-view {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+}
+
+.battle-view__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, min(20vw, 260px));
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 clamp(12px, 3vw, 50px) 8px;
+  align-items: stretch;
+}
+
+.battle-view__main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.battle-view__log-aside {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 960px) {
+  .battle-view__body {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(140px, 32vh);
+  }
+}
+
+.deck-builder-layout {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+}
+
+.deck-builder-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Saved decks UI: fixed flyout + tab — see deck-builder.css */
+
+.deck-builder-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.deck-builder-sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.65);
+  flex-shrink: 0;
+}
+
+.deck-builder-sidebar__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.deck-builder-sidebar__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deck-builder-sidebar__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.6);
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.deck-builder-sidebar__icon-btn:hover {
+  background: rgba(51, 65, 85, 0.85);
+  color: var(--text-h);
+}
+
+.deck-builder-sidebar__icon-btn--danger:hover {
+  background: rgba(127, 29, 29, 0.45);
+  color: #fecaca;
+}
+
+.deck-builder-sidebar__hide-icon {
+  font-size: 18px;
+  line-height: 1;
+  color: #94a3b8;
+}
+
+.deck-builder-sidebar__list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.deck-builder-sidebar__row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 4px;
+  margin-bottom: 4px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.deck-builder-sidebar__row--selected {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.deck-builder-sidebar__grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 18px;
+  cursor: grab;
+  color: #64748b;
+  touch-action: none;
+}
+
+.deck-builder-sidebar__grip:active {
+  cursor: grabbing;
+}
+
+.deck-builder-sidebar__row-main {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  text-align: left;
+  padding: 4px 2px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-h);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.deck-builder-sidebar__row-main:hover {
+  background: rgba(30, 41, 59, 0.45);
+}
+
+.deck-builder-sidebar__name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck-builder-sidebar__row-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.deck-builder-sidebar__empty {
+  margin: 12px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.deck-builder-sidebar-expand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 12px 6px;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: rgba(8, 12, 20, 0.97);
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.deck-builder-sidebar-expand:hover {
+  color: var(--text-h);
+  background: rgba(15, 23, 42, 0.98);
+}
+
+.deck-builder-sidebar-expand__label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+

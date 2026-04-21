@@ -1,0 +1,1499 @@
+/**
+ * Battle POC - side-view combat mockup.
+ *
+ * Layout grid (top to bottom) — 3 rows:
+ *   enemy-strip  — topbar chrome folded in at top, then enemy program chips
+ *   stage        — shared battlefield bg + mech sprites + HUD overlays + fx
+ *   player-strip — player program chips, then statusbar chrome folded in at bottom
+ *
+ * Mech sprites use SVG chroma-key filters (`bp-knockout-alley` / `bp-knockout-market` /
+ * `bp-knockout-neon`) so they composite cleanly on the stage without baked backdrops on the art.
+ * ALLEY uses `poc-bg-alley-dusk.png`; DUEL uses `poc-bg-duel-market.png`; NEON uses `poc-bg-battlefield.png`.
+ */
+
+.battle-poc {
+  --bp-bg: #070a11;
+  --bp-panel: rgba(12, 18, 32, 0.78);
+  --bp-border: rgba(150, 170, 195, 0.18);
+  --bp-border-strong: rgba(190, 210, 230, 0.35);
+  --bp-text: #c6d0de;
+  --bp-text-dim: #7a879b;
+  --bp-text-strong: #e8eef6;
+
+  /* Cyberpunk Neon Dynasty palette — ally is hot amber, enemy is hot magenta.
+     Ambient world glow leans cyan/violet to match the battlefield backdrop. */
+  --bp-ally: #ffa040;
+  --bp-ally-soft: rgba(255, 160, 64, 0.22);
+  --bp-ally-glow: rgba(255, 160, 64, 0.55);
+
+  --bp-enemy: #ff3ea5;
+  --bp-enemy-soft: rgba(255, 62, 165, 0.22);
+  --bp-enemy-glow: rgba(255, 62, 165, 0.55);
+
+  --bp-ambient: #5ef2ff;
+  --bp-ambient-soft: rgba(94, 242, 255, 0.18);
+
+  --bp-clip-card: polygon(
+    10px 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    10px 100%,
+    0 calc(100% - 10px),
+    0 10px
+  );
+  --bp-clip-panel: polygon(
+    18px 0,
+    calc(100% - 18px) 0,
+    100% 18px,
+    100% calc(100% - 18px),
+    calc(100% - 18px) 100%,
+    18px 100%,
+    0 calc(100% - 18px),
+    0 18px
+  );
+
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  color: var(--bp-text);
+  background: var(--bp-bg);
+  font-family: 'Rajdhani', 'Barlow Condensed', 'Inter', system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  display: grid;
+  /* 3-row layout: topbar chrome lives inside the enemy strip, statusbar
+     chrome lives inside the player strip. This gives the stage more
+     vertical real estate and keeps the mechs visually centred. */
+  grid-template-rows: 120px 1fr 120px;
+  grid-template-areas:
+    'enemy-strip'
+    'stage'
+    'player-strip';
+  isolation: isolate;
+  user-select: none;
+}
+
+.battle-poc * {
+  box-sizing: border-box;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Background + global scrim                                                   */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Alley — `poc-bg-alley-dusk.png` */
+.battle-poc--stage-alley .battle-poc__bg {
+  background:
+    linear-gradient(180deg, rgba(18, 12, 20, 0.2) 0%, transparent 35%, rgba(6, 4, 10, 0.45) 100%),
+    url('/poc/poc-bg-alley-dusk.png') center/cover no-repeat;
+}
+
+/*
+ * DUEL stage — full-width illustration: high-noon frontier main street with
+ * scavenger / night-market energy (stalls, saloon, crowd), no arena ring.
+ * Asset: `public/poc/poc-bg-duel-market.png`
+ */
+.battle-poc--stage-market .battle-poc__bg {
+  background:
+    linear-gradient(180deg, rgba(22, 16, 12, 0.28) 0%, transparent 38%, rgba(6, 4, 3, 0.52) 100%),
+    url('/poc/poc-bg-duel-market.png') center 42% / cover no-repeat;
+}
+
+/* Foreground dirt strip — subtle glue for mech feet on the road (art already shows packed earth). */
+.battle-poc__ground {
+  position: absolute;
+  left: -3%;
+  right: -3%;
+  bottom: 0;
+  height: 30%;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.2) 0%, transparent 15%, transparent 85%, rgba(0, 0, 0, 0.2) 100%),
+    linear-gradient(
+      180deg,
+      rgba(90, 62, 38, 0.15) 0%,
+      rgba(74, 48, 30, 0.55) 22%,
+      rgba(52, 34, 22, 0.88) 55%,
+      rgba(28, 18, 12, 0.95) 100%
+    );
+  box-shadow: inset 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.battle-poc--stage-market .battle-poc__ground {
+  opacity: 0.42;
+  height: 28%;
+}
+
+.battle-poc--stage-neon .battle-poc__bg {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(6, 9, 16, 0.45) 0%,
+      rgba(6, 9, 16, 0.05) 25%,
+      rgba(6, 9, 16, 0.05) 75%,
+      rgba(6, 9, 16, 0.55) 100%
+    ),
+    url('/poc/poc-bg-battlefield.png') center/cover no-repeat;
+}
+
+.battle-poc__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  /* Calm alley: very subtle scanlines + soft vignette. */
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.012) 0,
+      rgba(255, 255, 255, 0.012) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(ellipse at 50% 50%, transparent 65%, rgba(0, 0, 0, 0.38) 100%);
+}
+
+.battle-poc--stage-alley .battle-poc__scrim {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 220, 235, 0.014) 0,
+      rgba(255, 220, 235, 0.014) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(ellipse at 50% 48%, transparent 58%, rgba(25, 12, 28, 0.42) 100%);
+}
+
+.battle-poc--stage-market .battle-poc__scrim {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 245, 220, 0.018) 0,
+      rgba(255, 245, 220, 0.018) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(ellipse at 50% 42%, transparent 55%, rgba(20, 10, 6, 0.5) 100%);
+}
+
+.battle-poc--stage-neon .battle-poc__scrim {
+  /* Loud plaza: stronger cyan-tinted scanlines + deeper vignette. */
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(94, 242, 255, 0.02) 0,
+      rgba(94, 242, 255, 0.02) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(ellipse at 50% 50%, transparent 60%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Topbar                                                                      */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__topbar {
+  /* Now lives inside the enemy-strip flex column — no grid-area needed. */
+  flex-shrink: 0;
+  height: 42px;
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: linear-gradient(180deg, rgba(6, 9, 16, 0.98), rgba(6, 9, 16, 0.72));
+  border-bottom: 1px solid var(--bp-border);
+}
+
+.battle-poc__topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--bp-text-strong);
+}
+
+.battle-poc__topbar-mark {
+  color: var(--bp-ally);
+  font-size: 14px;
+  text-shadow: 0 0 8px var(--bp-ally-glow);
+}
+
+.battle-poc__topbar-turn {
+  font-size: 14px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--bp-text-dim);
+}
+
+.battle-poc__topbar-turn strong {
+  color: var(--bp-text-strong);
+  margin: 0 2px;
+}
+
+.battle-poc__topbar-controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.battle-poc__ctrl {
+  appearance: none;
+  border: 1px solid var(--bp-border-strong);
+  background: rgba(10, 14, 22, 0.9);
+  color: var(--bp-text);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+.battle-poc__ctrl:hover {
+  border-color: var(--bp-ally);
+  color: var(--bp-text-strong);
+  box-shadow: 0 0 14px var(--bp-ally-glow);
+}
+
+.battle-poc__ctrl--exit:hover {
+  border-color: var(--bp-enemy);
+  box-shadow: 0 0 14px var(--bp-enemy-glow);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Speed segmented control                                                     */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__speed {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--bp-border-strong);
+  background: rgba(10, 14, 22, 0.9);
+  margin-right: 6px;
+}
+
+.battle-poc__speed-label {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--bp-text-dim);
+  border-right: 1px solid var(--bp-border);
+}
+
+.battle-poc__speed-btn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--bp-border);
+  color: var(--bp-text-dim);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 0 12px;
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.battle-poc__speed-btn:last-child {
+  border-right: none;
+}
+
+.battle-poc__speed-btn:hover {
+  color: var(--bp-text);
+}
+
+.battle-poc__speed-btn--active {
+  background: var(--bp-ally-soft);
+  color: var(--bp-text-strong);
+  box-shadow: inset 0 0 0 1px var(--bp-ally);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Deck strips (horizontal)                                                    */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__strip {
+  position: relative;
+  z-index: 3;
+  /* Flex column so topbar / statusbar chrome, label, and chip list stack
+     without needing an explicit grid-template-rows per variant. */
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(8, 12, 20, 0.85), rgba(8, 12, 20, 0.6));
+  border-top: 1px solid var(--bp-border);
+  border-bottom: 1px solid var(--bp-border);
+  /* overflow: visible so the expanded chip can spill out of the strip
+     into the stage area above/below without being clipped. */
+  overflow: visible;
+}
+
+.battle-poc__strip--enemy {
+  grid-area: enemy-strip;
+  background: linear-gradient(180deg, rgba(8, 12, 20, 0.92), rgba(8, 12, 20, 0.55));
+}
+
+.battle-poc__strip--player {
+  grid-area: player-strip;
+  background: linear-gradient(0deg, rgba(8, 12, 20, 0.92), rgba(8, 12, 20, 0.55));
+}
+
+.battle-poc__strip-label {
+  flex-shrink: 0;
+  height: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+.battle-poc__strip--player .battle-poc__strip-label {
+  color: #d9b48a;
+}
+
+.battle-poc__strip--enemy .battle-poc__strip-label {
+  color: #c89298;
+}
+
+.battle-poc__strip-counter {
+  color: var(--bp-text-strong);
+  letter-spacing: 0.14em;
+  font-weight: 700;
+}
+
+.battle-poc__strip-list {
+  list-style: none;
+  margin: 0;
+  /* Flex instead of grid so the active chip can flex-grow into a full-card
+     shape in place while siblings compress. */
+  display: flex;
+  gap: 5px;
+  /* flex: 1 fills the remaining strip height left after label + chrome. */
+  flex: 1;
+  min-height: 0;
+  padding: 3px 16px 4px;
+  overflow: visible;
+}
+
+/* Player strip sits at the bottom: expanded chips anchor to the list's
+   bottom edge and grow upward into the stage. */
+.battle-poc__strip--player .battle-poc__strip-list {
+  align-items: flex-end;
+}
+
+/* Enemy strip sits at the top: expanded chips anchor to the list's top
+   edge and grow downward into the stage. */
+.battle-poc__strip--enemy .battle-poc__strip-list {
+  align-items: flex-start;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Deck chip (single card in a strip)                                          */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__chip {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  /* Each chip shares the strip's available width equally by default
+     (flex-basis: 0 + flex-grow: 1). The active chip overrides to a fixed
+     basis so it always lands at the same card shape regardless of how many
+     siblings there are. */
+  flex: 1 1 0;
+  align-self: stretch;
+  height: auto;
+  background: rgba(12, 16, 26, 0.88);
+  border: 1px solid var(--bp-border);
+  clip-path: var(--bp-clip-card);
+  display: grid;
+  grid-template-rows: 12px 1fr 14px auto;
+  overflow: hidden;
+  /* Animate the flex properties, height and alignment all in the same
+     cubic-bezier so the grow / shrink feels like one motion. */
+  transition:
+    flex-grow 380ms cubic-bezier(0.3, 0.8, 0.3, 1),
+    flex-shrink 380ms cubic-bezier(0.3, 0.8, 0.3, 1),
+    flex-basis 380ms cubic-bezier(0.3, 0.8, 0.3, 1),
+    height 380ms cubic-bezier(0.3, 0.8, 0.3, 1),
+    border-color 200ms ease,
+    box-shadow 240ms ease;
+}
+
+.battle-poc__chip-index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--bp-text-dim);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.battle-poc__chip-art {
+  position: relative;
+  background-color: #050811;
+  /* `cover` works at both extremes: a wide compressed chip crops the
+     landscape art to fill, and a tall expanded card crops horizontally.
+     Avoids having to animate background-size (which doesn't transition
+     smoothly across keyframes). */
+  background-size: cover;
+  background-position: 50% 45%;
+  background-repeat: no-repeat;
+  border-top: 1px solid var(--bp-border);
+  border-bottom: 1px solid var(--bp-border);
+}
+
+.battle-poc__chip-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bp-text-dim);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.battle-poc__chip-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.battle-poc__chip-cost {
+  color: var(--bp-text-strong);
+  font-weight: 700;
+  padding-left: 6px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Chip detail panel — tags + card text. Present in every chip but collapsed  */
+/* via max-height: 0 until the chip is expanded.                              */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__chip-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 0;
+  opacity: 0;
+  padding: 0 10px;
+  overflow: hidden;
+  background: rgba(6, 9, 16, 0.95);
+  border-top: 0 solid var(--bp-border);
+  /* The opacity lags slightly so the fade-in lands after the panel has
+     mostly unfolded — feels less like a flash of text. */
+  transition:
+    max-height 380ms cubic-bezier(0.3, 0.8, 0.3, 1),
+    opacity 240ms ease 120ms,
+    padding 380ms cubic-bezier(0.3, 0.8, 0.3, 1),
+    border-top-width 0ms 80ms;
+}
+
+.battle-poc__chip--expanded .battle-poc__chip-detail {
+  max-height: 120px;
+  opacity: 1;
+  padding: 8px 10px 10px;
+  border-top-width: 1px;
+}
+
+.battle-poc__chip-detail-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.battle-poc__chip-detail-tag {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border: 1px solid var(--bp-border-strong);
+  color: var(--bp-text);
+  background: rgba(10, 14, 22, 0.9);
+}
+
+.battle-poc__chip-detail-tag--atk {
+  color: #ffcaa0;
+  border-color: var(--bp-ally);
+}
+
+.battle-poc__chip--enemy .battle-poc__chip-detail-tag--atk {
+  color: #ffc3ca;
+  border-color: var(--bp-enemy);
+}
+
+.battle-poc__chip-detail-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--bp-text);
+}
+
+/* Active state: player strip = ally glow, enemy strip = enemy glow. The
+   active chip stays highlighted for the full round (across both reveal +
+   strike + recover phases AND the opponent's turn) — only the `expanded`
+   modifier below grows it into a full card, and only during its own
+   reveal + strike. */
+.battle-poc__chip--active.battle-poc__chip--player {
+  border-color: var(--bp-ally);
+  box-shadow: 0 0 14px var(--bp-ally-glow), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  z-index: 2;
+}
+
+.battle-poc__chip--active.battle-poc__chip--enemy {
+  border-color: var(--bp-enemy);
+  box-shadow: 0 0 14px var(--bp-enemy-glow), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  z-index: 2;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Expanded chip — the resolving card grows in place into a full card and     */
+/* forces the other chips to compress proportionally around it.               */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__chip--expanded {
+  /* 10 % smaller than the original size so the expanded card is a touch
+     more compact, giving mechs more breathing room on the stage. */
+  flex: 0 1 clamp(162px, 15.3vw, 216px);
+  height: clamp(198px, 21.6vw, 270px);
+  z-index: 10;
+  box-shadow: 0 0 26px var(--bp-ally-glow), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.battle-poc__chip--expanded.battle-poc__chip--enemy {
+  box-shadow: 0 0 26px var(--bp-enemy-glow), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* On the player strip the expanded chip sticks its feet into the strip and
+   grows UP into the stage. On the enemy strip it sticks its head to the
+   strip and grows DOWN into the stage. */
+.battle-poc__strip--player .battle-poc__chip--expanded {
+  align-self: flex-end;
+}
+
+.battle-poc__strip--enemy .battle-poc__chip--expanded {
+  align-self: flex-start;
+}
+
+.battle-poc__chip--fog {
+  border-style: dashed;
+  border-color: rgba(255, 62, 165, 0.6);
+}
+
+.battle-poc__chip-fog {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: rgba(255, 62, 165, 0.85);
+  text-shadow: 0 0 10px rgba(255, 62, 165, 0.45);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 62, 165, 0.1) 0 6px,
+      transparent 6px 12px
+    ),
+    #0a0d16;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Stage (HUDs, mechs, active card, fx)                                        */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__stage {
+  grid-area: stage;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+}
+
+/* Global thermal fatigue — mirrors combat `fatigueArmed` / `fatigueRoundsElapsed` on snapshots */
+.battle-poc__fatigue-panel {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: linear-gradient(180deg, rgba(40, 18, 8, 0.95), rgba(18, 8, 4, 0.92));
+  border: 1px solid rgba(255, 120, 40, 0.65);
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 0 18px rgba(255, 90, 20, 0.35);
+  pointer-events: none;
+}
+
+.battle-poc__fatigue-panel-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  color: #ff9f4a;
+  text-shadow: 0 0 10px rgba(255, 120, 40, 0.8);
+}
+
+.battle-poc__fatigue-panel-stack {
+  min-width: 28px;
+  padding: 2px 8px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #fff4e8;
+  background: rgba(255, 60, 20, 0.25);
+  border: 1px solid rgba(255, 160, 90, 0.45);
+  border-radius: 3px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Pilot HUDs (overlay the stage corners)                                      */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__hud {
+  position: absolute;
+  /* Centered vertically on the stage: we use the CSS `translate` property
+     instead of `transform: translate…` so the hit-shake animation (which
+     drives `transform`) doesn't clobber the centering. */
+  top: 50%;
+  translate: 0 -50%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(10, 14, 22, 0.82);
+  border: 1px solid var(--bp-border);
+  clip-path: var(--bp-clip-panel);
+  z-index: 4;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+  min-width: 240px;
+}
+
+.battle-poc__hud--left {
+  left: 18px;
+}
+
+.battle-poc__hud--right {
+  right: 18px;
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.battle-poc__hud--ally.battle-poc__hud--active {
+  border-color: var(--bp-ally);
+  box-shadow: 0 0 18px var(--bp-ally-glow), inset 0 0 0 1px var(--bp-ally-soft);
+}
+
+.battle-poc__hud--enemy.battle-poc__hud--active {
+  border-color: var(--bp-enemy);
+  box-shadow: 0 0 18px var(--bp-enemy-glow), inset 0 0 0 1px var(--bp-enemy-soft);
+}
+
+.battle-poc__hud--taking {
+  animation: bp-hud-hit 360ms ease-out;
+}
+
+@keyframes bp-hud-hit {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-4px); filter: brightness(1.4) saturate(1.3); }
+  40%  { transform: translateX(3px); }
+  60%  { transform: translateX(-2px); }
+  100% { transform: translateX(0); filter: none; }
+}
+
+.battle-poc__hud-portrait {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  clip-path: var(--bp-clip-card);
+  flex-shrink: 0;
+  background: #0a0f1c;
+}
+
+.battle-poc__hud-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 25%;
+  display: block;
+}
+
+.battle-poc__hud-portrait-frame {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--bp-border-strong);
+  clip-path: var(--bp-clip-card);
+  pointer-events: none;
+}
+
+.battle-poc__hud--ally .battle-poc__hud-portrait-frame {
+  border-color: var(--bp-ally);
+}
+
+.battle-poc__hud--enemy .battle-poc__hud-portrait-frame {
+  border-color: var(--bp-enemy);
+}
+
+.battle-poc__hud-body {
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.battle-poc__hud--right .battle-poc__hud-body {
+  align-items: flex-end;
+}
+
+.battle-poc__hud-name {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--bp-text-strong);
+}
+
+.battle-poc__hud--ally .battle-poc__hud-name {
+  color: #f3cfa2;
+  text-shadow: 0 0 8px var(--bp-ally-glow);
+}
+
+.battle-poc__hud--enemy .battle-poc__hud-name {
+  color: #f5b8bf;
+  text-shadow: 0 0 8px var(--bp-enemy-glow);
+}
+
+.battle-poc__hud-subtitle {
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: var(--bp-text-dim);
+  text-transform: uppercase;
+}
+
+/* -------------------------------------------------------------------------- */
+/* HP pips — 20 slanted pips (one per 5 %). Zone colours are baked into each  */
+/* pip's position so the green→yellow→red gradient is always visible;         */
+/* inactive pips simply go dark.                                               */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__hud-pips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.battle-poc__hud--right .battle-poc__hud-pips-row {
+  flex-direction: row-reverse;
+}
+
+.battle-poc__hud-pips {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  flex: 1;
+}
+
+.battle-poc__hud--right .battle-poc__hud-pips {
+  flex-direction: row-reverse;
+}
+
+.battle-poc__hud-pip {
+  /* Each pip is a slanted rectangle. flex: 1 lets them share the available
+     width evenly rather than overflowing on narrow HUDs. */
+  flex: 1;
+  max-width: 9px;
+  height: 14px;
+  transform: skewX(-18deg);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.battle-poc__hud-pip--green {
+  background: linear-gradient(180deg, #72e68a 0%, #3ab85c 100%);
+  border-color: rgba(90, 210, 120, 0.65);
+  box-shadow: 0 0 4px rgba(90, 210, 120, 0.45);
+}
+
+.battle-poc__hud-pip--yellow {
+  background: linear-gradient(180deg, #ffe566 0%, #e6a800 100%);
+  border-color: rgba(255, 210, 40, 0.65);
+  box-shadow: 0 0 4px rgba(255, 200, 0, 0.45);
+}
+
+.battle-poc__hud-pip--red {
+  background: linear-gradient(180deg, #ff5a5a 0%, #c42020 100%);
+  border-color: rgba(255, 60, 60, 0.65);
+  box-shadow: 0 0 4px rgba(255, 50, 50, 0.5);
+}
+
+.battle-poc__hud-hp-num {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--bp-text-strong);
+  white-space: nowrap;
+}
+
+.battle-poc__hud-hp-max {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--bp-text-dim);
+}
+
+.battle-poc__res {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
+.battle-poc__res-label {
+  width: 18px;
+  color: var(--bp-text-dim);
+  font-weight: 800;
+}
+
+.battle-poc__res-track {
+  flex: 1;
+  min-width: 56px;
+  height: 7px;
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid var(--bp-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.battle-poc__res-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 180ms ease;
+}
+
+.battle-poc__res-fill--energy {
+  background: linear-gradient(90deg, #22d3ee, #0ea5e9);
+}
+
+.battle-poc__res-fill--shield {
+  background: linear-gradient(90deg, #818cf8, #38bdf8);
+}
+
+.battle-poc__res-num {
+  min-width: 20px;
+  text-align: right;
+  color: var(--bp-text-strong);
+  font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------- */
+/* VS glyph (small, center of stage, above mechs)                              */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__vs {
+  position: absolute;
+  /* Same centering approach as the HUDs — split translate (for positioning)
+     from transform (reserved for the 45° rhombus rotation). */
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  transform: rotate(45deg);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--bp-text-strong);
+  background: rgba(10, 14, 22, 0.82);
+  border: 1px solid var(--bp-border-strong);
+  z-index: 4;
+}
+
+.battle-poc__vs span {
+  transform: rotate(-45deg);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mech sprites (independent of shared battlefield bg)                         */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__aura-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.battle-poc__aura-row--buff {
+  bottom: calc(100% + 6px);
+}
+
+.battle-poc__aura-row--debuff {
+  top: calc(100% + 6px);
+}
+
+.battle-poc__aura-chip {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border: 1px solid var(--bp-border-strong);
+  background: rgba(8, 12, 20, 0.92);
+  color: var(--bp-text-strong);
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.45);
+}
+
+.battle-poc__aura-row--buff .battle-poc__aura-chip {
+  border-color: var(--bp-ally);
+  color: #ffe8c8;
+  text-shadow: 0 0 8px var(--bp-ally-glow);
+}
+
+.battle-poc__aura-row--debuff .battle-poc__aura-chip {
+  border-color: var(--bp-enemy);
+  color: #ffd6ec;
+  text-shadow: 0 0 8px var(--bp-enemy-glow);
+}
+
+.battle-poc__mech {
+  position: absolute;
+  /* `bottom` as a raw % of stage height overshoots on large/full-screen
+     monitors because the stage can be 840 px+ tall. The platform surface
+     in the background image sits at roughly 110–120 px from the stage
+     bottom regardless of screen size (because `cover` scales the image
+     proportionally with the viewport). Clamping the absolute value keeps
+     the feet on the platform across screen sizes. */
+  bottom: clamp(70px, 14%, 115px);
+  width: clamp(180px, 22vw, 300px);
+  aspect-ratio: 1024 / 576;
+  pointer-events: none;
+  z-index: 2;
+  transition: transform 340ms cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+/* Duel strip: feet on the dirt band — slightly higher bottom clamp. */
+.battle-poc--stage-market .battle-poc__mech {
+  bottom: clamp(78px, 15%, 128px);
+}
+
+.battle-poc__mech img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  display: block;
+  /* Knockout filter is set per-stage on the root (alley / neon / market). */
+}
+
+.battle-poc--stage-alley .battle-poc__mech img {
+  filter: url(#bp-knockout-alley) drop-shadow(0 14px 18px rgba(0, 0, 0, 0.45));
+}
+
+.battle-poc--stage-neon .battle-poc__mech img {
+  filter: url(#bp-knockout-neon) drop-shadow(0 14px 18px rgba(0, 0, 0, 0.6));
+}
+
+.battle-poc--stage-market .battle-poc__mech img {
+  filter: url(#bp-knockout-market) drop-shadow(0 14px 20px rgba(0, 0, 0, 0.5));
+}
+
+/* Horizontal spacing: DUEL uses 58% offsets (tighter); alley + neon follow their art. */
+.battle-poc__mech--player {
+  right: 54%;
+  left: auto;
+}
+
+.battle-poc__mech--enemy {
+  left: 54%;
+  right: auto;
+}
+
+.battle-poc--stage-alley .battle-poc__mech--player {
+  right: 62%;
+}
+
+.battle-poc--stage-alley .battle-poc__mech--enemy {
+  left: 62%;
+}
+
+.battle-poc--stage-market .battle-poc__mech--player {
+  right: 58%;
+}
+
+.battle-poc--stage-market .battle-poc__mech--enemy {
+  left: 58%;
+}
+
+/* ARES-01's source sprite was generated facing left, but the pose reads
+   better when mirrored so her body + weapon angle toward Glint on the
+   player side. Flip on the inner img so the container-level combat
+   transforms (reveal / strike / hurt) keep working. */
+.battle-poc__mech--enemy img {
+  transform: scaleX(-1);
+}
+
+/* Ground shadow glued to the mech's feet */
+.battle-poc__mech::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: -2px;
+  height: 14px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.6) 0%, transparent 70%);
+  filter: blur(3px);
+  z-index: -1;
+}
+
+/* Reveal anticipation — small shift back */
+.battle-poc__mech--player.battle-poc__mech--player-reveal {
+  transform: translateX(-12px);
+}
+
+.battle-poc__mech--enemy.battle-poc__mech--enemy-reveal {
+  transform: translateX(12px);
+}
+
+/* Strike — lunge forward with slight scale */
+.battle-poc__mech--player.battle-poc__mech--player-strike {
+  transform: translateX(36px) scale(1.04);
+}
+
+.battle-poc__mech--enemy.battle-poc__mech--enemy-strike {
+  transform: translateX(-36px) scale(1.04);
+}
+
+/* Taking hit — recoil, flash, shake. The flash animation is stage-specific
+   because it re-declares the knockout filter on the img element. */
+.battle-poc--stage-alley .battle-poc__mech--hurt img {
+  animation: bp-mech-hit-flash-alley 360ms ease-out;
+}
+
+.battle-poc--stage-market .battle-poc__mech--hurt img {
+  animation: bp-mech-hit-flash-market 360ms ease-out;
+}
+
+.battle-poc--stage-neon .battle-poc__mech--hurt img {
+  animation: bp-mech-hit-flash-neon 360ms ease-out;
+}
+
+.battle-poc__mech--hurt {
+  animation: bp-mech-hit-shake 360ms ease-out;
+}
+
+/* Hit flash keyframes per stage — they re-declare `filter:` so they have
+   to know which knockout filter to reference. The alley variant also uses a
+   slightly gentler brightness peak to match the softer scene. */
+@keyframes bp-mech-hit-flash-alley {
+  0%   { filter: url(#bp-knockout-alley) drop-shadow(0 14px 18px rgba(0, 0, 0, 0.45)); }
+  15%  { filter: url(#bp-knockout-alley) brightness(1.9) saturate(0.5) drop-shadow(0 0 20px rgba(255, 240, 220, 0.75)); }
+  40%  { filter: url(#bp-knockout-alley) brightness(1.1) drop-shadow(0 0 14px rgba(255, 62, 165, 0.55)); }
+  100% { filter: url(#bp-knockout-alley) drop-shadow(0 14px 18px rgba(0, 0, 0, 0.45)); }
+}
+
+@keyframes bp-mech-hit-flash-market {
+  0%   { filter: url(#bp-knockout-market) drop-shadow(0 14px 20px rgba(0, 0, 0, 0.5)); }
+  15%  { filter: url(#bp-knockout-market) brightness(1.85) saturate(0.55) drop-shadow(0 0 18px rgba(255, 230, 200, 0.7)); }
+  40%  { filter: url(#bp-knockout-market) brightness(1.12) drop-shadow(0 0 12px rgba(255, 62, 165, 0.55)); }
+  100% { filter: url(#bp-knockout-market) drop-shadow(0 14px 20px rgba(0, 0, 0, 0.5)); }
+}
+
+@keyframes bp-mech-hit-flash-neon {
+  0%   { filter: url(#bp-knockout-neon) drop-shadow(0 14px 18px rgba(0, 0, 0, 0.6)); }
+  15%  { filter: url(#bp-knockout-neon) brightness(2.2) saturate(0.4) drop-shadow(0 0 22px rgba(255, 255, 255, 0.8)); }
+  40%  { filter: url(#bp-knockout-neon) brightness(1.15) drop-shadow(0 0 14px rgba(255, 62, 165, 0.7)); }
+  100% { filter: url(#bp-knockout-neon) drop-shadow(0 14px 18px rgba(0, 0, 0, 0.6)); }
+}
+
+@keyframes bp-mech-hit-shake {
+  0%   { transform: translateX(0); }
+  15%  { transform: translateX(6px); }
+  35%  { transform: translateX(-4px); }
+  55%  { transform: translateX(3px); }
+  80%  { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
+}
+
+/* -------------------------------------------------------------------------- */
+/* FX: floating damage, tracer bolt                                            */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__dmg {
+  position: absolute;
+  top: 42%;
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #ffe4c2;
+  text-shadow:
+    0 0 18px rgba(255, 140, 80, 0.95),
+    0 0 2px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  z-index: 6;
+  animation: bp-dmg-pop 520ms ease-out both;
+}
+
+.battle-poc__dmg--left {
+  left: 16%;
+}
+
+.battle-poc__dmg--right {
+  right: 16%;
+}
+
+.battle-poc__dmg-label {
+  font-size: 18px;
+  margin-left: 4px;
+  color: #ffb280;
+  letter-spacing: 0.24em;
+}
+
+@keyframes bp-dmg-pop {
+  0%   { opacity: 0; transform: translateY(12px) scale(0.6); }
+  25%  { opacity: 1; transform: translateY(0) scale(1.08); }
+  100% { opacity: 0; transform: translateY(-34px) scale(1); }
+}
+
+.battle-poc__tracer {
+  position: absolute;
+  top: 58%;
+  height: 3px;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 225, 180, 0.95) 20%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 225, 180, 0.95) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 12px rgba(255, 200, 120, 0.9), 0 0 24px rgba(255, 200, 120, 0.5);
+  animation: bp-tracer 420ms ease-out both;
+}
+
+.battle-poc__tracer--rightward {
+  left: 22%;
+  right: 22%;
+  transform-origin: left center;
+}
+
+.battle-poc__tracer--leftward {
+  left: 22%;
+  right: 22%;
+  transform-origin: right center;
+}
+
+@keyframes bp-tracer {
+  0%   { opacity: 0; transform: scaleX(0.2); }
+  40%  { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Status bar                                                                  */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__statusbar {
+  /* Now lives inside the player-strip flex column — no grid-area needed. */
+  flex-shrink: 0;
+  height: 28px;
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: linear-gradient(180deg, rgba(6, 9, 16, 0.55), rgba(6, 9, 16, 0.95));
+  border-top: 1px solid var(--bp-border);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.battle-poc__status-marker {
+  width: 10px;
+  height: 10px;
+  background: var(--bp-ally);
+  box-shadow: 0 0 10px var(--bp-ally-glow);
+  animation: bp-pulse 1400ms ease-in-out infinite;
+}
+
+@keyframes bp-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.2); }
+}
+
+.battle-poc__status-text {
+  color: var(--bp-text-strong);
+  letter-spacing: 0.22em;
+}
+
+.battle-poc__status-hint {
+  color: var(--bp-text-dim);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Victory / defeat banner                                                     */
+/* -------------------------------------------------------------------------- */
+
+.battle-poc__result {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.85) 100%);
+  animation: bp-result-in 600ms ease-out both;
+}
+
+@keyframes bp-result-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.battle-poc__result-inner {
+  text-align: center;
+  padding: 36px 60px;
+  background: rgba(10, 14, 22, 0.92);
+  border: 1px solid var(--bp-border-strong);
+  clip-path: var(--bp-clip-panel);
+}
+
+.battle-poc__result--victory .battle-poc__result-inner {
+  border-color: var(--bp-ally);
+  box-shadow: 0 0 60px var(--bp-ally-glow);
+}
+
+.battle-poc__result--defeat .battle-poc__result-inner {
+  border-color: var(--bp-enemy);
+  box-shadow: 0 0 60px var(--bp-enemy-glow);
+}
+
+.battle-poc__result-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.42em;
+  color: var(--bp-text-dim);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.battle-poc__result-title {
+  font-size: 64px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--bp-text-strong);
+  margin-bottom: 6px;
+}
+
+.battle-poc__result--victory .battle-poc__result-title {
+  color: #ffd8a3;
+  text-shadow: 0 0 24px var(--bp-ally-glow);
+}
+
+.battle-poc__result--defeat .battle-poc__result-title {
+  color: #ffb3bb;
+  text-shadow: 0 0 24px var(--bp-enemy-glow);
+}
+
+.battle-poc__result-sub {
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  color: var(--bp-text);
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+
+.battle-poc__result-btn {
+  appearance: none;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  padding: 10px 22px;
+  color: var(--bp-text-strong);
+  background: rgba(10, 14, 22, 0.95);
+  border: 1px solid var(--bp-border-strong);
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.battle-poc__result-btn:hover {
+  border-color: var(--bp-ally);
+  box-shadow: 0 0 18px var(--bp-ally-glow);
+}
+
+.battle-poc__result-btn--primary {
+  margin-top: 4px;
+  border-color: var(--bp-ally, #00e5ff);
+  color: var(--bp-ally, #00e5ff);
+  font-size: 13px;
+}
+
+.battle-poc__result-btn--primary:hover {
+  border-color: var(--bp-ally, #00e5ff);
+  box-shadow: 0 0 22px var(--bp-ally-glow, rgba(0, 229, 255, 0.5));
+}
+
+.battle-poc__result-retry-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.battle-poc__result-retry-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.battle-poc__result-btn--assist {
+  border-color: var(--bp-enemy, #ff4455);
+  color: var(--bp-enemy, #ff4455);
+  width: 100%;
+}
+
+.battle-poc__result-btn--assist:hover {
+  border-color: var(--bp-enemy, #ff4455);
+  box-shadow: 0 0 18px rgba(255, 68, 85, 0.45);
+}
+
+.battle-poc__result-btn--secondary {
+  margin-top: 16px;
+  opacity: 0.4;
+  font-size: 10px;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.battle-poc__result-btn--secondary:hover {
+  opacity: 0.7;
+  border-color: var(--bp-ally);
+  box-shadow: none;
+}
+
+.battle-poc__analysis {
+  position: absolute;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background: rgba(2, 6, 23, 0.72);
+}
+
+.battle-poc__analysis-card {
+  width: min(760px, 90vw);
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.96), rgba(15, 23, 42, 0.96));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.battle-poc__analysis-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.battle-poc__analysis-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.battle-poc__analysis-tab {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.85);
+  color: #e2e8f0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.battle-poc__analysis-tab--active {
+  border-color: rgba(56, 189, 248, 0.7);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25) inset;
+}
+
+.battle-poc__analysis-title {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.battle-poc__analysis-graph {
+  width: 100%;
+  height: 220px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 10px;
+}
+
+.battle-poc__analysis-axis {
+  stroke: rgba(148, 163, 184, 0.6);
+  stroke-width: 0.5;
+}
+
+.battle-poc__analysis-line {
+  fill: none;
+  stroke: #22d3ee;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}

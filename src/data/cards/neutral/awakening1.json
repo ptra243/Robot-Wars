@@ -1,0 +1,408 @@
+{
+	"cards": [
+		{
+			"id": "neutral_harassing_strike_t1",
+			"name": "Harassing Strike",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"base_damage": 1,
+			"tags": [
+				"Strike"
+			],
+			"keywords": [
+				{
+					"type": "Overclock",
+					"value": 1
+				}
+			],
+			"merge_to": "neutral_harassing_strike_t2",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 1,
+					"pierce": false,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": false,
+					"deferExposeClear": true
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Overclock",
+						"value": 1
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_harassing_strike_t2",
+			"name": "Harassing Strike+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"base_damage": 2,
+			"tags": [
+				"Strike"
+			],
+			"keywords": [
+				{
+					"type": "Overclock",
+					"value": 1
+				}
+			],
+			"merge_to": "neutral_harassing_strike_t3",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 2,
+					"pierce": false,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": false,
+					"deferExposeClear": true
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Overclock",
+						"value": 1
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_harassing_strike_t3",
+			"name": "Harassing Strike++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"base_damage": 2,
+			"tags": [
+				"Strike"
+			],
+			"keywords": [
+				{
+					"type": "Overclock",
+					"value": 2
+				}
+			],
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 2,
+					"pierce": false,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": false,
+					"deferExposeClear": true
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Overclock",
+						"value": 2
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_siphoning_strike_t1",
+			"name": "Siphoning Strike",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 1,
+			"charge_cost": 2,
+			"tags": [
+				"Strike",
+				"Shield"
+			],
+			"merge_to": "neutral_siphoning_strike_t2",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 4,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "AdjustEnemyCharge",
+					"delta": -1
+				},
+				{
+					"type": "GainCharge",
+					"amount": 1
+				},
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 4
+				}
+			]
+		},
+		{
+			"id": "neutral_siphoning_strike_t2",
+			"name": "Siphoning Strike+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 2,
+			"charge_cost": 2,
+			"tags": [
+				"Strike",
+				"Shield"
+			],
+			"merge_to": "neutral_siphoning_strike_t3",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 5,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "AdjustEnemyCharge",
+					"delta": -1
+				},
+				{
+					"type": "GainCharge",
+					"amount": 1
+				},
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 5
+				}
+			]
+		},
+		{
+			"id": "neutral_siphoning_strike_t3",
+			"name": "Siphoning Strike++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 3,
+			"charge_cost": 2,
+			"tags": [
+				"Strike",
+				"Shield"
+			],
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 6,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "AdjustEnemyCharge",
+					"delta": -1
+				},
+				{
+					"type": "GainCharge",
+					"amount": 1
+				},
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 6
+				}
+			]
+		},
+		{
+			"id": "neutral_expose_drone_uplink_t1",
+			"name": "Expose Drone Uplink",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"tags": [
+				"Expose"
+			],
+			"keywords": [
+				{
+					"type": "Continuous",
+					"value": 3
+				}
+			],
+			"merge_to": "neutral_expose_drone_uplink_t2",
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Continuous",
+						"value": 3
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_expose_drone_uplink_t2",
+			"name": "Expose Drone Uplink+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"tags": [
+				"Expose"
+			],
+			"keywords": [
+				{
+					"type": "Continuous",
+					"value": 2
+				}
+			],
+			"merge_to": "neutral_expose_drone_uplink_t3",
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Continuous",
+						"value": 2
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_expose_drone_uplink_t3",
+			"name": "Expose Drone Uplink++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"tags": [
+				"Expose"
+			],
+			"keywords": [
+				{
+					"type": "Continuous",
+					"value": 1
+				}
+			],
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Continuous",
+						"value": 1
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_capitalising_strike_t1",
+			"name": "Capitalising Strike",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 1,
+			"charge_cost": 2,
+			"base_damage": 6,
+			"tags": [
+				"Strike",
+				"Expose"
+			],
+			"keywords": [
+				{
+					"type": "Pierce",
+					"value": 1
+				}
+			],
+			"merge_to": "neutral_capitalising_strike_t2",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 6,
+					"pierce": true,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": true
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Pierce",
+						"value": 1
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_capitalising_strike_t2",
+			"name": "Capitalising Strike+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 2,
+			"charge_cost": 2,
+			"base_damage": 7,
+			"tags": [
+				"Strike",
+				"Expose"
+			],
+			"keywords": [
+				{
+					"type": "Pierce",
+					"value": 1
+				}
+			],
+			"merge_to": "neutral_capitalising_strike_t3",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 7,
+					"pierce": true,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": true
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Pierce",
+						"value": 1
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_capitalising_strike_t3",
+			"name": "Capitalising Strike++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 1,
+			"card_tier": 3,
+			"charge_cost": 2,
+			"base_damage": 8,
+			"tags": [
+				"Strike",
+				"Expose"
+			],
+			"keywords": [
+				{
+					"type": "Pierce",
+					"value": 1
+				}
+			],
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 8,
+					"pierce": true,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": true
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Pierce",
+						"value": 1
+					}
+				}
+			]
+		}
+	]
+}

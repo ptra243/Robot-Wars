@@ -1,0 +1,164 @@
+.card-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+}
+
+.card-modal {
+  width: min(420px, 90vw);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: #020617;
+  padding: 16px 18px 14px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-modal h2 {
+  margin: 0;
+}
+
+.card-modal-sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.card-modal-sub + .card-modal-sub {
+  margin-top: 8px;
+}
+
+.card-modal-sub--queue {
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.card-modal-body {
+  margin: 6px 0 10px;
+  font-size: 14px;
+}
+
+.card-modal--deck-cycle {
+  width: min(480px, 92vw);
+}
+
+.deck-cycle-totals {
+  margin: 4px 0 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.deck-cycle-totals__title {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.deck-cycle-totals__hint {
+  color: var(--muted);
+  font-weight: normal;
+  font-size: 12px;
+}
+
+.deck-cycle-round-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
+.deck-cycle-round-tab {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #0d1320;
+  color: var(--text-h);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.deck-cycle-round-tab:hover {
+  border-color: var(--accent);
+}
+
+.deck-cycle-round-tab--active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.deck-cycle-round-hint {
+  font-size: 11px !important;
+  line-height: 1.35;
+  margin-top: 0 !important;
+}
+
+.deck-cycle-round-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 10px;
+  font-size: 13px;
+}
+
+.deck-cycle-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.deck-cycle-stat__label {
+  color: var(--muted);
+  flex: 1 1 40%;
+}
+
+.deck-cycle-buffs ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.log-panel {
+  max-height: 420px;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: #0d1320;
+  color: #cbd5e1;
+  border: 1px solid var(--border);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 1200px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .app-shell {
+    padding: 16px;
+  }
+
+  .topbar {
+    flex-direction: column;
+  }
+
+  .queue-grid,
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+}

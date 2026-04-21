@@ -1,0 +1,967 @@
+{
+	"cards": [
+		{
+			"id": "neutral_basic_strike_t1",
+			"name": "Basic Strike",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_damage": 2,
+			"tags": [
+				"Strike"
+			],
+			"merge_to": "neutral_basic_strike_t2",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 2,
+					"pierce": false,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": false
+				}
+			]
+		},
+		{
+			"id": "neutral_basic_strike_t2",
+			"name": "Basic Strike+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_damage": 3,
+			"tags": [
+				"Strike"
+			],
+			"merge_to": "neutral_basic_strike_t3",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 3,
+					"pierce": false,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": false
+				}
+			]
+		},
+		{
+			"id": "neutral_basic_strike_t3",
+			"name": "Basic Strike++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_damage": 4,
+			"tags": [
+				"Strike"
+			],
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 4,
+					"pierce": false,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": false
+				}
+			]
+		},
+		{
+			"id": "neutral_barrier_t1",
+			"name": "Barrier",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_block": 3,
+			"tags": [
+				"Shield"
+			],
+			"merge_to": "neutral_barrier_t2",
+			"effects": [
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 3
+				}
+			]
+		},
+		{
+			"id": "neutral_barrier_t2",
+			"name": "Barrier+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_block": 5,
+			"tags": [
+				"Shield"
+			],
+			"merge_to": "neutral_barrier_t3",
+			"effects": [
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 5
+				}
+			]
+		},
+		{
+			"id": "neutral_barrier_t3",
+			"name": "Barrier++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_block": 7,
+			"tags": [
+				"Shield"
+			],
+			"effects": [
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 7
+				}
+			]
+		},
+		{
+			"id": "neutral_servo_t1",
+			"name": "Servo Tune-Up",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"strike_potency_gain": 1,
+			"shield_potency_gain": 1,
+			"tags": [
+				"Potency"
+			],
+			"merge_to": "neutral_servo_t2",
+			"effects": [
+				{
+					"type": "AddStrikePotency",
+					"amount": 1
+				},
+				{
+					"type": "AddShieldPotency",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "neutral_servo_t2",
+			"name": "Servo Tune-Up+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"strike_potency_gain": 2,
+			"shield_potency_gain": 2,
+			"tags": [
+				"Potency"
+			],
+			"merge_to": "neutral_servo_t3",
+			"effects": [
+				{
+					"type": "AddStrikePotency",
+					"amount": 2
+				},
+				{
+					"type": "AddShieldPotency",
+					"amount": 2
+				}
+			]
+		},
+		{
+			"id": "neutral_servo_t3",
+			"name": "Servo Tune-Up++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"strike_potency_gain": 3,
+			"shield_potency_gain": 3,
+			"tags": [
+				"Potency"
+			],
+			"effects": [
+				{
+					"type": "AddStrikePotency",
+					"amount": 3
+				},
+				{
+					"type": "AddShieldPotency",
+					"amount": 3
+				}
+			]
+		},
+		{
+			"id": "neutral_overclock_t1",
+			"name": "Overclock Burst",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 2,
+			"keywords": [
+				{
+					"type": "Overclock",
+					"value": 1
+				}
+			],
+			"merge_to": "neutral_overclock_t2",
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Overclock",
+						"value": 1
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_overclock_t2",
+			"name": "Overclock Burst+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 2,
+			"keywords": [
+				{
+					"type": "Overclock",
+					"value": 2
+				}
+			],
+			"merge_to": "neutral_overclock_t3",
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Overclock",
+						"value": 2
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_overclock_t3",
+			"name": "Overclock Burst++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"keywords": [
+				{
+					"type": "Overclock",
+					"value": 2
+				}
+			],
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Overclock",
+						"value": 2
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_capacitor_feed_t1",
+			"name": "Capacitor Feed",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"gain_charge": 2,
+			"merge_to": "neutral_capacitor_feed_t2",
+			"effects": [
+				{
+					"type": "GainCharge",
+					"amount": 2
+				}
+			]
+		},
+		{
+			"id": "neutral_capacitor_feed_t2",
+			"name": "Capacitor Feed+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"gain_charge": 3,
+			"merge_to": "neutral_capacitor_feed_t3",
+			"effects": [
+				{
+					"type": "GainCharge",
+					"amount": 3
+				}
+			]
+		},
+		{
+			"id": "neutral_capacitor_feed_t3",
+			"name": "Capacitor Feed++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"gain_charge": 4,
+			"effects": [
+				{
+					"type": "GainCharge",
+					"amount": 4
+				}
+			]
+		},
+		{
+			"id": "neutral_expose_wiring_t1",
+			"name": "Expose Wiring",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"keywords": [
+				{
+					"type": "Expose",
+					"value": 3
+				}
+			],
+			"merge_to": "neutral_expose_wiring_t2",
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Expose",
+						"value": 3
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_expose_wiring_t2",
+			"name": "Expose Wiring+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"keywords": [
+				{
+					"type": "Expose",
+					"value": 5
+				}
+			],
+			"merge_to": "neutral_expose_wiring_t3",
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Expose",
+						"value": 5
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_expose_wiring_t3",
+			"name": "Expose Wiring++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"keywords": [
+				{
+					"type": "Expose",
+					"value": 7
+				}
+			],
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Expose",
+						"value": 7
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_urgent_repairs_t1",
+			"name": "Urgent Repairs",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": -1,
+			"heal_self": 2,
+			"merge_to": "neutral_urgent_repairs_t2",
+			"effects": [
+				{
+					"type": "HealSelf",
+					"amount": 2
+				}
+			]
+		},
+		{
+			"id": "neutral_urgent_repairs_t2",
+			"name": "Urgent Repairs+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": -1,
+			"heal_self": 4,
+			"merge_to": "neutral_urgent_repairs_t3",
+			"effects": [
+				{
+					"type": "HealSelf",
+					"amount": 4
+				}
+			]
+		},
+		{
+			"id": "neutral_urgent_repairs_t3",
+			"name": "Urgent Repairs++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": -1,
+			"heal_self": 6,
+			"effects": [
+				{
+					"type": "HealSelf",
+					"amount": 6
+				}
+			]
+		},
+		{
+			"id": "neutral_bulk_up_t1",
+			"name": "Bulk Up",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"keywords": [
+				{
+					"type": "Bulk",
+					"value": 2
+				}
+			],
+			"tags": [
+				"Bulk"
+			],
+			"merge_to": "neutral_bulk_up_t2",
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Bulk",
+						"value": 2
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_bulk_up_t2",
+			"name": "Bulk Up+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"keywords": [
+				{
+					"type": "Bulk",
+					"value": 3
+				}
+			],
+			"tags": [
+				"Bulk"
+			],
+			"merge_to": "neutral_bulk_up_t3",
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Bulk",
+						"value": 3
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_bulk_up_t3",
+			"name": "Bulk Up++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"keywords": [
+				{
+					"type": "Bulk",
+					"value": 4
+				}
+			],
+			"tags": [
+				"Bulk"
+			],
+			"effects": [
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Bulk",
+						"value": 4
+					}
+				}
+			]
+		},
+		{
+			"id": "neutral_gathering_strike_t1",
+			"name": "Gathering Strike",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"keywords": [
+				{
+					"type": "UniqueDeck",
+					"value": 1
+				}
+			],
+			"merge_to": "neutral_gathering_strike_t2",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 1,
+					"pierce": false,
+					"useStrikePotency": true,
+					"bonusPerPriorStrikeThisCombat": 1
+				}
+			]
+		},
+		{
+			"id": "neutral_gathering_strike_t2",
+			"name": "Gathering Strike+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"keywords": [
+				{
+					"type": "UniqueDeck",
+					"value": 1
+				}
+			],
+			"merge_to": "neutral_gathering_strike_t3",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 2,
+					"pierce": false,
+					"useStrikePotency": true,
+					"bonusPerPriorStrikeThisCombat": 2
+				}
+			]
+		},
+		{
+			"id": "neutral_gathering_strike_t3",
+			"name": "Gathering Strike++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"keywords": [
+				{
+					"type": "UniqueDeck",
+					"value": 1
+				}
+			],
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 3,
+					"pierce": false,
+					"useStrikePotency": true,
+					"bonusPerPriorStrikeThisCombat": 3
+				}
+			]
+		},
+		{
+			"id": "neutral_multi_strike_t1",
+			"name": "Multi-strike",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"merge_to": "neutral_multi_strike_t2",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 1,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 1,
+					"pierce": false,
+					"useStrikePotency": true
+				}
+			]
+		},
+		{
+			"id": "neutral_multi_strike_t2",
+			"name": "Multi-strike+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"merge_to": "neutral_multi_strike_t3",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 2,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 2,
+					"pierce": false,
+					"useStrikePotency": true
+				}
+			]
+		},
+		{
+			"id": "neutral_multi_strike_t3",
+			"name": "Multi-strike++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 3,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 3,
+					"pierce": false,
+					"useStrikePotency": true
+				}
+			]
+		},
+		{
+			"id": "neutral_feint_t1",
+			"name": "Feint",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"merge_to": "neutral_feint_t2",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 3,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "GrantNextStrikePierce",
+					"count": 1
+				}
+			]
+		},
+		{
+			"id": "neutral_feint_t2",
+			"name": "Feint+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"merge_to": "neutral_feint_t3",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 4,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "GrantNextStrikePierce",
+					"count": 1
+				}
+			]
+		},
+		{
+			"id": "neutral_feint_t3",
+			"name": "Feint++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 5,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "GrantNextStrikePierce",
+					"count": 2
+				}
+			]
+		},
+		{
+			"id": "neutral_perpetual_motion_t1",
+			"name": "Perpetual Motion",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"tags": [
+				"Energy"
+			],
+			"merge_to": "neutral_perpetual_motion_t2",
+			"effects": [
+				{
+					"type": "GrantPerpetualRoundCharge",
+					"chargePerRound": 1,
+					"totalRounds": 3
+				}
+			]
+		},
+		{
+			"id": "neutral_perpetual_motion_t2",
+			"name": "Perpetual Motion+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 2,
+			"tags": [
+				"Energy"
+			],
+			"merge_to": "neutral_perpetual_motion_t3",
+			"effects": [
+				{
+					"type": "GrantPerpetualRoundCharge",
+					"chargePerRound": 2,
+					"totalRounds": 3
+				}
+			]
+		},
+		{
+			"id": "neutral_perpetual_motion_t3",
+			"name": "Perpetual Motion++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 3,
+			"tags": [
+				"Energy"
+			],
+			"effects": [
+				{
+					"type": "GrantPerpetualRoundCharge",
+					"chargePerRound": 3,
+					"totalRounds": 3
+				}
+			]
+		},
+		{
+			"id": "neutral_shield_reinforcement_t1",
+			"name": "Shield Reinforcement",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 2,
+			"tags": [
+				"Shield"
+			],
+			"merge_to": "neutral_shield_reinforcement_t2",
+			"effects": [
+				{
+					"type": "DoubleActorBlock"
+				}
+			]
+		},
+		{
+			"id": "neutral_shield_reinforcement_t2",
+			"name": "Shield Reinforcement+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 2,
+			"tags": [
+				"Shield"
+			],
+			"merge_to": "neutral_shield_reinforcement_t3",
+			"effects": [
+				{
+					"type": "DoubleActorBlock"
+				},
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 4
+				}
+			]
+		},
+		{
+			"id": "neutral_shield_reinforcement_t3",
+			"name": "Shield Reinforcement++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 2,
+			"tags": [
+				"Shield"
+			],
+			"effects": [
+				{
+					"type": "DoubleActorBlock"
+				},
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 8
+				}
+			]
+		},
+		{
+			"id": "neutral_shield_conditioning_t1",
+			"name": "Shield Conditioning",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"keywords": [
+				{
+					"type": "Persistent",
+					"value": 1
+				}
+			],
+			"tags": [
+				"Shield"
+			],
+			"merge_to": "neutral_shield_conditioning_t2",
+			"effects": [
+				{
+					"type": "SetShieldRoundRetainMultiplier",
+					"retainMultiplier": 0.75
+				}
+			]
+		},
+		{
+			"id": "neutral_shield_conditioning_t2",
+			"name": "Shield Conditioning+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"keywords": [
+				{
+					"type": "Persistent",
+					"value": 1
+				}
+			],
+			"tags": [
+				"Shield"
+			],
+			"merge_to": "neutral_shield_conditioning_t3",
+			"effects": [
+				{
+					"type": "SetShieldRoundRetainMultiplier",
+					"retainMultiplier": 0.85
+				}
+			]
+		},
+		{
+			"id": "neutral_shield_conditioning_t3",
+			"name": "Shield Conditioning++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"keywords": [
+				{
+					"type": "Persistent",
+					"value": 1
+				}
+			],
+			"tags": [
+				"Shield"
+			],
+			"effects": [
+				{
+					"type": "SetShieldRoundRetainMultiplier",
+					"retainMultiplier": 1
+				}
+			]
+		}
+	]
+}

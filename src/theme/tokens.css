@@ -1,0 +1,20 @@
+/**
+ * Semantic UI tokens — single place to adjust palette and shared chrome.
+ * Imported from main.tsx before other app styles.
+ */
+:root {
+  color-scheme: dark;
+  --bg: #0b1019;
+  --panel-bg: #111827;
+  --border: #263246;
+  --text: #b6c2d2;
+  --text-h: #eef2ff;
+  --muted: #8fa0b8;
+  --accent: #38bdf8;
+  --shadow: rgba(15, 23, 42, 0.35) 0 16px 40px -20px;
+  --input-bg: #0d1320;
+  --page-gradient-start: #111a2c;
+  --page-gradient-end: #0b1019;
+  --focus-ring: rgba(56, 189, 248, 0.5);
+  --status-bar-bg: rgba(15, 23, 42, 0.98);
+}

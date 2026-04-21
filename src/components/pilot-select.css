@@ -1,0 +1,410 @@
+/* ── Pilot Select Screen ─────────────────────────────────────────── */
+
+.pilot-select-screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 100%;
+  padding: 28px 24px 20px;
+  font-family: 'Rajdhani', 'Barlow Condensed', 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+  gap: 16px;
+}
+
+/* Background image — use ::before so the > * z-index rule can't interfere */
+.pilot-select-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--pilot-bg, url('/pilot-select-bg.png'));
+  background-size: cover;
+  background-position: center 30%;
+  z-index: 0;
+}
+
+/* Gradient overlay for readability */
+.pilot-select-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg,
+      rgba(10, 6, 20, 0.55) 0%,
+      rgba(10, 6, 20, 0.25) 30%,
+      rgba(10, 6, 20, 0.45) 65%,
+      rgba(10, 6, 20, 0.88) 100%
+    );
+  z-index: 0;
+}
+
+/* All direct children sit above both pseudo layers */
+.pilot-select-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Header ──────────────────────────────────────────────────────── */
+
+.pilot-select-screen__header {
+  text-align: center;
+}
+
+.pilot-select-screen__title {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #f0a84a;
+  opacity: 0.9;
+}
+
+.pilot-select-screen__subtitle {
+  margin: 4px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: rgba(220, 210, 255, 0.55);
+  text-transform: uppercase;
+}
+
+/* ── Carousel wrapper ────────────────────────────────────────────── */
+
+.pilot-carousel {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 780px;
+}
+
+.pilot-carousel__arrow {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: rgba(15, 10, 30, 0.7);
+  border: 1px solid rgba(240, 168, 74, 0.4);
+  color: #f0a84a;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 140ms, border-color 140ms, opacity 140ms;
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+}
+
+.pilot-carousel__arrow:hover:not(:disabled) {
+  background: rgba(240, 168, 74, 0.2);
+  border-color: #f0a84a;
+}
+
+.pilot-carousel__arrow:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+/* ── Pilot card ──────────────────────────────────────────────────── */
+
+.pilot-card-new {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 360px;
+  background: rgba(12, 8, 24, 0.82);
+  border: 1px solid rgba(240, 168, 74, 0.35);
+  clip-path: polygon(
+    16px 0, calc(100% - 16px) 0,
+    100% 16px, 100% calc(100% - 16px),
+    calc(100% - 16px) 100%, 16px 100%,
+    0 calc(100% - 16px), 0 16px
+  );
+  backdrop-filter: blur(6px);
+  overflow: hidden;
+}
+
+/* Portrait column */
+.pilot-card-new__portrait {
+  position: relative;
+  overflow: hidden;
+}
+
+.pilot-card-new__portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+
+.pilot-card-new__portrait-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #1a1030 0%, #0d0820 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  opacity: 0.3;
+}
+
+/* Gradient overlay on portrait so it blends into card body */
+.pilot-card-new__portrait::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 60%, rgba(12, 8, 24, 0.82) 100%);
+}
+
+/* Info column */
+.pilot-card-new__info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 20px 18px 16px;
+}
+
+.pilot-card-new__faction {
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #f0a84a;
+}
+
+.pilot-card-new__name {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f5eedc;
+  line-height: 1;
+}
+
+.pilot-card-new__flavor {
+  margin: 0;
+  font-size: 12px;
+  font-style: italic;
+  letter-spacing: 0.06em;
+  color: rgba(200, 190, 230, 0.7);
+  line-height: 1.55;
+  border-left: 2px solid rgba(240, 168, 74, 0.4);
+  padding-left: 8px;
+}
+
+/* Trait list */
+.pilot-card-new__traits {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.pilot-card-new__trait {
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+
+.pilot-card-new__trait--locked {
+  opacity: 0.45;
+}
+
+.pilot-card-new__trait-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.pilot-card-new__trait-tier {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #f0a84a;
+  background: rgba(240, 168, 74, 0.15);
+  border: 1px solid rgba(240, 168, 74, 0.3);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.pilot-card-new__trait--locked .pilot-card-new__trait-tier {
+  color: rgba(180, 170, 210, 0.5);
+  background: rgba(180, 170, 210, 0.05);
+  border-color: rgba(180, 170, 210, 0.15);
+}
+
+.pilot-card-new__trait-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #e8e0f0;
+}
+
+.pilot-card-new__trait-text {
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: rgba(180, 175, 210, 0.7);
+  line-height: 1.5;
+}
+
+/* Start Run button */
+.pilot-card-new__cta {
+  margin-top: 4px;
+}
+
+.pilot-card-new__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(220, 214, 246, 0.88);
+}
+
+.pilot-start-btn {
+  width: 100%;
+  padding: 11px 18px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #0d0820;
+  background: linear-gradient(135deg, #f0a84a 0%, #e8873a 100%);
+  border: none;
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  cursor: pointer;
+  transition: filter 140ms ease, transform 140ms ease;
+}
+
+.pilot-start-btn:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+.pilot-start-btn:active {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+
+/* Carousel dots */
+.pilot-carousel__dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.pilot-carousel__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(240, 168, 74, 0.25);
+  border: 1px solid rgba(240, 168, 74, 0.4);
+  cursor: pointer;
+  transition: background 140ms;
+}
+
+.pilot-carousel__dot--active {
+  background: #f0a84a;
+}
+
+/* ── Starter Deck Strip ───────────────────────────────────────────── */
+
+.pilot-deck-strip {
+  width: 100%;
+  max-width: 780px;
+}
+
+.pilot-deck-strip__label {
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(240, 168, 74, 0.7);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.pilot-deck-strip__cards {
+  display: flex;
+  gap: 8px;
+}
+
+/* Individual starter deck card */
+.deck-mini-card {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 10px 8px;
+  background: rgba(12, 8, 24, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  cursor: default;
+  backdrop-filter: blur(4px);
+  transition: border-color 120ms, background 120ms;
+}
+
+.deck-mini-card:hover {
+  border-color: rgba(240, 168, 74, 0.5);
+  background: rgba(20, 14, 38, 0.9);
+  z-index: 10;
+}
+
+.deck-mini-card__faction {
+  display: block;
+  font-size: 7px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #f0a84a;
+  margin-bottom: 3px;
+}
+
+.deck-mini-card__name {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f0ebe8;
+  line-height: 1.2;
+}
+
+.deck-mini-card__tags {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(180, 175, 210, 0.55);
+  margin-top: 3px;
+}
+
+/* Hover tooltip */
+.deck-mini-card__tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  padding: 10px 12px;
+  background: rgba(8, 5, 18, 0.97);
+  border: 1px solid rgba(240, 168, 74, 0.4);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%, 0 8px);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: rgba(200, 195, 225, 0.85);
+  line-height: 1.6;
+  white-space: pre-line;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.deck-mini-card:hover .deck-mini-card__tooltip {
+  display: block;
+}

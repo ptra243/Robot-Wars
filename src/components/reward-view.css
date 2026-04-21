@@ -1,0 +1,242 @@
+/* ============================================================
+   RewardView — post-battle reward screen
+   Slay the Spire inspiration, cyberpunk / neon theme
+   ============================================================ */
+
+.reward-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100%;
+  padding: 48px 24px 32px;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0, 200, 255, 0.07) 0%, transparent 70%),
+    linear-gradient(180deg, #050a14 0%, #080e1c 60%, #040810 100%);
+  color: #d0e8ff;
+  font-family: inherit;
+  gap: 32px;
+}
+
+/* ── Header ─────────────────────────────────────────── */
+.reward-view__header {
+  text-align: center;
+}
+
+.reward-view__eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  color: rgba(0, 200, 255, 0.55);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.reward-view__title {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff;
+  margin: 0;
+  text-shadow:
+    0 0 18px rgba(0, 200, 255, 0.6),
+    0 0 40px rgba(0, 200, 255, 0.25);
+}
+
+/* ── Collected items (gold, relic) ───────────────────── */
+.reward-view__items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.reward-view__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+  backdrop-filter: blur(4px);
+}
+
+.reward-view__item--gold {
+  border-color: rgba(255, 210, 60, 0.35);
+  background: rgba(255, 180, 0, 0.05);
+}
+
+.reward-view__item--relic {
+  border-color: rgba(200, 80, 255, 0.35);
+  background: rgba(160, 40, 255, 0.05);
+}
+
+.reward-view__item-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.reward-view__item--gold .reward-view__item-icon {
+  color: #ffd23c;
+  filter: drop-shadow(0 0 6px rgba(255, 210, 60, 0.7));
+}
+
+.reward-view__item--relic .reward-view__item-icon {
+  color: #c850ff;
+  filter: drop-shadow(0 0 6px rgba(200, 80, 255, 0.7));
+}
+
+.reward-view__item-label {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.reward-view__item--gold .reward-view__item-label {
+  color: #ffd23c;
+}
+
+.reward-view__item--relic .reward-view__item-label {
+  color: #d090ff;
+}
+
+.reward-view__item-total {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.05em;
+}
+
+.reward-view__item-desc {
+  font-size: 11px;
+  color: rgba(200, 160, 255, 0.65);
+  font-style: italic;
+}
+
+/* ── Card pick section ───────────────────────────────── */
+.reward-view__cards-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 760px;
+}
+
+.reward-view__cards-heading {
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: rgba(0, 200, 255, 0.55);
+  text-transform: uppercase;
+}
+
+.reward-view__cards {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── Individual card choice ──────────────────────────── */
+.reward-view__card {
+  appearance: none;
+  font-family: inherit;
+  cursor: pointer;
+  width: 200px;
+  min-height: 240px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  background: rgba(5, 15, 30, 0.9);
+  border: 1px solid rgba(0, 200, 255, 0.2);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  color: #d0e8ff;
+  position: relative;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.reward-view__card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(0, 200, 255, 0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.reward-view__card:hover {
+  border-color: rgba(0, 200, 255, 0.7);
+  box-shadow:
+    0 0 24px rgba(0, 200, 255, 0.3),
+    0 0 8px rgba(0, 200, 255, 0.15) inset;
+  transform: translateY(-4px);
+}
+
+.reward-view__card:hover .reward-view__card-name {
+  color: #00e5ff;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
+}
+
+.reward-view__card-tier {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: rgba(0, 200, 255, 0.5);
+  text-transform: uppercase;
+}
+
+.reward-view__card-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #e8f4ff;
+  transition: color 140ms, text-shadow 140ms;
+  line-height: 1.2;
+}
+
+.reward-view__card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.reward-view__card-tag {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border: 1px solid rgba(0, 200, 255, 0.25);
+  color: rgba(0, 200, 255, 0.7);
+  background: rgba(0, 200, 255, 0.05);
+}
+
+.reward-view__card-desc {
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(200, 220, 255, 0.7);
+  flex: 1;
+}
+
+/* ── Skip button ─────────────────────────────────────── */
+.reward-view__skip {
+  appearance: none;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  padding: 8px 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: border-color 120ms, color 120ms;
+}
+
+.reward-view__skip:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.7);
+}

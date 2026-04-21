@@ -1,0 +1,1000 @@
+{
+	"cards": [
+		{
+			"id": "salvage_strike_t1",
+			"name": "Salvage Strike",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"base_damage": 3,
+			"gain_junk": 1,
+			"tags": [
+				"Strike",
+				"Junk"
+			],
+			"merge_to": "salvage_strike_t2",
+			"effects": [
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 3,
+					"pierce": false,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": false
+				}
+			]
+		},
+		{
+			"id": "salvage_strike_t2",
+			"name": "Salvage Strike+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"base_damage": 4,
+			"gain_junk": 1,
+			"tags": [
+				"Strike",
+				"Junk"
+			],
+			"merge_to": "salvage_strike_t3",
+			"effects": [
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 4,
+					"pierce": false,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": false
+				}
+			]
+		},
+		{
+			"id": "salvage_strike_t3",
+			"name": "Salvage Strike++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"base_damage": 5,
+			"gain_junk": 2,
+			"tags": [
+				"Strike",
+				"Junk"
+			],
+			"effects": [
+				{
+					"type": "GainJunk",
+					"amount": 2
+				},
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 5,
+					"pierce": false,
+					"useStrikePotency": true,
+					"consumeTargetExposeForBonus": false
+				}
+			]
+		},
+		{
+			"id": "core_tap_t1",
+			"name": "Core Tap",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_damage": 8,
+			"spend_core": 1,
+			"tags": [
+				"Strike"
+			],
+			"keywords": [
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"merge_to": "core_tap_t2",
+			"effects": [
+				{
+					"type": "BranchIfCoreGte",
+					"minCore": 1,
+					"thenSteps": [
+						{
+							"type": "SpendCore",
+							"amount": 1
+						},
+						{
+							"type": "StrikeDamage",
+							"baseDamage": 8,
+							"pierce": false,
+							"useStrikePotency": true
+						},
+						{
+							"type": "TransformCurrentQueueSlot",
+							"matchNeutralBasicTierToResolvingCard": true
+						}
+					],
+					"elseSteps": [
+						{
+							"type": "TransformCurrentQueueSlot",
+							"matchNeutralBasicTierToResolvingCard": true
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "core_tap_t2",
+			"name": "Core Tap+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_damage": 10,
+			"spend_core": 1,
+			"tags": [
+				"Strike"
+			],
+			"keywords": [
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"merge_to": "core_tap_t3",
+			"effects": [
+				{
+					"type": "BranchIfCoreGte",
+					"minCore": 1,
+					"thenSteps": [
+						{
+							"type": "SpendCore",
+							"amount": 1
+						},
+						{
+							"type": "StrikeDamage",
+							"baseDamage": 10,
+							"pierce": false,
+							"useStrikePotency": true
+						},
+						{
+							"type": "TransformCurrentQueueSlot",
+							"matchNeutralBasicTierToResolvingCard": true
+						}
+					],
+					"elseSteps": [
+						{
+							"type": "TransformCurrentQueueSlot",
+							"matchNeutralBasicTierToResolvingCard": true
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "core_tap_t3",
+			"name": "Core Tap++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_damage": 12,
+			"spend_core": 1,
+			"tags": [
+				"Strike"
+			],
+			"keywords": [
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"effects": [
+				{
+					"type": "BranchIfCoreGte",
+					"minCore": 1,
+					"thenSteps": [
+						{
+							"type": "SpendCore",
+							"amount": 1
+						},
+						{
+							"type": "StrikeDamage",
+							"baseDamage": 12,
+							"pierce": false,
+							"useStrikePotency": true
+						},
+						{
+							"type": "TransformCurrentQueueSlot",
+							"matchNeutralBasicTierToResolvingCard": true
+						}
+					],
+					"elseSteps": [
+						{
+							"type": "TransformCurrentQueueSlot",
+							"matchNeutralBasicTierToResolvingCard": true
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "junk_loader_t1",
+			"name": "Junk Loader",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"gain_charge": 1,
+			"gain_junk": 2,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "junk_loader_t2",
+			"effects": [
+				{
+					"type": "GainJunk",
+					"amount": 2
+				},
+				{
+					"type": "GainCharge",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "junk_loader_t2",
+			"name": "Junk Loader+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"gain_charge": 2,
+			"gain_junk": 3,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "junk_loader_t3",
+			"effects": [
+				{
+					"type": "GainJunk",
+					"amount": 3
+				},
+				{
+					"type": "GainCharge",
+					"amount": 2
+				}
+			]
+		},
+		{
+			"id": "junk_loader_t3",
+			"name": "Junk Loader++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"gain_charge": 3,
+			"gain_junk": 4,
+			"tags": [
+				"Junk"
+			],
+			"effects": [
+				{
+					"type": "GainJunk",
+					"amount": 4
+				},
+				{
+					"type": "GainCharge",
+					"amount": 3
+				}
+			]
+		},
+		{
+			"id": "field_diode_t1",
+			"name": "Junk Surge",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"gain_charge": 1,
+			"tags": [
+				"Junk"
+			],
+			"optional_spend_junk_for_charge": {
+				"spend": 1,
+				"gainCharge": 1
+			},
+			"merge_to": "field_diode_t2",
+			"effects": [
+				{
+					"type": "GainCharge",
+					"amount": 1
+				},
+				{
+					"type": "OptionalSpendJunkForGainCharge",
+					"spend": 1,
+					"gainCharge": 1
+				}
+			]
+		},
+		{
+			"id": "field_diode_t2",
+			"name": "Junk Surge+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"gain_charge": 1,
+			"tags": [
+				"Junk"
+			],
+			"optional_spend_junk_for_charge": {
+				"spend": 1,
+				"gainCharge": 2
+			},
+			"merge_to": "field_diode_t3",
+			"effects": [
+				{
+					"type": "GainCharge",
+					"amount": 1
+				},
+				{
+					"type": "OptionalSpendJunkForGainCharge",
+					"spend": 1,
+					"gainCharge": 2
+				}
+			]
+		},
+		{
+			"id": "field_diode_t3",
+			"name": "Junk Surge++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"gain_charge": 2,
+			"tags": [
+				"Junk"
+			],
+			"optional_spend_junk_for_charge": {
+				"spend": 1,
+				"gainCharge": 2
+			},
+			"effects": [
+				{
+					"type": "GainCharge",
+					"amount": 2
+				},
+				{
+					"type": "OptionalSpendJunkForGainCharge",
+					"spend": 1,
+					"gainCharge": 2
+				}
+			]
+		},
+		{
+			"id": "core_refactoring_t1",
+			"name": "Core Refactoring",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 2,
+			"base_damage": 0,
+			"gain_core": 2,
+			"tags": [],
+			"keywords": [
+				{
+					"type": "Overclock",
+					"value": 1
+				},
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"merge_to": "core_refactoring_t2",
+			"effects": [
+				{
+					"type": "SelfDamage",
+					"amount": 5
+				},
+				{
+					"type": "GainCore",
+					"amount": 2
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Overclock",
+						"value": 1
+					}
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				}
+			]
+		},
+		{
+			"id": "core_refactoring_t2",
+			"name": "Core Refactoring+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 2,
+			"base_damage": 0,
+			"gain_core": 2,
+			"tags": [],
+			"keywords": [
+				{
+					"type": "Overclock",
+					"value": 2
+				},
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"merge_to": "core_refactoring_t3",
+			"effects": [
+				{
+					"type": "SelfDamage",
+					"amount": 5
+				},
+				{
+					"type": "GainCore",
+					"amount": 2
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Overclock",
+						"value": 2
+					}
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				}
+			]
+		},
+		{
+			"id": "core_refactoring_t3",
+			"name": "Core Refactoring++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"base_damage": 0,
+			"gain_core": 3,
+			"tags": [],
+			"keywords": [
+				{
+					"type": "Overclock",
+					"value": 2
+				},
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"effects": [
+				{
+					"type": "SelfDamage",
+					"amount": 5
+				},
+				{
+					"type": "GainCore",
+					"amount": 3
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Overclock",
+						"value": 2
+					}
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				}
+			]
+		},
+		{
+			"id": "strip_mine_t1",
+			"name": "Strip Mine",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 2,
+			"spend_junk": 2,
+			"base_damage": 0,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "strip_mine_t2",
+			"effects": [
+				{
+					"type": "SpendJunk",
+					"amount": 2
+				},
+				{
+					"type": "GrantIncomingStrikeMitigation",
+					"amount": 3
+				}
+			]
+		},
+		{
+			"id": "strip_mine_t2",
+			"name": "Strip Mine+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 2,
+			"spend_junk": 2,
+			"base_damage": 0,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "strip_mine_t3",
+			"effects": [
+				{
+					"type": "SpendJunk",
+					"amount": 2
+				},
+				{
+					"type": "GrantIncomingStrikeMitigation",
+					"amount": 5
+				}
+			]
+		},
+		{
+			"id": "strip_mine_t3",
+			"name": "Strip Mine++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 2,
+			"spend_junk": 1,
+			"base_damage": 0,
+			"tags": [
+				"Junk"
+			],
+			"effects": [
+				{
+					"type": "SpendJunk",
+					"amount": 1
+				},
+				{
+					"type": "GrantIncomingStrikeMitigation",
+					"amount": 7
+				}
+			]
+		},
+		{
+			"id": "junk_spigot_t1",
+			"name": "Junk Spigot",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "junk_spigot_t2",
+			"effects": [
+				{
+					"type": "GainCharge",
+					"amount": 1
+				},
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 4,
+					"thenSteps": [
+						{
+							"type": "GainCharge",
+							"amount": 2
+						},
+						{
+							"type": "GainJunk",
+							"amount": 2
+						}
+					],
+					"elseSteps": []
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 10,
+					"thenSteps": [
+						{
+							"type": "GainChargeFromJunkSnapshotFloorDiv",
+							"divisor": 4
+						}
+					],
+					"elseSteps": []
+				}
+			]
+		},
+		{
+			"id": "junk_spigot_t2",
+			"name": "Junk Spigot+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "junk_spigot_t3",
+			"effects": [
+				{
+					"type": "GainCharge",
+					"amount": 1
+				},
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 4,
+					"thenSteps": [
+						{
+							"type": "GainCharge",
+							"amount": 2
+						},
+						{
+							"type": "GainJunk",
+							"amount": 2
+						}
+					],
+					"elseSteps": []
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 9,
+					"thenSteps": [
+						{
+							"type": "GainChargeFromJunkSnapshotFloorDiv",
+							"divisor": 3
+						}
+					],
+					"elseSteps": []
+				}
+			]
+		},
+		{
+			"id": "junk_spigot_t3",
+			"name": "Junk Spigot++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Junk"
+			],
+			"effects": [
+				{
+					"type": "GainCharge",
+					"amount": 1
+				},
+				{
+					"type": "GainJunk",
+					"amount": 2
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 4,
+					"thenSteps": [
+						{
+							"type": "GainCharge",
+							"amount": 2
+						},
+						{
+							"type": "GainJunk",
+							"amount": 2
+						}
+					],
+					"elseSteps": []
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 8,
+					"thenSteps": [
+						{
+							"type": "GainChargeFromJunkSnapshotFloorDiv",
+							"divisor": 3
+						}
+					],
+					"elseSteps": []
+				}
+			]
+		},
+		{
+			"id": "junk_bulwark_t1",
+			"name": "Junk Bulwark",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"base_damage": 0,
+			"base_block": 3,
+			"tags": [
+				"Shield",
+				"Junk"
+			],
+			"merge_to": "junk_bulwark_t2",
+			"effects": [
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 3
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 5,
+					"thenSteps": [
+						{
+							"type": "Keyword",
+							"spec": {
+								"type": "Bulk",
+								"value": 2
+							}
+						}
+					],
+					"elseSteps": []
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 10,
+					"thenSteps": [
+						{
+							"type": "ShieldBlockEqualToActorBulkStacks"
+						}
+					],
+					"elseSteps": []
+				}
+			]
+		},
+		{
+			"id": "junk_bulwark_t2",
+			"name": "Junk Bulwark+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"base_damage": 0,
+			"base_block": 4,
+			"tags": [
+				"Shield",
+				"Junk"
+			],
+			"merge_to": "junk_bulwark_t3",
+			"effects": [
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 4
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 5,
+					"thenSteps": [
+						{
+							"type": "Keyword",
+							"spec": {
+								"type": "Bulk",
+								"value": 2
+							}
+						}
+					],
+					"elseSteps": []
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 9,
+					"thenSteps": [
+						{
+							"type": "ShieldBlockEqualToActorBulkStacks"
+						}
+					],
+					"elseSteps": []
+				}
+			]
+		},
+		{
+			"id": "junk_bulwark_t3",
+			"name": "Junk Bulwark++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"base_damage": 0,
+			"base_block": 5,
+			"tags": [
+				"Shield",
+				"Junk"
+			],
+			"effects": [
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 5
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 4,
+					"thenSteps": [
+						{
+							"type": "Keyword",
+							"spec": {
+								"type": "Bulk",
+								"value": 3
+							}
+						}
+					],
+					"elseSteps": []
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 8,
+					"thenSteps": [
+						{
+							"type": "ShieldBlockEqualToActorBulkStacks"
+						}
+					],
+					"elseSteps": []
+				}
+			]
+		},
+		{
+			"id": "junk_ladder_t1",
+			"name": "Junk Ladder",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Direct",
+				"Junk"
+			],
+			"merge_to": "junk_ladder_t2",
+			"effects": [
+				{
+					"type": "DirectHpDamage",
+					"baseDamage": 5,
+					"pierce": false
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 8,
+					"thenSteps": [
+						{
+							"type": "Keyword",
+							"spec": {
+								"type": "Overclock",
+								"value": 1
+							}
+						}
+					],
+					"elseSteps": []
+				}
+			]
+		},
+		{
+			"id": "junk_ladder_t2",
+			"name": "Junk Ladder+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Direct",
+				"Junk"
+			],
+			"merge_to": "junk_ladder_t3",
+			"effects": [
+				{
+					"type": "DirectHpDamage",
+					"baseDamage": 6,
+					"pierce": false
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 8,
+					"thenSteps": [
+						{
+							"type": "Keyword",
+							"spec": {
+								"type": "Overclock",
+								"value": 1
+							}
+						}
+					],
+					"elseSteps": []
+				}
+			]
+		},
+		{
+			"id": "junk_ladder_t3",
+			"name": "Junk Ladder++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Direct",
+				"Junk"
+			],
+			"effects": [
+				{
+					"type": "DirectHpDamage",
+					"baseDamage": 7,
+					"pierce": false
+				},
+				{
+					"type": "BranchIfJunkGte",
+					"minJunk": 7,
+					"thenSteps": [
+						{
+							"type": "Keyword",
+							"spec": {
+								"type": "Overclock",
+								"value": 1
+							}
+						}
+					],
+					"elseSteps": []
+				}
+			]
+		}
+	]
+}
