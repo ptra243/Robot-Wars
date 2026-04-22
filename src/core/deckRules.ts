@@ -4,8 +4,8 @@ import type { CardDef, RunState } from './types';
 /** Max copies (card instances) with Continuous **or** Persistent across hand+deck combined. */
 export const MAX_CONTINUOUS_OR_PERSISTENT_PER_DECK = 2;
 
-/** Max copies of the same card id for cards **without** UniqueDeck (hand + deck combined). */
-export const MAX_COPIES_PER_NON_UNIQUE_CARD_ID = 3;
+/** Non-Unique cards can be copied without a hard cap. */
+export const MAX_COPIES_PER_NON_UNIQUE_CARD_ID = Number.POSITIVE_INFINITY;
 
 /** Neutral Basic Strike / Basic Shield (Barrier) — unlimited copies; ignore {@link MAX_COPIES_PER_NON_UNIQUE_CARD_ID}. */
 export function isUnlimitedCopyNeutralStapleId(id: string): boolean {
@@ -60,13 +60,15 @@ export function validateDeckComposition(
   for (const id of ids) {
     countsById.set(id, (countsById.get(id) ?? 0) + 1);
   }
-  for (const [id, count] of countsById) {
-    if (isUnlimitedCopyNeutralStapleId(id)) {
-      continue;
-    }
-    const c = content.get(id);
-    if (!cardHasUniqueDeck(c) && count > MAX_COPIES_PER_NON_UNIQUE_CARD_ID) {
-      return `Deck may include at most ${String(MAX_COPIES_PER_NON_UNIQUE_CARD_ID)} copies of “${c.name}” (non-UniqueDeck cards).`;
+  if (Number.isFinite(MAX_COPIES_PER_NON_UNIQUE_CARD_ID)) {
+    for (const [id, count] of countsById) {
+      if (isUnlimitedCopyNeutralStapleId(id)) {
+        continue;
+      }
+      const c = content.get(id);
+      if (!cardHasUniqueDeck(c) && count > MAX_COPIES_PER_NON_UNIQUE_CARD_ID) {
+        return `Deck may include at most ${String(MAX_COPIES_PER_NON_UNIQUE_CARD_ID)} copies of “${c.name}” (non-UniqueDeck cards).`;
+      }
     }
   }
 

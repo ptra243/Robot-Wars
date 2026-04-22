@@ -77,6 +77,8 @@ interface ForgePOCProps {
   /** Run mode: persisted HP between fights. Defaults to combat starting HP in POC. */
   playerHp?: number;
   playerHpMax?: number;
+  /** Active run trait IDs (base/aw0/aw1 as unlocked). */
+  activeTraitIds?: string[];
   /** Run mode: scrap a hand card for gold + reroll (syncs deck in parent). */
   onScrapHandCard?: (cardId: string) => void;
 }
@@ -232,6 +234,7 @@ export function ForgePOC({
   pilotId,
   playerHp = COMBAT_RULES.startingHp,
   playerHpMax = COMBAT_RULES.startingHp,
+  activeTraitIds = [],
   onScrapHandCard,
 }: ForgePOCProps) {
   const isRunMode = initialHand !== undefined && onRunDeploy !== undefined;
@@ -503,8 +506,8 @@ export function ForgePOC({
     const playerDeck = [...queue.filter((card): card is ForgeCard => card !== null), ...hand].map(
       (card) => card.id,
     );
-    return simulateForgeDeckMetrics(content, forgeSeed, queueIds, playerDeck);
-  }, [simModalOpen, content, forgeSeed, queue, hand]);
+    return simulateForgeDeckMetrics(content, forgeSeed, queueIds, playerDeck, activeTraitIds);
+  }, [simModalOpen, content, forgeSeed, queue, hand, activeTraitIds]);
 
   const handleSimulationRoundHover = useCallback(
     (round: number | null, pointer: { clientX: number; clientY: number } | null) => {
@@ -609,6 +612,7 @@ export function ForgePOC({
           pilotId={pilotId ?? 'glint'}
           playerHp={playerHp}
           playerHpMax={playerHpMax}
+          activeTraitIds={activeTraitIds}
         />
 
         <HandSection

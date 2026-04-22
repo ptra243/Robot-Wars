@@ -340,6 +340,10 @@
 					"amount": 1
 				},
 				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
 					"type": "ReplaceRandomNeutralBasicWithCorePartsCard"
 				}
 			],
@@ -367,6 +371,10 @@
 					"amount": 1
 				},
 				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
 					"type": "ReplaceRandomNeutralBasicWithCorePartsCard"
 				}
 			],
@@ -392,6 +400,10 @@
 				{
 					"type": "GainCore",
 					"amount": 1
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
 				},
 				{
 					"type": "ReplaceRandomNeutralBasicWithCorePartsCard"

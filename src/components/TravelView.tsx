@@ -28,32 +28,6 @@ export function TravelView() {
         <h2 className="run-loop__title">
           Run <span className="run-loop__title-accent">Navigator</span>
         </h2>
-        <div className="run-loop__hud">
-          <div className="run-loop__hud-item run-loop__hud-item--accent">
-            <span className="run-loop__hud-label">ACT</span>
-            <span className="run-loop__hud-value">{run.loop.act}</span>
-          </div>
-          <div className="run-loop__hud-item">
-            <span className="run-loop__hud-label">STEP</span>
-            <span className="run-loop__hud-value">{run.loop.stepsInAct}/10</span>
-          </div>
-          <div className="run-loop__hud-item">
-            <span className="run-loop__hud-label">HEARTS</span>
-            <span className="run-loop__hud-value">{run.loop.hearts}</span>
-          </div>
-          <div className="run-loop__hud-item">
-            <span className="run-loop__hud-label">GOLD</span>
-            <span className="run-loop__hud-value">{run.loop.gold}</span>
-          </div>
-          <div className="run-loop__hud-item">
-            <span className="run-loop__hud-label">REROLLS</span>
-            <span className="run-loop__hud-value">{run.loop.rerolls}</span>
-          </div>
-          <div className="run-loop__hud-item">
-            <span className="run-loop__hud-label">AWAKENING</span>
-            <span className="run-loop__hud-value">{run.loop.awakening}</span>
-          </div>
-        </div>
       </div>
       <div className="run-loop__travel-stage">
         <div className="run-loop__offers">

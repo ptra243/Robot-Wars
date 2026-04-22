@@ -19,6 +19,8 @@ interface CompendiumHover {
   clientY: number;
 }
 
+type CompendiumTag = CardTag | 'Core';
+
 export function CompendiumView({ onExit }: CompendiumViewProps) {
   const content = useMemo(() => CardContentService.loadDefault(1), []);
   const cards = useMemo(
@@ -48,7 +50,7 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
     }
     return rows.sort((a, b) => a.name.localeCompare(b.name));
   }, [cardsByFamily]);
-  const [activeTags, setActiveTags] = useState<CardTag[]>([]);
+  const [activeTags, setActiveTags] = useState<CompendiumTag[]>([]);
   const [activeFactions, setActiveFactions] = useState<string[]>([]);
   const [activeAwakening, setActiveAwakening] = useState<number[]>([]);
   const [hover, setHover] = useState<CompendiumHover | null>(null);
@@ -58,10 +60,13 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
   const [isHoveringPopover, setIsHoveringPopover] = useState(false);
 
   const allTags = useMemo(() => {
-    const tagSet = new Set<CardTag>();
+    const tagSet = new Set<CompendiumTag>();
     for (const card of cards) {
       for (const tag of card.tags) {
         tagSet.add(tag);
+      }
+      if (card.keywords.some((k) => k.type === 'CoreParts')) {
+        tagSet.add('Core');
       }
     }
     return [...tagSet].sort((a, b) => a.localeCompare(b));
@@ -83,7 +88,11 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
 
   const filteredCards = useMemo(() => {
     return baseCards.filter((card) => {
-      const tagOk = activeTags.length === 0 || activeTags.every((tag) => card.tags.includes(tag));
+      const tagOk =
+        activeTags.length === 0 ||
+        activeTags.every((tag) =>
+          tag === 'Core' ? card.keywords.some((k) => k.type === 'CoreParts') : card.tags.includes(tag),
+        );
       const factionOk =
         activeFactions.length === 0 || activeFactions.includes(card.faction.toUpperCase());
       const awakeningOk = activeAwakening.length === 0 || activeAwakening.includes(card.awakeningMin);
@@ -137,7 +146,7 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
     };
   }, [hover, isHoveringCard, hoverPinnedPosition]);
 
-  const toggleTag = (tag: CardTag) => {
+  const toggleTag = (tag: CompendiumTag) => {
     setActiveTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
   };
   const toggleFaction = (faction: string) => {

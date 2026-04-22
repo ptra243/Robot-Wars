@@ -17,7 +17,7 @@ export function keywordEffectLine(spec: KeywordSpec): string {
   const v = spec.value;
   switch (spec.type) {
     case 'Bulk':
-      return `Bulk ${v}: gain up to ${v} bulk stack(s) (cap ${COMBAT_RULES.maxBulkStacks}). Each stack mitigates 1 incoming strike damage to HP (consumed when used).`;
+      return `Bulk ${v}: gain up to ${v} bulk stack(s) (cap ${COMBAT_RULES.maxBulkStacks}). Each stack mitigates 1 incoming strike damage to HP.`;
     case 'Expose':
       return `Expose ${v}: apply ${v} Expose to the target. The next Strike that hits that target gains +${v} damage, then Expose clears.`;
     case 'Overclock':
@@ -192,7 +192,8 @@ export function buildCardDescription(
   const multiStrikeText = /^neutral_multi_strike_t[123]$/.test(card.id);
   if (multiStrikeText) {
     const d = card.card_tier;
-    parts.push(`Two Strikes: ${String(d)} + ${String(d)} damage (potency each)`);
+    parts.push(`Strike ${String(d)}`);
+    parts.push(`Strike ${String(d)}`);
   }
 
   const stripMineText = card.id === 'strip_mine_t1';
@@ -289,6 +290,16 @@ export function buildCardDescription(
         'Doubles your current Shield block, then grants 8 block (potency applies to Shield skills).',
       );
     }
+  }
+  const shieldConditioningText = /^neutral_shield_conditioning_t[123]$/.test(card.id);
+  if (shieldConditioningText) {
+    const retain = card.effects?.find((e) => e.type === 'SetShieldRoundRetainMultiplier');
+    const x =
+      retain && retain.type === 'SetShieldRoundRetainMultiplier'
+        ? retain.retainMultiplier
+        : COMBAT_RULES.shieldBlockRetainAtRoundStartDefault;
+    parts.push('Persistent');
+    parts.push(`Shield x${String(x)}`);
   }
   if (
     card.gain_charge &&
@@ -388,6 +399,5 @@ export function buildCardDescription(
     parts.push(fallbackWhenEmpty(card));
   }
 
-  const multiline = parts.some((p) => p.includes('\n'));
-  return multiline ? parts.join('\n') : parts.join(' ');
+  return parts.join('\n');
 }

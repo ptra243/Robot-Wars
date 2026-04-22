@@ -83,7 +83,7 @@ interface GameStore {
   handleSeedStep: (delta: number) => void;
   dismissDeckCycleReport: () => void;
   dismissTravelModal: () => void;
-  handleShopBuyCard: (cardId: string) => void;
+  handleShopBuyCard: (cardId: string) => boolean;
   handleShopRerollOffers: () => void;
   handleShopBuyRerollToken: () => void;
   handleTravelDraftPick: (cardId: string) => void;
@@ -468,19 +468,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   handleShopBuyCard: (cardId) => {
     const modal = get().travelModal;
-    if (!modal || modal.kind !== 'shop') return;
+    if (!modal || modal.kind !== 'shop') return false;
     const CARD_PRICE = 40;
     const nextRun = cloneRun(get().run);
-    if (nextRun.loop.gold < CARD_PRICE) return;
+    if (nextRun.loop.gold < CARD_PRICE) return false;
     const content = CardContentService.loadDefault(nextRun.seed);
+    const cardName = content.get(cardId).name;
     nextRun.loop.gold -= CARD_PRICE;
     nextRun.deck.push(cardId);
     drawStartingHand(nextRun);
-    const deckErr = validateDeckComposition(nextRun, content);
-    if (deckErr) {
-      set({ statusMessage: `Cannot add that card: ${deckErr}` });
-      return;
-    }
     set({
       run: nextRun,
       travelModal: {
@@ -488,8 +484,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         offers: modal.offers,
         nonCardPurchases: modal.nonCardPurchases,
       },
-      statusMessage: 'Card purchased.',
+      statusMessage: `${cardName} bought.`,
     });
+    return true;
   },
 
   handleShopRerollOffers: () => {

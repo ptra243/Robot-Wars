@@ -4,6 +4,10 @@ import { CardContentService } from '../../core/content';
 import { getPilotById, getPilotMechSpriteUrl, getPilotPortraitUrl } from '../../core/pilots';
 import type { CombatFighterSnapshot, CombatResult } from '../../core/types';
 import { buildCardDescription } from '../../ui/cardText';
+import {
+  BattleAnalysisModal,
+  type BattleAnalysisRoundMetrics,
+} from './forge/BattleAnalysisModal';
 import { cardArtUrlFromDef } from './forge/forgeCardModel';
 import './battle-poc.css';
 
@@ -43,6 +47,11 @@ interface BattleCard {
   fog?: boolean;
 }
 
+function parseResolveDamage(text: string): number {
+  const m = /dealt=(\d+)/.exec(text);
+  return m ? Number(m[1] ?? '0') : 0;
+}
+
 /**
  * Battle phase machine. The scripted POC cycles through these in order,
  * alternating between player and enemy. Durations are tuned in
@@ -66,6 +75,15 @@ type Phase =
  * - `neon` — saturated cyber plaza (`poc-bg-battlefield`).
  */
 type Stage = 'alley' | 'market' | 'neon';
+type MechPose = 'idle' | 'attackWindup' | 'attackContact' | 'hurt' | 'defeat';
+
+interface MechPoseSet {
+  idle: string;
+  attackWindup: string;
+  attackContact: string;
+  hurt: string;
+  defeat: string;
+}
 
 const DECK_SIZE = 9;
 const PLAYER_MAX_HP = 50;
@@ -85,6 +103,30 @@ const PHASE_DURATIONS: Record<Phase, number> = {
   'enemy-recover': 360,
   victory: 0,
   defeat: 0,
+};
+
+const ENEMY_MECH_POSES: MechPoseSet = {
+  idle: '/poc/poc-mech-enemy-sprite.png',
+  attackWindup: '/poc/poc-mech-enemy-sprite.png',
+  attackContact: '/poc/poc-mech-enemy-sprite.png',
+  hurt: '/poc/poc-mech-enemy-sprite.png',
+  defeat: '/poc/poc-mech-enemy-sprite.png',
+};
+
+const GLINT_POSES: MechPoseSet = {
+  idle: '/poc/poc-mech-glint-sprite.png',
+  attackWindup: '/poc/poc-mech-glint-sprite.png',
+  attackContact: '/poc/poc-mech-glint-sprite.png',
+  hurt: '/poc/poc-mech-glint-sprite.png',
+  defeat: '/poc/poc-mech-glint-sprite.png',
+};
+
+const BARON_POSES: MechPoseSet = {
+  idle: '/poc/poc-mech-baron-von-boar-sprite.png',
+  attackWindup: '/poc/poc-mech-baron-von-boar-sprite.png',
+  attackContact: '/poc/poc-mech-baron-von-boar-sprite.png',
+  hurt: '/poc/poc-mech-baron-von-boar-sprite.png',
+  defeat: '/poc/poc-mech-baron-von-boar-sprite.png',
 };
 
 const makeDeck = (prefix: string, fogLast: boolean): BattleCard[] =>
@@ -155,6 +197,22 @@ function battleCardFromId(id: string, content: CardContentService): BattleCard {
       statKind: 'strike',
     };
   }
+}
+
+function poseSetForPilot(pilotId: string, fallbackSrc: string): MechPoseSet {
+  if (pilotId === 'baron_von_boar') {
+    return BARON_POSES;
+  }
+  if (pilotId === 'glint') {
+    return GLINT_POSES;
+  }
+  return {
+    idle: fallbackSrc,
+    attackWindup: fallbackSrc,
+    attackContact: fallbackSrc,
+    hurt: fallbackSrc,
+    defeat: fallbackSrc,
+  };
 }
 
 export function BattlePOC({
@@ -289,6 +347,10 @@ export function BattlePOC({
   const rp = replaySnapshot?.player;
   const re = replaySnapshot?.enemy;
   const activeEvent = replayStep >= 0 ? replayEvents[replayStep] : undefined;
+  const prevReplaySnapshot =
+    hasReplay && replayStep > 0
+      ? replayEvents[Math.max(0, replayStep - 1)]?.snapshot
+      : combatResult?.initialSnapshot;
   const replayDone = hasReplay && replayStep >= replayEvents.length - 1;
   const replayPlayerDeck = useMemo(() => {
     const ids =
@@ -367,6 +429,47 @@ export function BattlePOC({
 
   const activeEnemyCard =
     uiEnemyDeckRevealed[uiTurnIndex] ?? battleCardFromId('neutral_basic_strike_t1', replayContent);
+  const eventType = activeEvent?.type ?? '';
+  const playerStrikeStyle: 'rush' | 'overhead' = pilotId === 'baron_von_boar' ? 'overhead' : 'rush';
+  const playerDamageTaken = Math.max(
+    0,
+    (prevReplaySnapshot?.player.hp ?? uiPlayerHp) - (replaySnapshot?.player.hp ?? uiPlayerHp),
+  );
+  const enemyDamageTaken = Math.max(
+    0,
+    (prevReplaySnapshot?.enemy.hp ?? uiEnemyHp) - (replaySnapshot?.enemy.hp ?? uiEnemyHp),
+  );
+  const eventFlags = {
+    stall: eventType === 'stall_skip',
+    whiff: eventType === 'whiff' || eventType === 'continuous_skip' || eventType === 'bonus_fizzle',
+    fatigueTick: eventType === 'fatigue_tick',
+    playerResolve: uiPhase === 'player-strike',
+    enemyResolve: uiPhase === 'enemy-strike',
+  };
+  const playerPoseSet = poseSetForPilot(pilotId, playerMechSrc);
+  const enemyPoseSet = ENEMY_MECH_POSES;
+  const playerPose: MechPose =
+    uiPhase === 'defeat'
+      ? 'defeat'
+      : uiPhase === 'enemy-strike'
+        ? 'hurt'
+        : uiPhase === 'player-strike'
+          ? 'attackContact'
+          : uiPhase === 'player-reveal'
+            ? 'attackWindup'
+            : 'idle';
+  const enemyPose: MechPose =
+    uiPhase === 'victory'
+      ? 'defeat'
+      : uiPhase === 'player-strike'
+        ? 'hurt'
+        : uiPhase === 'enemy-strike'
+          ? 'attackContact'
+          : uiPhase === 'enemy-reveal'
+            ? 'attackWindup'
+            : 'idle';
+  const playerMechSrcResolved = playerPoseSet[playerPose];
+  const enemyMechSrcResolved = enemyPoseSet[enemyPose];
 
   const statusText = useMemo(() => {
     if (hasReplay) {
@@ -414,24 +517,60 @@ export function BattlePOC({
   ]);
 
   const analysisSeries = useMemo(() => {
+    const empty = { player: [] as BattleAnalysisRoundMetrics[], enemy: [] as BattleAnalysisRoundMetrics[] };
     if (!combatResult) {
-      return { player: [] as Array<{ x: number; y: number }>, enemy: [] as Array<{ x: number; y: number }> };
+      return empty;
     }
-    const initialPlayerHp = combatResult.initialSnapshot.player.hp;
-    const initialEnemyHp = combatResult.initialSnapshot.enemy.hp;
-    const points = replayEvents
-      .map((ev, idx) => {
-        if (!ev.snapshot) return null;
-        return {
-          idx,
-          playerHp: ev.snapshot.player.hp,
-          enemyHp: ev.snapshot.enemy.hp,
-        };
-      })
-      .filter((p): p is { idx: number; playerHp: number; enemyHp: number } => p !== null);
-    const player = points.map((p) => ({ x: p.idx + 1, y: Math.max(0, initialPlayerHp - p.playerHp) }));
-    const enemy = points.map((p) => ({ x: p.idx + 1, y: Math.max(0, initialEnemyHp - p.enemyHp) }));
-    return { player, enemy };
+    const totalRounds = Math.max(1, combatResult.rounds);
+    const initPlayer = combatResult.initialSnapshot.player;
+    const initEnemy = combatResult.initialSnapshot.enemy;
+
+    const mkRows = (initial: CombatFighterSnapshot): BattleAnalysisRoundMetrics[] =>
+      Array.from({ length: totalRounds }, (_, i) => ({
+        round: i + 1,
+        energy: initial.charge,
+        damage: 0,
+        shields: initial.block,
+        stalls: 0,
+        junk: initial.junk,
+      }));
+
+    const playerRows = mkRows(initPlayer);
+    const enemyRows = mkRows(initEnemy);
+
+    for (const ev of replayEvents) {
+      const r = Math.max(1, Math.min(totalRounds, ev.round));
+      const idx = r - 1;
+      const pRow = playerRows[idx]!;
+      const eRow = enemyRows[idx]!;
+
+      if (ev.snapshot) {
+        pRow.energy = ev.snapshot.player.charge;
+        pRow.shields = ev.snapshot.player.block;
+        pRow.junk = ev.snapshot.player.junk;
+        eRow.energy = ev.snapshot.enemy.charge;
+        eRow.shields = ev.snapshot.enemy.block;
+        eRow.junk = ev.snapshot.enemy.junk;
+      }
+
+      if (ev.type === 'resolve') {
+        const dealt = parseResolveDamage(ev.text);
+        if (ev.actor === 'Player') {
+          pRow.damage += dealt;
+        } else if (ev.actor === 'Enemy') {
+          eRow.damage += dealt;
+        }
+      }
+
+      if ((ev.type === 'stall' || ev.type === 'stunned_stall') && ev.actor === 'Player') {
+        pRow.stalls += 1;
+      }
+      if ((ev.type === 'stall' || ev.type === 'stunned_stall') && ev.actor === 'Enemy') {
+        eRow.stalls += 1;
+      }
+    }
+
+    return { player: playerRows, enemy: enemyRows };
   }, [combatResult, replayEvents]);
 
   return (
@@ -634,13 +773,15 @@ export function BattlePOC({
             'battle-poc__mech',
             'battle-poc__mech--player',
             `battle-poc__mech--${uiPhase}`,
+            `battle-poc__mech--pose-${playerPose}`,
+            `battle-poc__mech--attack-${playerStrikeStyle}`,
             uiPhase === 'enemy-strike' ? 'battle-poc__mech--hurt' : '',
           ].join(' ')}
         >
           {hasReplay && rp ? (
             <AuraChipRow variant="buff" chips={buffChipsFromSnapshot(rp)} a11y="Player buffs" />
           ) : null}
-          <img src={playerMechSrc} alt={pilot ? `${pilot.name}'s mech` : "Player mech"} />
+          <img src={playerMechSrcResolved} alt={pilot ? `${pilot.name}'s mech` : 'Player mech'} />
           {hasReplay && rp ? (
             <AuraChipRow variant="debuff" chips={debuffChipsFromSnapshot(rp)} a11y="Player debuffs" />
           ) : null}
@@ -650,13 +791,14 @@ export function BattlePOC({
             'battle-poc__mech',
             'battle-poc__mech--enemy',
             `battle-poc__mech--${uiPhase}`,
+            `battle-poc__mech--pose-${enemyPose}`,
             uiPhase === 'player-strike' ? 'battle-poc__mech--hurt' : '',
           ].join(' ')}
         >
           {hasReplay && re ? (
             <AuraChipRow variant="buff" chips={buffChipsFromSnapshot(re)} a11y="Enemy buffs" />
           ) : null}
-          <img src="/poc/poc-mech-enemy-sprite.png" alt="Enemy mech" />
+          <img src={enemyMechSrcResolved} alt="Enemy mech" />
           {hasReplay && re ? (
             <AuraChipRow variant="debuff" chips={debuffChipsFromSnapshot(re)} a11y="Enemy debuffs" />
           ) : null}
@@ -668,12 +810,23 @@ export function BattlePOC({
 
         {/* FX overlays */}
         {uiPhase === 'player-strike' ? (
-          <DamagePop side="right" amount={hasReplay ? activePlayerCard.atk ?? ATTACK_DAMAGE : ATTACK_DAMAGE} />
+          <DamagePop side="right" amount={hasReplay ? Math.max(enemyDamageTaken, 0) || (activePlayerCard.atk ?? ATTACK_DAMAGE) : ATTACK_DAMAGE} />
         ) : null}
-        {uiPhase === 'enemy-strike' ? <DamagePop side="left" amount={hasReplay ? activeEnemyCard.atk ?? ATTACK_DAMAGE : ATTACK_DAMAGE} /> : null}
+        {uiPhase === 'enemy-strike' ? (
+          <DamagePop side="left" amount={hasReplay ? Math.max(playerDamageTaken, 0) || (activeEnemyCard.atk ?? ATTACK_DAMAGE) : ATTACK_DAMAGE} />
+        ) : null}
 
-        {uiPhase === 'player-strike' ? <TracerBolt direction="rightward" /> : null}
-        {uiPhase === 'enemy-strike' ? <TracerBolt direction="leftward" /> : null}
+        {eventFlags.playerResolve && playerStrikeStyle === 'rush' ? <SpeedLines direction="rightward" /> : null}
+        {eventFlags.playerResolve && playerStrikeStyle === 'overhead' ? <GroundSlam side="right" /> : null}
+        {eventFlags.enemyResolve ? <MuzzleFlash side="right" /> : null}
+        {eventFlags.enemyResolve ? <TracerBolt direction="leftward" /> : null}
+        {eventFlags.playerResolve ? <ImpactSpark side="right" /> : null}
+        {eventFlags.enemyResolve ? <ImpactSpark side="left" /> : null}
+        {eventFlags.stall ? <SystemLock actor={activeEvent?.actor} /> : null}
+        {eventFlags.whiff ? <WhiffBanner /> : null}
+        {eventFlags.fatigueTick ? <FatiguePulse /> : null}
+        {(rp?.block ?? 0) > 0 ? <ShieldAura side="left" /> : null}
+        {(re?.block ?? 0) > 0 ? <ShieldAura side="right" /> : null}
       </main>
 
       {/* Player deck: bottom strip — statusbar chrome is baked in as bottomChrome */}
@@ -1045,6 +1198,48 @@ function TracerBolt({ direction }: { direction: 'leftward' | 'rightward' }) {
   return <div className={`battle-poc__tracer battle-poc__tracer--${direction}`} />;
 }
 
+function MuzzleFlash({ side }: { side: 'left' | 'right' }) {
+  return <div className={`battle-poc__muzzle battle-poc__muzzle--${side}`} />;
+}
+
+function ImpactSpark({ side }: { side: 'left' | 'right' }) {
+  return <div className={`battle-poc__impact battle-poc__impact--${side}`} />;
+}
+
+function SpeedLines({ direction }: { direction: 'leftward' | 'rightward' }) {
+  return <div className={`battle-poc__speed-lines battle-poc__speed-lines--${direction}`} />;
+}
+
+function GroundSlam({ side }: { side: 'left' | 'right' }) {
+  return <div className={`battle-poc__ground-slam battle-poc__ground-slam--${side}`} />;
+}
+
+function ShieldAura({ side }: { side: 'left' | 'right' }) {
+  return <div className={`battle-poc__shield-aura battle-poc__shield-aura--${side}`} />;
+}
+
+function SystemLock({ actor }: { actor?: string }) {
+  const side = actor === 'Enemy' ? 'enemy' : 'player';
+  const label = actor === 'Enemy' ? 'ENEMY SYSTEM LOCK' : 'SYSTEM LOCK';
+  return (
+    <div className={`battle-poc__system-lock battle-poc__system-lock--${side}`}>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function WhiffBanner() {
+  return (
+    <div className="battle-poc__whiff-banner">
+      <span>WHIFF</span>
+    </div>
+  );
+}
+
+function FatiguePulse() {
+  return <div className="battle-poc__fatigue-pulse" aria-hidden />;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Result banner                                                               */
 /* -------------------------------------------------------------------------- */
@@ -1121,62 +1316,3 @@ function ResultBanner({
   );
 }
 
-function BattleAnalysisModal({
-  selected,
-  onSelect,
-  onClose,
-  playerSeries,
-  enemySeries,
-}: {
-  selected: 'player' | 'enemy';
-  onSelect: (s: 'player' | 'enemy') => void;
-  onClose: () => void;
-  playerSeries: Array<{ x: number; y: number }>;
-  enemySeries: Array<{ x: number; y: number }>;
-}) {
-  const series = selected === 'player' ? playerSeries : enemySeries;
-  const maxY = Math.max(1, ...series.map((p) => p.y));
-  const maxX = Math.max(1, series.length);
-  const points = series
-    .map((p) => `${((p.x - 1) / Math.max(1, maxX - 1)) * 100},${100 - (p.y / maxY) * 100}`)
-    .join(' ');
-
-  return (
-    <div className="battle-poc__analysis" role="dialog" aria-modal="true" aria-label="Battle analysis">
-      <div className="battle-poc__analysis-card">
-        <div className="battle-poc__analysis-head">
-          <strong>BATTLE ANALYSIS</strong>
-          <button type="button" className="battle-poc__ctrl battle-poc__ctrl--exit" onClick={onClose}>
-            ✕ CLOSE
-          </button>
-        </div>
-        <div className="battle-poc__analysis-tabs">
-          <button
-            type="button"
-            className={`battle-poc__analysis-tab${selected === 'player' ? ' battle-poc__analysis-tab--active' : ''}`}
-            onClick={() => onSelect('player')}
-          >
-            PLAYER
-          </button>
-          <button
-            type="button"
-            className={`battle-poc__analysis-tab${selected === 'enemy' ? ' battle-poc__analysis-tab--active' : ''}`}
-            onClick={() => onSelect('enemy')}
-          >
-            ENEMY
-          </button>
-        </div>
-        <div className="battle-poc__analysis-title">
-          Damage Taken Over Timeline ({selected === 'player' ? 'Player' : 'Enemy'})
-        </div>
-        <svg className="battle-poc__analysis-graph" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <line x1="0" y1="100" x2="100" y2="100" className="battle-poc__analysis-axis" />
-          <line x1="0" y1="0" x2="0" y2="100" className="battle-poc__analysis-axis" />
-          {points.length > 0 ? (
-            <polyline points={points} className="battle-poc__analysis-line" />
-          ) : null}
-        </svg>
-      </div>
-    </div>
-  );
-}

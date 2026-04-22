@@ -3,6 +3,7 @@ import { CardContentService, normalizeCard } from '../core/content';
 import { CombatSimulator } from '../core/combat';
 import { compileLegacyToEffects } from '../core/effects/compileLegacy';
 import { COMBAT_RULES } from '../core/rules';
+import { simulateForgeDeckMetrics } from '../core/run/forgeDeckSimulation';
 import { buildArenaFromReplaySlice } from '../core/run';
 import type { CardDef } from '../core/types';
 import { makeTestFighter } from './helpers';
@@ -120,7 +121,7 @@ describe('CombatSimulator', () => {
     expect(firstPlayerResolve?.text).toMatch(/Enemy HP=/);
   });
 
-  it('bulk stacks reduce incoming strike damage to HP by 1 per stack (consumed)', () => {
+  it('bulk stacks reduce incoming strike damage to HP by 1 per stack and persist', () => {
     const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['neutral_basic_strike_t1']);
     player.charge = 99;
     player.bulkStacks = 2;
@@ -131,7 +132,7 @@ describe('CombatSimulator', () => {
     const firstEnemyResolve = result.events.find((e) => e.type === 'resolve' && e.actor === 'Enemy');
     expect(firstEnemyResolve?.text).toMatch(/dealt=0/);
     expect(firstEnemyResolve?.snapshot?.player.hp).toBe(40);
-    expect(firstEnemyResolve?.snapshot?.player.bulkStacks).toBe(0);
+    expect(firstEnemyResolve?.snapshot?.player.bulkStacks).toBe(2);
   });
 
   it('arms thermal fatigue after configured combat rounds', () => {
@@ -335,6 +336,37 @@ describe('CombatSimulator', () => {
     );
     expect(r?.text).toMatch(/dealt=23/);
     expect(r?.text).toMatch(/Enemy HP=17/);
+  });
+
+  it('Rust Ranger Aw0 converts Basic Strike with junk and forces a stall next activation', () => {
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['neutral_basic_strike_t1']);
+    player.charge = 99;
+    player.junk = 4;
+    player.traitIds = ['rust_ranger_aw0'];
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    enemy.charge = 99;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 2 });
+    const firstPlayerResolve = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Basic Strike'),
+    );
+    expect(firstPlayerResolve?.text).toMatch(/dealt=6/);
+    expect(firstPlayerResolve?.snapshot?.player.junk).toBe(0);
+    const stunnedStall = result.events.find((e) => e.type === 'stunned_stall' && e.actor === 'Player');
+    expect(stunnedStall).toBeDefined();
+  });
+
+  it('forge sim applies Rust Ranger base junk cap', () => {
+    const queue = Array.from({ length: COMBAT_RULES.queueSize }, () => 'junk_loader_t3');
+    const report = simulateForgeDeckMetrics(
+      content,
+      1,
+      queue,
+      ['junk_loader_t3'],
+      ['rust_ranger_base'],
+    );
+    const maxJunkAtRoundStart = Math.max(...report.rounds.map((r) => r.junk));
+    expect(maxJunkAtRoundStart).toBeLessThanOrEqual(5);
   });
 });
 

@@ -34,6 +34,7 @@ interface PilotPanelProps {
   pilotId: string;
   playerHp: number;
   playerHpMax: number;
+  activeTraitIds?: string[];
 }
 
 export function PilotPanel({
@@ -41,6 +42,7 @@ export function PilotPanel({
   pilotId,
   playerHp,
   playerHpMax,
+  activeTraitIds = [],
 }: PilotPanelProps) {
   const displayAwakening = awakeningInternal + 1;
   const pilot = getPilotById(pilotId);
@@ -103,6 +105,7 @@ export function PilotPanel({
             key={trait.id}
             trait={trait}
             awakeningInternal={awakeningInternal}
+            forcedUnlocked={activeTraitIds.includes(trait.id)}
           />
         ))}
       </div>

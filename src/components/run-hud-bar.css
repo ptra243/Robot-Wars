@@ -1,21 +1,113 @@
+:root {
+  --run-hud-height: 40px;
+}
+
 .run-hud-bar {
+  --run-hud-clip-card: polygon(
+    10px 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    10px 100%,
+    0 calc(100% - 10px),
+    0 10px
+  );
+  --run-hud-clip-panel: polygon(
+    12px 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    0 calc(100% - 12px),
+    0 12px
+  );
+
   position: sticky;
   top: 0;
   z-index: 3000;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 7px;
+  min-height: var(--run-hud-height);
+  padding: 5px 10px;
+  background: linear-gradient(180deg, rgba(10, 14, 22, 0.96) 0%, rgba(10, 14, 22, 0.78) 100%);
+  border-bottom: 1px solid rgba(150, 170, 195, 0.24);
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+    0 6px 16px rgba(2, 6, 23, 0.4);
+  clip-path: var(--run-hud-clip-panel);
+  overflow: hidden;
+}
+
+.run-hud-bar__center {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
-  padding: 8px 12px;
-  background: linear-gradient(180deg, rgba(4, 10, 22, 0.96), rgba(4, 10, 22, 0.9));
-  border-bottom: 1px solid rgba(56, 189, 248, 0.28);
+}
+
+.run-hud-bar__right {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .run-hud-bar__item {
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  color: #dbeafe;
-  border: 1px solid rgba(148, 163, 184, 0.34);
-  background: rgba(15, 23, 42, 0.72);
-  padding: 4px 8px;
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  border: 1px solid rgba(150, 170, 195, 0.22);
+  background: rgba(10, 14, 22, 0.75);
+  padding: 4px 9px;
+  clip-path: var(--run-hud-clip-card);
+  white-space: nowrap;
+}
+
+.run-hud-bar__menu-btn {
+  border: 1px solid rgba(150, 170, 195, 0.3);
+  background: rgba(10, 14, 22, 0.8);
+  color: #e8eef6;
+  padding: 5px 11px;
+  clip-path: var(--run-hud-clip-card);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.run-hud-bar__menu-btn:hover {
+  border-color: rgba(224, 138, 58, 0.65);
+  color: #f1d7b6;
+}
+
+.run-hud-bar__item--accent {
+  border-color: rgba(224, 138, 58, 0.6);
+  background: linear-gradient(180deg, rgba(224, 138, 58, 0.18), rgba(10, 14, 22, 0.8));
+}
+
+.run-hud-bar__item--stat {
+  min-width: 84px;
+}
+
+.run-hud-bar__label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: rgba(122, 135, 155, 0.95);
+}
+
+.run-hud-bar__value {
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e8eef6;
+  font-variant-numeric: tabular-nums;
+}
+
+.run-hud-bar__icon {
+  color: rgba(224, 138, 58, 0.92);
 }

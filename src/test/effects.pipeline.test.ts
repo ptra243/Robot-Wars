@@ -116,10 +116,11 @@ describe('effect pipeline', () => {
     );
     expect(upgrades.length).toBeGreaterThanOrEqual(1);
     const q = ev?.snapshot?.playerQueue ?? [];
+    expect(q[0]).toBe('neutral_basic_strike_t1');
     const nonBasicNeutral = q.filter(
       (id) => id && !/^neutral_basic_strike_t[123]$/.test(id),
     );
-    expect(nonBasicNeutral.length).toBeGreaterThanOrEqual(2);
+    expect(nonBasicNeutral.length).toBeGreaterThanOrEqual(1);
   });
 
   it('Core Rebirth+ (tier 2) replaces two Neutral Basic Strike slots when two are present', () => {
@@ -141,6 +142,7 @@ describe('effect pipeline', () => {
     );
     expect(upgrades.length).toBeGreaterThanOrEqual(2);
     const q = ev?.snapshot?.playerQueue ?? [];
+    expect(q[0]).toBe('neutral_basic_strike_t2');
     const basicCount = q.filter((id) => id === 'neutral_basic_strike_t1').length;
     expect(basicCount).toBe(6);
   });

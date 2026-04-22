@@ -8,6 +8,7 @@ import { callTraitOnCardResolved } from '../traits';
 import type { CardDef, CombatEvent, CombatState, FighterState, KeywordSpec } from '../types';
 import { createAuraDispatchBudget, dispatchAuraTrigger } from './auras';
 import {
+  addStunnedTurns,
   advanceQueue,
   effectiveChargeCost,
   isContinuousSkipped,
@@ -67,10 +68,32 @@ function resolveCard(
   allowBonusNext: boolean,
   combatSeed: number,
 ): void {
+  const isNeutralBasicStrike = /^neutral_basic_strike_t[123]$/.test(card.id);
+  let rustRangerAw0SpentJunk = 0;
+  if (actor.traitIds.includes('rust_ranger_aw0') && isNeutralBasicStrike && actor.junk > 0) {
+    rustRangerAw0SpentJunk = actor.junk;
+    actor.junk = 0;
+    pushEv(state, events, {
+      type: 'trait_effect',
+      round: state.roundIndex,
+      actor: actor.name,
+      text: `${actor.name} spends ${String(rustRangerAw0SpentJunk)} junk on Basic Strike (Fastest Gun in the West).`,
+    });
+  }
+
   const junkSnapshotAtResolveStart = actor.junk;
   const rawSteps = getResolvedEffectPipeline(card);
   const expanded = expandEffectSteps(rawSteps, actor, junkSnapshotAtResolveStart);
-  const steps = finalizeEffectPipeline(expanded);
+  const firstStrikeIndex = expanded.findIndex((step) => step.type === 'StrikeDamage');
+  const aw0Adjusted =
+    rustRangerAw0SpentJunk > 0
+      ? expanded.map((step, index) =>
+          step.type === 'StrikeDamage' && index === firstStrikeIndex
+            ? { ...step, baseDamage: step.baseDamage + rustRangerAw0SpentJunk }
+            : step,
+        )
+      : expanded;
+  const steps = finalizeEffectPipeline(aw0Adjusted);
   const { junk: needJunk, core: needCore } = getSpendPrerequisites(steps);
 
   if (needJunk > actor.junk) {
@@ -156,6 +179,16 @@ function resolveCard(
       `${actor.name} HP=${actor.hp} EN=${actor.charge} J=${actor.junk} B=${actor.bulkStacks} | ` +
       `${target.name} HP=${target.hp} BL=${target.block}`,
   });
+
+  if (rustRangerAw0SpentJunk > 0) {
+    addStunnedTurns(actor, 1);
+    pushEv(state, events, {
+      type: 'trait_effect',
+      round: state.roundIndex,
+      actor: actor.name,
+      text: `Fastest Gun in the West: ${actor.name} stalls next turn.`,
+    });
+  }
 
   // Dispatch onCardResolved to all active traits on the actor.
   const cardCtx = { state, content, push: (ev: CombatEvent) => pushEv(state, events, ev) };

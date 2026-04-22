@@ -3,11 +3,12 @@ import type { Trait } from './types';
 interface TraitRowProps {
   trait: Trait;
   awakeningInternal: number;
+  forcedUnlocked?: boolean;
 }
 
-export function TraitRow({ trait, awakeningInternal }: TraitRowProps) {
+export function TraitRow({ trait, awakeningInternal, forcedUnlocked = false }: TraitRowProps) {
   const unlocked =
-    trait.unlockAt === 0 || awakeningInternal >= trait.unlockAt;
+    forcedUnlocked || trait.unlockAt === 0 || awakeningInternal >= trait.unlockAt;
   const slotLabel =
     trait.unlockAt === 0 ? 'BASE' : `AWAKENING ${String(trait.unlockAt)}`;
 

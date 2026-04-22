@@ -72,6 +72,11 @@
   --fp-accent-glow: rgba(224, 138, 58, 0.3);
 }
 
+/* In run mode, leave space for the persistent global run HUD. */
+.forge-poc--run {
+  inset: var(--run-hud-height, 40px) 0 0 0;
+}
+
 .forge-poc--overclock {
   --fp-accent: var(--fp-f-overclock);
   --fp-accent-soft: rgba(164, 102, 214, 0.18);

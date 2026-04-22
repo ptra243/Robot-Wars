@@ -66,6 +66,7 @@ export function GameApp() {
               pilotId={run.spirit.id}
               playerHp={run.loop.playerHp}
               playerHpMax={run.loop.playerHpMax}
+              activeTraitIds={run.loop.playerTraitIds}
               initialHand={run.hand}
               initialQueue={run.plannedQueue}
               onRunDeploy={(queueIds, handCardIds) => {

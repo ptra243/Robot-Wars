@@ -3,7 +3,14 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ForgeDeckRoundMetrics, ForgeDeckSimulationResult } from '../../../core/run/forgeDeckSimulation';
 import { FORGE_DECK_SIM_ROUNDS } from '../../../core/run/forgeDeckSimulation';
 
-export type ForgeSimSeriesKey = 'energy' | 'damage' | 'shields' | 'stalls' | 'junk';
+export type ForgeSimSeriesKey =
+  | 'energy'
+  | 'damage'
+  | 'shields'
+  | 'stalls'
+  | 'junk'
+  | 'continuousTicks'
+  | 'continuousSkips';
 
 export type ForgeDeckSimLayout = 'compact' | 'large';
 
@@ -17,6 +24,8 @@ const SERIES: {
   { key: 'shields', label: 'Shields', color: '#6fa8bd' },
   { key: 'stalls', label: 'Stalls', color: '#c084fc' },
   { key: 'junk', label: 'Junk', color: '#a3e635' },
+  { key: 'continuousTicks', label: 'Cont. Ticks', color: '#22d3ee' },
+  { key: 'continuousSkips', label: 'Cont. Skips', color: '#f472b6' },
 ];
 
 const LAYOUT_DIMS: Record<
@@ -64,13 +73,19 @@ function buildPlotSeries(
   }
   let cumDamage = 0;
   let cumStalls = 0;
+  let cumContinuousTicks = 0;
+  let cumContinuousSkips = 0;
   return rounds.map((row) => {
     cumDamage += row.damage;
     cumStalls += row.stalls;
+    cumContinuousTicks += row.continuousTicks;
+    cumContinuousSkips += row.continuousSkips;
     return {
       round: row.round,
       damage: cumDamage,
       stalls: cumStalls,
+      continuousTicks: cumContinuousTicks,
+      continuousSkips: cumContinuousSkips,
       energy: row.energy - initialPlayer.energy,
       shields: row.shields - initialPlayer.shields,
       junk: row.junk - initialPlayer.junk,
@@ -98,6 +113,8 @@ export function ForgeDeckSimChart({ simulation, onRoundPointer, layout = 'compac
     shields: true,
     stalls: true,
     junk: true,
+    continuousTicks: true,
+    continuousSkips: true,
   });
 
   const plotMetrics = useMemo(
@@ -233,7 +250,7 @@ export function ForgeDeckSimChart({ simulation, onRoundPointer, layout = 'compac
         <span className="forge-poc__sim-sub">
           {String(FORGE_DECK_SIM_ROUNDS)} rounds vs dummy ·{' '}
           {valueMode === 'discrete'
-            ? 'Discrete: per-round damage & stalls; energy / shields / junk at round start'
+            ? 'Discrete: per-round damage/stalls/continuous; energy / shields / junk at round start'
             : 'Cumulative: total damage & stalls through each round; energy / shields / junk = Δ vs combat start'}
         </span>
       </div>

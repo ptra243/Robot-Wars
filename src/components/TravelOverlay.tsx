@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useState } from 'react';
 import type { TravelEventOutcome } from '../core/types';
+import { CardContentService } from '../core/content';
 import { useRunCardContent } from '../hooks/useRunCardContent';
 import { buildCardDescription } from '../ui/cardText';
 import { useGameStore } from '../stores/gameStore';
@@ -7,14 +9,30 @@ import './travel-overlay.css';
 
 const SHOP_CARD_PRICE = 40;
 
+function SoldCardOffer({ priceLabel }: { priceLabel?: string }) {
+  return (
+    <div className="travel-overlay__card-shell">
+      <div
+        className="travel-overlay__card travel-overlay__card--full travel-overlay__card--sold"
+        aria-label="Sold"
+      >
+        <div className="travel-overlay__sold-mark">- sold -</div>
+      </div>
+      {priceLabel ? <div className="travel-overlay__card-under-price">{priceLabel}</div> : null}
+    </div>
+  );
+}
+
 function FullCardOffer({
   cardId,
   seed,
+  priceLabel,
   disabled = false,
   onClick,
 }: {
   cardId: string;
   seed: number;
+  priceLabel?: string;
   disabled?: boolean;
   onClick?: () => void;
 }) {
@@ -27,22 +45,29 @@ function FullCardOffer({
   }
   const desc = buildCardDescription(card);
   return (
-    <button
-      type="button"
-      className="travel-overlay__card travel-overlay__card--full"
-      disabled={disabled}
-      onClick={onClick}
-    >
-      <div className="travel-overlay__card-art" style={{ backgroundImage: `url(${cardArtUrlFromDef(card)})` }}>
-        <span className="travel-overlay__card-tier-badge">T{card.card_tier}</span>
-        <span className="travel-overlay__card-cost-badge">EN {card.charge_cost}</span>
-      </div>
-      <div className="travel-overlay__card-body">
-        <div className="travel-overlay__card-name">{card.name}</div>
-        <div className="travel-overlay__card-desc">{desc}</div>
-      </div>
-    </button>
+    <div className="travel-overlay__card-shell">
+      <button
+        type="button"
+        className="travel-overlay__card travel-overlay__card--full"
+        disabled={disabled}
+        onClick={onClick}
+      >
+        <div className="travel-overlay__card-art" style={{ backgroundImage: `url(${cardArtUrlFromDef(card)})` }}>
+          <span className="travel-overlay__card-tier-badge">T{card.card_tier}</span>
+          <span className="travel-overlay__card-cost-badge">EN {card.charge_cost}</span>
+        </div>
+        <div className="travel-overlay__card-body">
+          <div className="travel-overlay__card-name">{card.name}</div>
+          <div className="travel-overlay__card-desc">{desc}</div>
+        </div>
+      </button>
+      {priceLabel ? <div className="travel-overlay__card-under-price">{priceLabel}</div> : null}
+    </div>
   );
+}
+
+function offersKey(offers: string[]): string {
+  return offers.join('|');
 }
 
 function EventOutcomeBody({
@@ -170,6 +195,32 @@ export function TravelOverlay() {
   const handleShopRerollOffers = useGameStore((s) => s.handleShopRerollOffers);
   const handleShopBuyRerollToken = useGameStore((s) => s.handleShopBuyRerollToken);
   const handleTravelDraftPick = useGameStore((s) => s.handleTravelDraftPick);
+  const [soldShopSlots, setSoldShopSlots] = useState<number[]>([]);
+  const [shopToast, setShopToast] = useState<string | null>(null);
+  const currentShopOffersKey = useMemo(
+    () => (travelModal?.kind === 'shop' ? offersKey(travelModal.offers) : ''),
+    [travelModal],
+  );
+
+  useEffect(() => {
+    if (travelModal?.kind !== 'shop') {
+      setSoldShopSlots([]);
+      setShopToast(null);
+    }
+  }, [travelModal?.kind]);
+
+  useEffect(() => {
+    if (travelModal?.kind !== 'shop') {
+      return;
+    }
+    setSoldShopSlots([]);
+  }, [currentShopOffersKey]);
+
+  useEffect(() => {
+    if (!shopToast) return;
+    const timer = window.setTimeout(() => setShopToast(null), 1600);
+    return () => window.clearTimeout(timer);
+  }, [shopToast]);
 
   if (!travelModal) {
     return null;
@@ -218,16 +269,28 @@ export function TravelOverlay() {
             CARDS — {SHOP_CARD_PRICE}g each
           </div>
           <div className="travel-overlay__cards">
-            {travelModal.offers.map((cardId, offerIdx) => (
-              <FullCardOffer
-                key={`${cardId}-${String(offerIdx)}`}
-                cardId={cardId}
-                seed={run.seed}
-                disabled={run.loop.gold < SHOP_CARD_PRICE}
-                onClick={() => handleShopBuyCard(cardId)}
-              />
-            ))}
+            {travelModal.offers.map((cardId, offerIdx) =>
+              soldShopSlots.includes(offerIdx) ? (
+                <SoldCardOffer key={`sold-${String(offerIdx)}`} priceLabel={`${SHOP_CARD_PRICE}g`} />
+              ) : (
+                <FullCardOffer
+                  key={`${cardId}-${String(offerIdx)}`}
+                  cardId={cardId}
+                  seed={run.seed}
+                  priceLabel={`${SHOP_CARD_PRICE}g`}
+                  disabled={run.loop.gold < SHOP_CARD_PRICE}
+                  onClick={() => {
+                    const ok = handleShopBuyCard(cardId);
+                    if (!ok) return;
+                    setSoldShopSlots((prev) => [...prev, offerIdx]);
+                    const content = CardContentService.loadDefault(run.seed);
+                    setShopToast(`${content.get(cardId).name} bought.`);
+                  }}
+                />
+              ),
+            )}
           </div>
+          {shopToast ? <div className="travel-overlay__toast">{shopToast}</div> : null}
           <button type="button" className="travel-overlay__dismiss" onClick={dismissTravelModal}>
             Leave shop
           </button>

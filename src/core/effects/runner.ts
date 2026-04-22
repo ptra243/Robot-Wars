@@ -118,7 +118,6 @@ function dealDirectHpDamage(
   }
   const bulkMit = Math.min(target.bulkStacks, hpLoss);
   hpLoss -= bulkMit;
-  target.bulkStacks -= bulkMit;
   target.hp -= hpLoss;
   if (dispatchDamageAura && damage > 0) {
     ctx.dispatchAuraTrigger(state, target, actor, 'OnDamageTaken');
@@ -249,7 +248,6 @@ const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
     }
     const bulkMit = Math.min(target.bulkStacks, hpLoss);
     hpLoss -= bulkMit;
-    target.bulkStacks -= bulkMit;
     target.hp -= hpLoss;
     actor.strikeResolutionsThisCombat += 1;
     if (damage > 0) {
@@ -315,6 +313,9 @@ const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
     const basicSlotsInQueueOrder: number[] = [];
     const activeSlots = Math.max(3, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
     for (let i = 0; i < activeSlots; i += 1) {
+      if (queueSlotIndex !== undefined && i === queueSlotIndex) {
+        continue; // Keep the resolving card's transformed basic slot untouched.
+      }
       const id = actor.queue[i];
       if (id && neutralBasic.test(id)) {
         basicSlotsInQueueOrder.push(i);

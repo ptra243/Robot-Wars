@@ -1,6 +1,7 @@
 import { CardContentService } from '../content';
 import { CombatSimulator } from '../combat';
 import { COMBAT_RULES } from '../rules';
+import { callTraitOnCombatStart } from '../traits';
 import type { CombatEvent, CombatEventSnapshot, RunState } from '../types';
 import { createCombatSetupFromDecklists, padQueueFromDeckList } from './combatSetup';
 import { replaceEmptyDeckWithBasicStrikes } from './lifecycle';
@@ -137,6 +138,11 @@ export function simulateDeckCycleReport(run: RunState, content: CardContentServi
     enemyCoreScrap: 0,
     activeQueueSlots: run.sandboxActiveQueueSlots,
   });
+  setup.player.traitIds = [...run.loop.playerTraitIds];
+  if (setup.player.traitIds.includes('rust_ranger_base')) {
+    setup.player.junkCapacity = 5;
+  }
+  callTraitOnCombatStart(setup.player, content);
   setup.player.hp = 9999;
   setup.enemy.hp = 9999;
   setup.player.block = 0;

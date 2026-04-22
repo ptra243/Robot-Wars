@@ -1,6 +1,7 @@
 import { CombatSimulator } from '../combat';
 import type { CardContentService } from '../content';
 import { COMBAT_RULES } from '../rules';
+import { callTraitOnCombatStart } from '../traits';
 import type { CombatEvent } from '../types';
 import { createCombatSetupFromDecklists } from './combatSetup';
 
@@ -20,6 +21,10 @@ export interface ForgeDeckRoundMetrics {
   damage: number;
   /** Player stall events this round. */
   stalls: number;
+  /** Player Continuous aura ticks this round. */
+  continuousTicks: number;
+  /** Player queue skips caused by already-armed Continuous this round. */
+  continuousSkips: number;
   /**
    * Card id at the player’s program cursor for their first queue action this round
    * (resolve / stall / whiff / skip), for forge chart hover.
@@ -47,7 +52,7 @@ const PLAYER_PROGRAM_EVENTS = new Set([
   'stall',
   'stall_skip',
   'whiff',
-  'continuous_skip',
+  // Continuous cards should not appear as the round's highlighted program card.
 ]);
 
 function programCardIdFromPlayerSnapshot(ev: CombatEvent): string | null {
@@ -105,6 +110,8 @@ export function aggregateForgeDeckMetricsFromEvents(
     junk: 0,
     damage: 0,
     stalls: 0,
+    continuousTicks: 0,
+    continuousSkips: 0,
     programCardId: programIds[i] ?? null,
   }));
 
@@ -127,6 +134,14 @@ export function aggregateForgeDeckMetricsFromEvents(
       rounds[idx]!.stalls += 1;
     }
 
+    if (ev.type === 'continuous_tick' && ev.actor === 'Player') {
+      rounds[idx]!.continuousTicks += 1;
+    }
+
+    if (ev.type === 'continuous_skip' && ev.actor === 'Player') {
+      rounds[idx]!.continuousSkips += 1;
+    }
+
     if (ev.type === 'resolve' && ev.actor === 'Player') {
       const m = DEALT_RE.exec(ev.text);
       const dealt = m ? Number(m[1]) : 0;
@@ -146,6 +161,7 @@ export function simulateForgeDeckMetrics(
   forgeSeed: number,
   queueIds: Array<string | null>,
   playerDeckCardIds: string[],
+  playerTraitIds: string[] = [],
 ): ForgeDeckSimulationResult {
   const enemyDeck = Array.from({ length: COMBAT_RULES.queueSize }, () => 'neutral_basic_strike_t1');
   const setup = createCombatSetupFromDecklists({
@@ -155,6 +171,11 @@ export function simulateForgeDeckMetrics(
     playerQueue: queueIds,
     enemyQueue: enemyDeck,
   });
+  setup.player.traitIds = [...playerTraitIds];
+  if (setup.player.traitIds.includes('rust_ranger_base')) {
+    setup.player.junkCapacity = 5;
+  }
+  callTraitOnCombatStart(setup.player, content);
   setup.player.hp = 9999;
   setup.enemy.hp = 9999;
   setup.player.block = 0;
