@@ -13,6 +13,8 @@ import {
   validateDeckComposition,
   drawStartingHand,
   buildDeployDeckFromQueueAndHand,
+  grantRelic,
+  rollRelicForSource,
   type DeckCycleReport,
 } from '../core/run';
 import type { CombatResult, RunState, TravelModalState } from '../core/types';
@@ -86,6 +88,7 @@ interface GameStore {
   handleShopBuyCard: (cardId: string) => boolean;
   handleShopRerollOffers: () => void;
   handleShopBuyRerollToken: () => void;
+  handleShopBuyCommonRelic: () => void;
   handleTravelDraftPick: (cardId: string) => void;
 }
 
@@ -526,6 +529,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
         nonCardPurchases: modal.nonCardPurchases + 1,
       },
       statusMessage: 'Bought +1 card reroll.',
+    });
+  },
+
+  handleShopBuyCommonRelic: () => {
+    const modal = get().travelModal;
+    if (!modal || modal.kind !== 'shop') return;
+    const nextRun = cloneRun(get().run);
+    const price = 50 + 50 * modal.nonCardPurchases;
+    if (nextRun.loop.gold < price) return;
+    const rolled = rollRelicForSource(
+      nextRun,
+      'shop',
+      nextRun.seed + nextRun.loop.totalStepsResolved * 97 + modal.nonCardPurchases * 13,
+    );
+    if (!rolled) {
+      set({ statusMessage: 'No common relic available in the shop pool.' });
+      return;
+    }
+    if (!grantRelic(nextRun, rolled.id)) {
+      set({ statusMessage: 'Could not buy relic from shop.' });
+      return;
+    }
+    nextRun.loop.gold -= price;
+    set({
+      run: nextRun,
+      travelModal: {
+        kind: 'shop',
+        offers: modal.offers,
+        nonCardPurchases: modal.nonCardPurchases + 1,
+      },
+      statusMessage: `${rolled.name} bought.`,
     });
   },
 

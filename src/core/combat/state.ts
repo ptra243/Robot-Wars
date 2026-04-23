@@ -57,6 +57,10 @@ export function cloneFighter(fighter: FighterState): FighterState {
     },
     traitIds: [...(fighter.traitIds ?? [])],
     tempUpgrade: fighter.tempUpgrade ? { ...fighter.tempUpgrade } : null,
+    scheduledEffects: (fighter.scheduledEffects ?? []).map((entry) => ({
+      fireAtRound: entry.fireAtRound,
+      steps: [...entry.steps],
+    })),
   };
 }
 
@@ -93,6 +97,7 @@ function fighterToSnapshot(fighter: FighterState): CombatFighterSnapshot {
     coreScrap: fighter.coreScrap,
     potency: fighter.potency,
     exposeDamage: fighter.exposeDamage,
+    weakenStacks: fighter.weakenStacks > 0 ? fighter.weakenStacks : undefined,
     deckWraps: fighter.deckWraps,
     stunnedTurnsLeft: stun && stun.turnsLeft > 0 ? stun.turnsLeft : undefined,
   };

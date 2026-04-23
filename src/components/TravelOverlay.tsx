@@ -4,6 +4,7 @@ import { CardContentService } from '../core/content';
 import { useRunCardContent } from '../hooks/useRunCardContent';
 import { buildCardDescription } from '../ui/cardText';
 import { useGameStore } from '../stores/gameStore';
+import { getRelicDef } from '../core/run';
 import { cardArtUrlFromDef } from './poc/forge/forgeCardModel';
 import './travel-overlay.css';
 
@@ -180,6 +181,11 @@ function EventOutcomeBody({
     );
   }
 
+  if (outcome.kind === 'relic_gain') {
+    const name = getRelicDef(outcome.relicId)?.name ?? outcome.relicId;
+    return <p className="travel-overlay__p">Relic gained: {name}</p>;
+  }
+
   if (outcome.kind === 'noop') {
     return <p className="travel-overlay__p travel-overlay__p--muted">Nothing changed.</p>;
   }
@@ -194,6 +200,7 @@ export function TravelOverlay() {
   const handleShopBuyCard = useGameStore((s) => s.handleShopBuyCard);
   const handleShopRerollOffers = useGameStore((s) => s.handleShopRerollOffers);
   const handleShopBuyRerollToken = useGameStore((s) => s.handleShopBuyRerollToken);
+  const handleShopBuyCommonRelic = useGameStore((s) => s.handleShopBuyCommonRelic);
   const handleTravelDraftPick = useGameStore((s) => s.handleTravelDraftPick);
   const [soldShopSlots, setSoldShopSlots] = useState<number[]>([]);
   const [shopToast, setShopToast] = useState<string | null>(null);
@@ -263,6 +270,14 @@ export function TravelOverlay() {
               onClick={handleShopBuyRerollToken}
             >
               +1 card reroll ({rerollTokenPrice}g)
+            </button>
+            <button
+              type="button"
+              className="travel-overlay__btn travel-overlay__btn--ghost"
+              disabled={run.loop.gold < rerollTokenPrice}
+              onClick={handleShopBuyCommonRelic}
+            >
+              Buy common relic ({rerollTokenPrice}g)
             </button>
           </div>
           <div className="travel-overlay__cards-heading">

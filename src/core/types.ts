@@ -142,6 +142,16 @@ export type EffectStep =
   | { type: 'AdjustEnemyCharge'; delta: number }
   /** Lose HP but not below 1 (Gutter Offering). */
   | { type: 'SelfDamageRespectFloor1'; amount: number }
+  /** Scavenger sacrifice line: +Emergency Protocol stacks (core factory cards; see Emergency Protocol EOT). */
+  | { type: 'GainEmergencyProtocolStacks'; amount: number }
+  /** Core bleed echo (aw1): when true, CoreParts self-damage also deals that loss to the enemy (DirectHpDamage). */
+  | { type: 'SetMirrorCoreSelfDamage'; active: boolean }
+  /** Apply a stackable outgoing-damage debuff to the opponent. */
+  | { type: 'ApplyWeaken'; stacks: number }
+  /** Add Stunned turns to the resolving fighter after this card resolves. */
+  | { type: 'AddStunnedToSelf'; turns: number }
+  /** Schedule a one-shot delayed effect pipeline after N combat rounds. */
+  | { type: 'ScheduleEffectAfterRounds'; delayRounds: number; steps: EffectStep[] }
   /** Mitigate damage from the opponent’s next Strike against this fighter (Strip Mine). */
   | { type: 'GrantIncomingStrikeMitigation'; amount: number }
   /** Set current Shield (block) to twice its current value; does not add potency. */
@@ -247,6 +257,8 @@ export interface FighterState {
   /** Buffs strike damage and shield block; only changes when effects say so (not consumed on use). */
   potency: number;
   exposeDamage: number;
+  /** Outgoing-damage penalty: each stack reduces each damage packet by 1. */
+  weakenStacks: number;
   deckCursor: number;
   deckWraps: number;
   queueCursor: number;
@@ -275,6 +287,27 @@ export interface FighterState {
    * at combat start. Cleared in syncRunFromCombatResult so it never persists to RunState.
    */
   tempUpgrade: { slotIndex: number; originalId: string } | null;
+  /**
+   * Emergency Protocol (B): stacks gained only from core-line factory cards in data.
+   * End of player turn: take self-damage equal to stacks (minimum 1). If that drops you to 0 HP,
+   * one stack is spent to survive at 1 HP (+1 strike potency), unless prevented this turn.
+   */
+  emergencyProtocolStacks: number;
+  /**
+   * Core bleed echo: after Corebleed Oath–style card resolves, CoreParts self-damage
+   * also deals matching DirectHpDamage to the enemy.
+   */
+  mirrorCoreSelfDamage: boolean;
+  /** Overclock: at most one bonus resolution per your turn (separate from per-card overclockConsumed). */
+  overclockBonusUsedThisTurn: boolean;
+  /** One-shot delayed pipelines keyed to combat round when they should fire. */
+  scheduledEffects: Array<{ fireAtRound: number; steps: EffectStep[] }>;
+  /** Relic state: last observed deck wraps for once-per-cycle triggers. */
+  lastDeckWrapsSeenForRelics?: number;
+  /** Prime Directive temporary mode for this activation. */
+  primeDirectiveActiveThisTurn?: boolean;
+  /** Prime Directive: do not consume Emergency Protocol stacks this turn. */
+  preventEmergencyProtocolSpendThisTurn?: boolean;
 }
 
 export interface CombatState {
@@ -295,6 +328,7 @@ export interface CombatFighterSnapshot {
   coreScrap: number;
   potency: number;
   exposeDamage: number;
+  weakenStacks?: number;
   /** Times the fatigue deck has wrapped (player only; used for deck-cycle stats). */
   deckWraps?: number;
   /** Stunned aura: skips activations until cleared. */
@@ -380,6 +414,7 @@ export type TravelEventOutcome =
   | /** Player picks one card in UI; deck updates when they confirm. */
     { kind: 'draft_pick'; offers: string[] }
   | { kind: 'lost_hand_card'; cardId: string }
+  | { kind: 'relic_gain'; relicId: string }
   | { kind: 'heart_loss'; heartsRemaining: number }
   | { kind: 'noop'; reason: string };
 

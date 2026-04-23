@@ -1,4 +1,5 @@
 import { CARD_TAG_HELP, KEYWORD_TYPE_HELP } from '../../../ui/keywordTagGlossary';
+import { ForgeCardFaceArt, ForgeCardFaceText } from './ForgeCardFaceParts';
 import type { ForgeCard, HoverState } from './types';
 
 interface CardHoverPopoverProps {
@@ -125,18 +126,8 @@ function PopoverCard({
           ✕
         </button>
       ) : null}
-      <div
-        className="forge-poc__popover-art"
-        style={{ backgroundImage: `url(${card.art})` }}
-      >
-        <div className="forge-poc__popover-art-scrim" />
-        <div className="forge-poc__popover-cost">
-          <span className="forge-poc__popover-cost-label">EN</span>
-          <span className="forge-poc__popover-cost-value">{card.cost}</span>
-        </div>
-        <div className="forge-poc__popover-tier">TIER {card.tier}</div>
-      </div>
-      <div className="forge-poc__popover-body">
+      <ForgeCardFaceArt card={card} variant="preview" />
+      <ForgeCardFaceText variant="preview">
         {onPrevTier || onNextTier ? (
           <div className="forge-poc__popover-tier-nav">
             <button
@@ -194,7 +185,7 @@ function PopoverCard({
           ) : null}
         </div>
         <p className="forge-poc__popover-blurb">{card.blurb}</p>
-      </div>
+      </ForgeCardFaceText>
     </div>
   );
 }

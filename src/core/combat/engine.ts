@@ -6,6 +6,8 @@ import {
   applyShieldDecayAtRoundStart,
   beginFighterTurn,
   armFatigueIfNeeded,
+  decayWeakenAtTurnEnd,
+  resolveEmergencyProtocolEndOfPlayerTurn,
 } from './flow';
 import { resolveFighter } from './resolver';
 import { buildSnapshot, cloneFighter, ensureAuraDefaults, ensureQueue, pushEv } from './state';
@@ -66,6 +68,11 @@ export class CombatSimulator {
       if (!beginFighterTurn(this.content, state, state.player, state.enemy, events)) {
         resolveFighter(this.content, state, state.player, state.enemy, events, combatSeed);
       }
+      decayWeakenAtTurnEnd(state, state.player, events);
+      resolveEmergencyProtocolEndOfPlayerTurn(state, events);
+      if (state.player.hp <= 0) {
+        break;
+      }
       if (state.enemy.hp <= 0) {
         break;
       }
@@ -79,6 +86,7 @@ export class CombatSimulator {
       if (!beginFighterTurn(this.content, state, state.enemy, state.player, events)) {
         resolveFighter(this.content, state, state.enemy, state.player, events, combatSeed);
       }
+      decayWeakenAtTurnEnd(state, state.enemy, events);
       if (state.player.hp <= 0) {
         break;
       }

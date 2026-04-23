@@ -8,7 +8,9 @@ import {
   BattleAnalysisModal,
   type BattleAnalysisRoundMetrics,
 } from './forge/BattleAnalysisModal';
-import { cardArtUrlFromDef } from './forge/forgeCardModel';
+import { cardArtUrlFromDef, isCoreSacrificeLineCardId } from './forge/forgeCardModel';
+import { hpPlayCostAmountForUi } from '../../ui/hpPlayCost';
+import { PocKnockoutCardFilter } from './PocKnockoutCardFilter';
 import './battle-poc.css';
 
 type Speed = 1 | 2 | 4;
@@ -36,11 +38,15 @@ interface BattleCard {
   id: string;
   name: string;
   cost: number;
+  /** 0 energy + self-damage in effects: show red HP chip instead of EN. */
+  hpPlayCost?: number;
   atk: number;
   /** Shield value when this is primarily a Shield card. */
   def?: number;
   text: string;
   art: string;
+  /** Match forge lib / queue art crop for core sacrifice placeholder. */
+  artFocus: 'default' | 'core-reactor';
   /** Visual row in expanded chip: Strike (ATK) vs Shield (DEF). */
   statKind: 'strike' | 'shield' | 'other';
   /** If true, this card is hidden from the viewer (fog-of-war preview). */
@@ -137,6 +143,7 @@ const makeDeck = (prefix: string, fogLast: boolean): BattleCard[] =>
     atk: ATTACK_DAMAGE,
     text: `Deal ${ATTACK_DAMAGE} damage.`,
     art: '/poc/poc-card-attack.png',
+    artFocus: 'default' as const,
     statKind: 'strike' as const,
     fog: fogLast && i === DECK_SIZE - 1,
   }));
@@ -176,14 +183,17 @@ function battleCardFromId(id: string, content: CardContentService): BattleCard {
     const atkV = card.base_damage > 0 ? card.base_damage : 0;
     const defV = card.base_block > 0 ? card.base_block : 0;
     const primary = statKind === 'shield' ? defV || atkV : atkV || defV;
+    const hpPlay = hpPlayCostAmountForUi(card) ?? undefined;
     return {
       id,
       name: card.name,
       cost: card.charge_cost,
+      hpPlayCost: hpPlay,
       atk: primary,
       def: statKind === 'shield' && defV > 0 ? defV : undefined,
       text: buildCardDescription(card, { omitTagsAndKeywords: true }),
       art: cardArtUrlFromDef(card),
+      artFocus: isCoreSacrificeLineCardId(id) ? 'core-reactor' : 'default',
       statKind,
     };
   } catch {
@@ -194,6 +204,7 @@ function battleCardFromId(id: string, content: CardContentService): BattleCard {
       atk: ATTACK_DAMAGE,
       text: `Deal ${ATTACK_DAMAGE} damage.`,
       art: '/poc/poc-card-attack.png',
+      artFocus: 'default',
       statKind: 'strike',
     };
   }
@@ -245,6 +256,7 @@ export function BattlePOC({
   const [speed, setSpeed] = useState<Speed>(replaySpeed ?? 1);
   const [stage, setStage] = useState<Stage>('market');
   const [replayStep, setReplayStep] = useState(-1);
+  const [replayResultVisible, setReplayResultVisible] = useState(false);
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [analysisSide, setAnalysisSide] = useState<'player' | 'enemy'>('player');
 
@@ -340,6 +352,24 @@ export function BattlePOC({
     return () => window.clearTimeout(timer);
   }, [hasReplay, paused, replayStep, replayEvents.length, speed]);
 
+  useEffect(() => {
+    if (!hasReplay) {
+      setReplayResultVisible(false);
+      return undefined;
+    }
+    const atEnd = replayStep >= replayEvents.length - 1;
+    if (!atEnd) {
+      setReplayResultVisible(false);
+      return undefined;
+    }
+    // Hold one beat on the final replay event so lethal strike FX can play
+    // before the victory/defeat overlay takes over.
+    const timer = window.setTimeout(() => {
+      setReplayResultVisible(true);
+    }, 320 / speed);
+    return () => window.clearTimeout(timer);
+  }, [hasReplay, replayEvents.length, replayStep, speed]);
+
   const replaySnapshot =
     replayStep >= 0
       ? replayEvents[Math.min(replayStep, replayEvents.length - 1)]?.snapshot
@@ -352,29 +382,52 @@ export function BattlePOC({
       ? replayEvents[Math.max(0, replayStep - 1)]?.snapshot
       : combatResult?.initialSnapshot;
   const replayDone = hasReplay && replayStep >= replayEvents.length - 1;
-  const replayPlayerDeck = useMemo(() => {
-    const ids =
+  /** Per replay frame: queue is updated by Factory Reset / transforms; must not freeze on initial snapshot. */
+  const replayPlayerQueueIds = useMemo(() => {
+    const fromSnap = replaySnapshot?.playerQueue;
+    if (fromSnap && fromSnap.length > 0) {
+      return fromSnap.map((id) => id ?? 'neutral_basic_strike_t1');
+    }
+    return (
       combatResult?.initialSnapshot.playerQueue?.map((id) => id ?? 'neutral_basic_strike_t1') ??
-      Array.from({ length: DECK_SIZE }, () => 'neutral_basic_strike_t1');
-    return ids.map((id, i) => ({ ...battleCardFromId(id, replayContent), id: `rp-${String(i)}-${id}` }));
-  }, [combatResult?.initialSnapshot.playerQueue, replayContent]);
-  const replayEnemyDeck = useMemo(() => {
-    const ids =
+      Array.from({ length: DECK_SIZE }, () => 'neutral_basic_strike_t1')
+    );
+  }, [replaySnapshot?.playerQueue, combatResult?.initialSnapshot.playerQueue]);
+  const replayPlayerDeck = useMemo(
+    () =>
+      replayPlayerQueueIds.map((id, i) => ({
+        ...battleCardFromId(id, replayContent),
+        id: `rp-${String(i)}-${id}`,
+      })),
+    [replayPlayerQueueIds, replayContent],
+  );
+  const replayEnemyQueueIds = useMemo(() => {
+    const fromSnap = replaySnapshot?.enemyQueue;
+    if (fromSnap && fromSnap.length > 0) {
+      return fromSnap.map((id) => id ?? 'neutral_basic_strike_t1');
+    }
+    return (
       combatResult?.initialSnapshot.enemyQueue?.map((id) => id ?? 'neutral_basic_strike_t1') ??
       combatResult?.enemyDeckUsed ??
-      Array.from({ length: DECK_SIZE }, () => 'neutral_basic_strike_t1');
-    return ids.slice(0, DECK_SIZE).map((id, i) => ({
-      ...battleCardFromId(id, replayContent),
-      id: `re-${String(i)}-${id}`,
-      fog: i === DECK_SIZE - 1,
-    }));
-  }, [combatResult?.enemyDeckUsed, combatResult?.initialSnapshot.enemyQueue, replayContent]);
+      Array.from({ length: DECK_SIZE }, () => 'neutral_basic_strike_t1')
+    );
+  }, [replaySnapshot?.enemyQueue, combatResult?.initialSnapshot.enemyQueue, combatResult?.enemyDeckUsed]);
+  const replayEnemyDeck = useMemo(
+    () =>
+      replayEnemyQueueIds.slice(0, DECK_SIZE).map((id, i) => ({
+        ...battleCardFromId(id, replayContent),
+        id: `re-${String(i)}-${id}`,
+        fog: i === DECK_SIZE - 1,
+      })),
+    [replayEnemyQueueIds, replayContent],
+  );
   const uiPlayerDeck = hasReplay ? replayPlayerDeck : playerDeck;
   const uiEnemyDeck = hasReplay ? replayEnemyDeck : enemyDeck;
-  // Real deck size comes from the initial queue snapshot; fall back to the
-  // POC constant when running the scripted demo (no combat result).
+  // Real deck size from the live queue at this replay step (Factory Reset can change program cards per slot).
   const uiDeckSize = hasReplay
-    ? (combatResult?.initialSnapshot.playerQueue?.length ?? DECK_SIZE)
+    ? (replayPlayerQueueIds.length > 0
+        ? replayPlayerQueueIds.length
+        : (combatResult?.initialSnapshot.playerQueue?.length ?? DECK_SIZE))
     : DECK_SIZE;
   // Use playerQueueCursor (accurate 0-based slot index) instead of roundIndex-1
   // so the highlighted card is always the one that actually resolved.
@@ -393,7 +446,7 @@ export function BattlePOC({
   const activePlayerCard =
     uiPlayerDeck[uiTurnIndex] ?? battleCardFromId('neutral_basic_strike_t1', replayContent);
   const replayPhase: Phase =
-    replayDone && combatResult
+    replayDone && combatResult && replayResultVisible
       ? combatResult.playerWon
         ? 'victory'
         : 'defeat'
@@ -473,7 +526,7 @@ export function BattlePOC({
 
   const statusText = useMemo(() => {
     if (hasReplay) {
-      if (replayDone && combatResult) {
+      if (replayDone && combatResult && replayResultVisible) {
         return combatResult.playerWon ? 'VICTORY — Enemy core offline' : 'DEFEAT — Reactor critical';
       }
       return activeEvent?.text ?? 'BATTLE COMMENCE — replaying simulation';
@@ -507,6 +560,7 @@ export function BattlePOC({
   }, [
     hasReplay,
     replayDone,
+    replayResultVisible,
     combatResult,
     activeEvent,
     phase,
@@ -579,6 +633,7 @@ export function BattlePOC({
       role="dialog"
       aria-label="Battle UI preview"
     >
+      <PocKnockoutCardFilter />
       {/* SVG chroma-key filters for the mech sprites. Both follow the same
           pipeline:
            1. feColorMatrix knocks out pure-white sprite background while
@@ -1129,16 +1184,45 @@ function DeckStrip({ cards, activeIndex, active, side, phase, topChrome, bottomC
             >
               <div className="battle-poc__chip-index">{String(i + 1).padStart(2, '0')}</div>
               <div
-                className="battle-poc__chip-art"
-                style={{
-                  backgroundImage: card.fog ? 'none' : `url(${card.art})`,
-                }}
+                className={[
+                  'battle-poc__chip-art',
+                  !card.fog && card.artFocus === 'core-reactor' ? 'battle-poc__chip-art--core-reactor' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                style={
+                  card.fog
+                    ? { backgroundImage: 'none' }
+                    : card.artFocus === 'core-reactor'
+                      ? { backgroundImage: 'none' }
+                      : { backgroundImage: `url(${card.art})` }
+                }
               >
+                {!card.fog && card.artFocus === 'core-reactor' ? (
+                  <>
+                    <div className="battle-poc__chip-art-void" aria-hidden />
+                    <div className="battle-poc__chip-art-bgi">
+                      <img
+                        className="battle-poc__chip-art-bgi-img"
+                        src={card.art}
+                        alt=""
+                        draggable={false}
+                      />
+                    </div>
+                  </>
+                ) : null}
                 {card.fog ? <div className="battle-poc__chip-fog">?</div> : null}
               </div>
               <div className="battle-poc__chip-meta">
                 <span className="battle-poc__chip-name">{card.fog ? 'UNKNOWN' : card.name}</span>
-                <span className="battle-poc__chip-cost">{card.cost}</span>
+                {card.hpPlayCost !== undefined ? (
+                  <span className="battle-poc__chip-cost battle-poc__chip-cost--hp">
+                    <span className="battle-poc__chip-cost-hp-lbl">HP</span>
+                    {String(card.hpPlayCost)}
+                  </span>
+                ) : (
+                  <span className="battle-poc__chip-cost">{card.cost}</span>
+                )}
               </div>
               {/* Detail body — slides open only when this chip is expanded.
                   Kept in the DOM at all times (with max-height: 0) so the
@@ -1303,7 +1387,7 @@ function ResultBanner({
         ) : null}
 
         {onOpenAnalysis ? (
-          <button type="button" className="battle-poc__result-btn battle-poc__result-btn--assist" onClick={onOpenAnalysis}>
+          <button type="button" className="battle-poc__result-btn battle-poc__result-btn--analyze" onClick={onOpenAnalysis}>
             ANALYZE BATTLE
           </button>
         ) : null}

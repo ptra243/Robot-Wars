@@ -94,10 +94,10 @@
 			"awakening_min": 0,
 			"card_tier": 1,
 			"charge_cost": 0,
-			"base_damage": 8,
-			"spend_core": 1,
+			"base_damage": 0,
 			"tags": [
-				"Strike"
+				"Direct",
+				"Junk"
 			],
 			"keywords": [
 				{
@@ -108,30 +108,25 @@
 			"merge_to": "core_tap_t2",
 			"effects": [
 				{
-					"type": "BranchIfCoreGte",
-					"minCore": 1,
-					"thenSteps": [
-						{
-							"type": "SpendCore",
-							"amount": 1
-						},
-						{
-							"type": "StrikeDamage",
-							"baseDamage": 8,
-							"pierce": false,
-							"useStrikePotency": true
-						},
-						{
-							"type": "TransformCurrentQueueSlot",
-							"matchNeutralBasicTierToResolvingCard": true
-						}
-					],
-					"elseSteps": [
-						{
-							"type": "TransformCurrentQueueSlot",
-							"matchNeutralBasicTierToResolvingCard": true
-						}
-					]
+					"type": "SelfDamageRespectFloor1",
+					"amount": 5
+				},
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "DirectHpDamage",
+					"baseDamage": 5,
+					"pierce": false
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
 				}
 			]
 		},
@@ -143,10 +138,10 @@
 			"awakening_min": 0,
 			"card_tier": 2,
 			"charge_cost": 0,
-			"base_damage": 10,
-			"spend_core": 1,
+			"base_damage": 0,
 			"tags": [
-				"Strike"
+				"Direct",
+				"Junk"
 			],
 			"keywords": [
 				{
@@ -157,30 +152,25 @@
 			"merge_to": "core_tap_t3",
 			"effects": [
 				{
-					"type": "BranchIfCoreGte",
-					"minCore": 1,
-					"thenSteps": [
-						{
-							"type": "SpendCore",
-							"amount": 1
-						},
-						{
-							"type": "StrikeDamage",
-							"baseDamage": 10,
-							"pierce": false,
-							"useStrikePotency": true
-						},
-						{
-							"type": "TransformCurrentQueueSlot",
-							"matchNeutralBasicTierToResolvingCard": true
-						}
-					],
-					"elseSteps": [
-						{
-							"type": "TransformCurrentQueueSlot",
-							"matchNeutralBasicTierToResolvingCard": true
-						}
-					]
+					"type": "SelfDamageRespectFloor1",
+					"amount": 5
+				},
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "DirectHpDamage",
+					"baseDamage": 6,
+					"pierce": false
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
 				}
 			]
 		},
@@ -192,10 +182,10 @@
 			"awakening_min": 0,
 			"card_tier": 3,
 			"charge_cost": 0,
-			"base_damage": 12,
-			"spend_core": 1,
+			"base_damage": 0,
 			"tags": [
-				"Strike"
+				"Direct",
+				"Junk"
 			],
 			"keywords": [
 				{
@@ -205,30 +195,25 @@
 			],
 			"effects": [
 				{
-					"type": "BranchIfCoreGte",
-					"minCore": 1,
-					"thenSteps": [
-						{
-							"type": "SpendCore",
-							"amount": 1
-						},
-						{
-							"type": "StrikeDamage",
-							"baseDamage": 12,
-							"pierce": false,
-							"useStrikePotency": true
-						},
-						{
-							"type": "TransformCurrentQueueSlot",
-							"matchNeutralBasicTierToResolvingCard": true
-						}
-					],
-					"elseSteps": [
-						{
-							"type": "TransformCurrentQueueSlot",
-							"matchNeutralBasicTierToResolvingCard": true
-						}
-					]
+					"type": "SelfDamageRespectFloor1",
+					"amount": 5
+				},
+				{
+					"type": "GainJunk",
+					"amount": 2
+				},
+				{
+					"type": "DirectHpDamage",
+					"baseDamage": 7,
+					"pierce": false
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
 				}
 			]
 		},
@@ -399,10 +384,11 @@
 			"neutral": false,
 			"awakening_min": 0,
 			"card_tier": 1,
-			"charge_cost": 2,
+			"charge_cost": 0,
 			"base_damage": 0,
-			"gain_core": 2,
-			"tags": [],
+			"tags": [
+				"Junk"
+			],
 			"keywords": [
 				{
 					"type": "Overclock",
@@ -420,7 +406,7 @@
 					"amount": 5
 				},
 				{
-					"type": "GainCore",
+					"type": "GainJunk",
 					"amount": 2
 				},
 				{
@@ -433,6 +419,10 @@
 				{
 					"type": "TransformCurrentQueueSlot",
 					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
 				}
 			]
 		},
@@ -443,10 +433,11 @@
 			"neutral": false,
 			"awakening_min": 0,
 			"card_tier": 2,
-			"charge_cost": 2,
+			"charge_cost": 0,
 			"base_damage": 0,
-			"gain_core": 2,
-			"tags": [],
+			"tags": [
+				"Junk"
+			],
 			"keywords": [
 				{
 					"type": "Overclock",
@@ -464,7 +455,7 @@
 					"amount": 5
 				},
 				{
-					"type": "GainCore",
+					"type": "GainJunk",
 					"amount": 2
 				},
 				{
@@ -477,6 +468,10 @@
 				{
 					"type": "TransformCurrentQueueSlot",
 					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
 				}
 			]
 		},
@@ -487,10 +482,11 @@
 			"neutral": false,
 			"awakening_min": 0,
 			"card_tier": 3,
-			"charge_cost": 1,
+			"charge_cost": 0,
 			"base_damage": 0,
-			"gain_core": 3,
-			"tags": [],
+			"tags": [
+				"Junk"
+			],
 			"keywords": [
 				{
 					"type": "Overclock",
@@ -507,7 +503,7 @@
 					"amount": 5
 				},
 				{
-					"type": "GainCore",
+					"type": "GainJunk",
 					"amount": 3
 				},
 				{
@@ -520,6 +516,10 @@
 				{
 					"type": "TransformCurrentQueueSlot",
 					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
 				}
 			]
 		},
@@ -993,6 +993,583 @@
 						}
 					],
 					"elseSteps": []
+				}
+			]
+		},
+		{
+			"id": "sacrif_lumen_t1",
+			"name": "Lumen Bleed",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "sacrif_lumen_t2",
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 2
+				},
+				{
+					"type": "GainJunk",
+					"amount": 2
+				},
+				{
+					"type": "AddStrikePotency",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "sacrif_lumen_t2",
+			"name": "Lumen Bleed+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "sacrif_lumen_t3",
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 2
+				},
+				{
+					"type": "GainJunk",
+					"amount": 2
+				},
+				{
+					"type": "AddStrikePotency",
+					"amount": 2
+				}
+			]
+		},
+		{
+			"id": "sacrif_lumen_t3",
+			"name": "Lumen Bleed++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Junk"
+			],
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 2
+				},
+				{
+					"type": "GainJunk",
+					"amount": 3
+				},
+				{
+					"type": "AddStrikePotency",
+					"amount": 2
+				}
+			]
+		},
+		{
+			"id": "sacrif_spike_t1",
+			"name": "Spike Lash",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Direct",
+				"Junk"
+			],
+			"keywords": [
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"merge_to": "sacrif_spike_t2",
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 5
+				},
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "DirectHpDamage",
+					"baseDamage": 4,
+					"pierce": false
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "sacrif_spike_t2",
+			"name": "Spike Lash+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Direct",
+				"Junk"
+			],
+			"keywords": [
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"merge_to": "sacrif_spike_t3",
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 5
+				},
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "DirectHpDamage",
+					"baseDamage": 5,
+					"pierce": false
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "sacrif_spike_t3",
+			"name": "Spike Lash++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Direct",
+				"Junk"
+			],
+			"keywords": [
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 5
+				},
+				{
+					"type": "GainJunk",
+					"amount": 2
+				},
+				{
+					"type": "DirectHpDamage",
+					"baseDamage": 6,
+					"pierce": false
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "sacrif_plate_t1",
+			"name": "Plate Graft",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Shield",
+				"Junk"
+			],
+			"keywords": [
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"merge_to": "sacrif_plate_t2",
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 5
+				},
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 4
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "sacrif_plate_t2",
+			"name": "Plate Graft+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Shield",
+				"Junk"
+			],
+			"keywords": [
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"merge_to": "sacrif_plate_t3",
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 5
+				},
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 5
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "sacrif_plate_t3",
+			"name": "Plate Graft++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Shield",
+				"Junk"
+			],
+			"keywords": [
+				{
+					"type": "CoreParts",
+					"value": 1
+				}
+			],
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 5
+				},
+				{
+					"type": "GainJunk",
+					"amount": 2
+				},
+				{
+					"type": "ShieldBlock",
+					"baseBlock": 6
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "sacrif_probe_t1",
+			"name": "Probe & Shunt",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Junk",
+				"Expose"
+			],
+			"keywords": [
+				{
+					"type": "Expose",
+					"value": 1
+				}
+			],
+			"merge_to": "sacrif_probe_t2",
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 1
+				},
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "GainCharge",
+					"amount": 1
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Expose",
+						"value": 1
+					}
+				}
+			]
+		},
+		{
+			"id": "sacrif_probe_t2",
+			"name": "Probe & Shunt+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Junk",
+				"Expose"
+			],
+			"keywords": [
+				{
+					"type": "CoreParts",
+					"value": 1
+				},
+				{
+					"type": "Expose",
+					"value": 1
+				}
+			],
+			"merge_to": "sacrif_probe_t3",
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 5
+				},
+				{
+					"type": "GainJunk",
+					"amount": 1
+				},
+				{
+					"type": "GainCharge",
+					"amount": 1
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Expose",
+						"value": 1
+					}
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "sacrif_probe_t3",
+			"name": "Probe & Shunt++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Junk",
+				"Expose"
+			],
+			"keywords": [
+				{
+					"type": "CoreParts",
+					"value": 1
+				},
+				{
+					"type": "Expose",
+					"value": 2
+				}
+			],
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 5
+				},
+				{
+					"type": "GainJunk",
+					"amount": 2
+				},
+				{
+					"type": "GainCharge",
+					"amount": 1
+				},
+				{
+					"type": "Keyword",
+					"spec": {
+						"type": "Expose",
+						"value": 2
+					}
+				},
+				{
+					"type": "TransformCurrentQueueSlot",
+					"matchNeutralBasicTierToResolvingCard": true
+				},
+				{
+					"type": "GainEmergencyProtocolStacks",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "sacrif_tether_t1",
+			"name": "Tethered Draw",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "sacrif_tether_t2",
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 1
+				},
+				{
+					"type": "GainJunk",
+					"amount": 3
+				},
+				{
+					"type": "GainCharge",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "sacrif_tether_t2",
+			"name": "Tethered Draw+",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "sacrif_tether_t3",
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 1
+				},
+				{
+					"type": "GainJunk",
+					"amount": 4
+				},
+				{
+					"type": "GainCharge",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "sacrif_tether_t3",
+			"name": "Tethered Draw++",
+			"faction": "scavengers",
+			"neutral": false,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"tags": [
+				"Junk"
+			],
+			"effects": [
+				{
+					"type": "SelfDamageRespectFloor1",
+					"amount": 1
+				},
+				{
+					"type": "GainJunk",
+					"amount": 4
+				},
+				{
+					"type": "GainCharge",
+					"amount": 2
 				}
 			]
 		}

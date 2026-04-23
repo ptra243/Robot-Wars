@@ -1,5 +1,6 @@
 import { COMBAT_RULES } from '../core/rules';
 import type { CardDef, KeywordSpec } from '../core/types';
+import { stripSelfHpPlayCostFromDescriptionText } from './hpPlayCost';
 
 export interface BuildCardDescriptionOptions {
   /** Omit tag/keyword summary lines (e.g. when shown in a side glossary). */
@@ -22,7 +23,7 @@ export function keywordEffectLine(spec: KeywordSpec): string {
       return `Expose ${v}: apply ${v} Expose to the target. The next Strike that hits that target gains +${v} damage, then Expose clears.`;
     case 'Overclock':
       return v > 0
-        ? `Overclock ${v}: bonus-resolves the next card in your queue when bonus resolutions are allowed.`
+        ? `Overclock ${v}: bonus-resolves the next card in your queue once per your turn (first eligible Overclock on that turn; no energy cost on Overclock carriers).`
         : `Overclock: bonus chain requires a positive keyword value.`;
     case 'TurboLink':
       return `TurboLink ${v}: spend between 1 and ${v} bulk stacks for junk, then bonus-resolve the next queued card when allowed.`;
@@ -35,7 +36,7 @@ export function keywordEffectLine(spec: KeywordSpec): string {
       return `Factory Reset ${tier}: this deck entry becomes Neutral Basic Strike (tier ${tier}).`;
     }
     case 'CoreParts':
-      return `CoreParts: marks a core-parts card (filter; Core Rebirth upgrades the next Neutral Basic Strike(s) in queue order into one of these at the same tier).`;
+      return `Core parts: marks a core-parts card (filter; Core Rebirth upgrades the next Neutral Basic Strike(s) in queue order into one of these at the same tier).`;
     case 'UniqueDeck':
       return `UniqueDeck: your deck may include at most one copy of any card with this keyword (hand + fatigue deck combined).`;
     case 'Persistent':
@@ -45,6 +46,16 @@ export function keywordEffectLine(spec: KeywordSpec): string {
 
 function compactKeywordHeadline(spec: KeywordSpec): string {
   return `${spec.type} ${spec.value}.`;
+}
+
+function tieredNumber(tier: number, t1: number, t2: number, t3: number): number {
+  if (tier >= 3) {
+    return t3;
+  }
+  if (tier === 2) {
+    return t2;
+  }
+  return t1;
 }
 
 function fallbackWhenEmpty(card: CardDef): string {
@@ -72,49 +83,49 @@ function perpetualChargeFromEffects(card: CardDef):
 const JUNK_THRESHOLD_CARD_TEXT: Record<string, { full: string; compact: string }> = {
   junk_spigot_t1: {
     full:
-      'Junk Spigot\n\nBaseline: +1 Energy, +1 Junk\nJunk ≥ 4: +2 Energy, +2 Junk\nJunk ≥ 10: +Energy — floor(junk at snapshot ÷ 4)\nTags: Junk, Energy.',
+      'Baseline: +1 Energy, +1 Junk\nJunk ≥ 4: +2 Energy, +2 Junk\nJunk ≥ 10: +Energy — floor(junk at snapshot ÷ 4)\nTags: Junk, Energy.',
     compact:
-      'Junk Spigot\n\nBaseline: +1 Energy, +1 Junk\nJunk ≥ 4: +2 Energy, +2 Junk\nJunk ≥ 10: +Energy from pile size',
+      'Baseline: +1 Energy, +1 Junk\nJunk ≥ 4: +2 Energy, +2 Junk\nJunk ≥ 10: +Energy from pile size',
   },
   junk_bulwark_t1: {
     full:
-      'Junk Bulwark\n\nEnergy 1\nShield 3\nJunk ≥ 5: Bulk 2\nJunk ≥ 10: Shield — your bulk stacks + potency (stack this Shield for Junk Aegis)\nTags: Shield, Junk.',
+      'Energy 1\nShield 3\nJunk ≥ 5: Bulk 2\nJunk ≥ 10: Shield — your bulk stacks + potency (stack this Shield for Junk Aegis)\nTags: Shield, Junk.',
     compact:
-      'Junk Bulwark\n\nEnergy 1 · Shield 3\nJunk ≥ 5: Bulk 2\nJunk ≥ 10: Shield from bulk + potency',
+      'Energy 1 · Shield 3\nJunk ≥ 5: Bulk 2\nJunk ≥ 10: Shield from bulk + potency',
   },
   junk_ladder_t1: {
-    full: 'Junk Ladder\n\n5 non-Strike damage\nJunk ≥ 8: Overclock (once)\nTags: Direct, Junk.',
-    compact: 'Junk Ladder\n\n5 non-Strike damage\nJunk ≥ 8: Overclock',
+    full: '5 non-Strike damage\nJunk ≥ 8: Overclock (once)\nTags: Direct, Junk.',
+    compact: '5 non-Strike damage\nJunk ≥ 8: Overclock',
   },
   junk_gasket_t1: {
     full:
-      'Junk Gasket\n\nBaseline: +1 Energy, +1 Junk\nJunk ≥ 4: Bulk 1, +1 Energy, +1 Junk\nJunk ≥ 10: Overclock (once)\nTags: Junk, Energy.',
+      'Baseline: +1 Energy, +1 Junk\nJunk ≥ 4: Bulk 1, +1 Energy, +1 Junk\nJunk ≥ 10: Overclock (once)\nTags: Junk, Energy.',
     compact:
-      'Junk Gasket\n\nBaseline: +1 Energy, +1 Junk\nJunk ≥ 4: Bulk + fuel\nJunk ≥ 10: Overclock',
+      'Baseline: +1 Energy, +1 Junk\nJunk ≥ 4: Bulk + fuel\nJunk ≥ 10: Overclock',
   },
   junk_coil_t1: {
     full:
-      'Junk Coil\n\nBaseline: +1 Energy\nJunk ≥ 4: Gain Junk equal to your Energy (after the baseline +1)\nJunk ≥ 12: If you can pay 4 Energy — +potency, floor(junk at snapshot ÷ 4)\nTags: Junk, Energy.',
+      'Baseline: +1 Energy\nJunk ≥ 4: Gain Junk equal to your Energy (after the baseline +1)\nJunk ≥ 12: If you can pay 4 Energy — +potency, floor(junk at snapshot ÷ 4)\nTags: Junk, Energy.',
     compact:
-      'Junk Coil\n\n+1 Energy\nJunk ≥ 4: Junk gained = your Energy\nJunk ≥ 12: Pay 4 Energy → potency from pile',
+      '+1 Energy\nJunk ≥ 4: Junk gained = your Energy\nJunk ≥ 12: Pay 4 Energy → potency from pile',
   },
   junk_aegis_t1: {
     full:
-      'Junk Aegis\n\nEnergy 2\nBulk 1\nJunk ≥ 4: Shield — floor(junk at snapshot ÷ 4) + potency\nJunk ≥ 11: Deal non-Strike damage to enemy equal to your Shield (after the lines above)\nTags: Shield, Junk.',
+      'Energy 2\nBulk 1\nJunk ≥ 4: Shield — floor(junk at snapshot ÷ 4) + potency\nJunk ≥ 11: Deal non-Strike damage to enemy equal to your Shield (after the lines above)\nTags: Shield, Junk.',
     compact:
-      'Junk Aegis\n\nEnergy 2\nBulk 1\nJunk ≥ 4: Shield from junk + potency\nJunk ≥ 11: Damage dealt = your Shield',
+      'Energy 2\nBulk 1\nJunk ≥ 4: Shield from junk + potency\nJunk ≥ 11: Damage dealt = your Shield',
   },
   junk_rivet_t1: {
     full:
-      'Junk Rivet\n\nEnergy 1\nStrike 4 (potency applies)\nJunk ≥ 5: Expose — max(1, floor(junk at snapshot ÷ 4))\nJunk ≥ 10: +2 Strike damage\nJunk ≥ 12: +5 Strike damage\nTags: Strike, Expose, Junk.',
+      'Energy 1\nStrike 4 (potency applies)\nJunk ≥ 5: Expose — max(1, floor(junk at snapshot ÷ 4))\nJunk ≥ 10: +2 Strike damage\nJunk ≥ 12: +5 Strike damage\nTags: Strike, Expose, Junk.',
     compact:
-      'Junk Rivet\n\nEnergy 1 · Strike 4\nJunk ≥ 5: Expose from pile\nJunk ≥ 10: +2 Strike damage\nJunk ≥ 12: +5 Strike damage',
+      'Energy 1 · Strike 4\nJunk ≥ 5: Expose from pile\nJunk ≥ 10: +2 Strike damage\nJunk ≥ 12: +5 Strike damage',
   },
   junk_crown_t1: {
     full:
-      'Junk Crown\n\nEnergy 2\n5 non-Strike damage\nJunk ≥ 8: Overclock (once on this card)\nJunk ≥ 15: If you can pay 4 Energy — +2 Energy, then 1 non-Strike damage per junk at snapshot\nTags: Direct, Junk.',
+      'Energy 2\n5 non-Strike damage\nJunk ≥ 8: Overclock (once on this card)\nJunk ≥ 15: If you can pay 4 Energy — +2 Energy, then 1 non-Strike damage per junk at snapshot\nTags: Direct, Junk.',
     compact:
-      'Junk Crown\n\nEnergy 2 · 5 non-Strike damage\nJunk ≥ 8: Overclock\nJunk ≥ 15: Pay 4 Energy → pile damage line',
+      'Energy 2 · 5 non-Strike damage\nJunk ≥ 8: Overclock\nJunk ≥ 15: Pay 4 Energy → pile damage line',
   },
 };
 
@@ -128,17 +139,27 @@ export function buildCardDescription(
 
   const junkThresholdPinned = JUNK_THRESHOLD_CARD_TEXT[card.id];
   if (junkThresholdPinned) {
-    return omit ? junkThresholdPinned.compact : junkThresholdPinned.full;
+    const raw = omit ? junkThresholdPinned.compact : junkThresholdPinned.full;
+    return stripSelfHpPlayCostFromDescriptionText(raw, card);
   }
 
-  const coreTapBranchText =
-    card.id === 'core_tap_t1' && card.effects && card.effects.length > 0;
-
-  const coreSacrificeText =
-    card.id === 'deep_core_tap_t1' && card.effects && card.effects.length > 0;
-
-  const coreRefactoringText = card.id === 'core_refactoring_t1';
+  const coreTapBranchText = /^core_tap_t[123]$/.test(card.id);
+  const coreSacrificeText = /^deep_core_tap_t[123]$/.test(card.id);
+  const coreRefactoringText = /^core_refactoring_t[123]$/.test(card.id);
   const coreRebirthText = /^core_rebirth_t[123]$/.test(card.id);
+  const sacrifCustomText = /^sacrif_(lumen|spike|plate|probe|tether|echo|cinder|forge|rift|suture)_t[123]$/.test(
+    card.id,
+  );
+  const sacrifLumenText = /^sacrif_lumen_t[123]$/.test(card.id);
+  const sacrifSpikeText = /^sacrif_spike_t[123]$/.test(card.id);
+  const sacrifPlateText = /^sacrif_plate_t[123]$/.test(card.id);
+  const sacrifProbeText = /^sacrif_probe_t[123]$/.test(card.id);
+  const sacrifTetherText = /^sacrif_tether_t[123]$/.test(card.id);
+  const sacrifEchoText = /^sacrif_echo_t[123]$/.test(card.id);
+  const sacrifCinderText = /^sacrif_cinder_t[123]$/.test(card.id);
+  const sacrifForgeText = /^sacrif_forge_t[123]$/.test(card.id);
+  const sacrifRiftText = /^sacrif_rift_t[123]$/.test(card.id);
+  const sacrifSutureText = /^sacrif_suture_t[123]$/.test(card.id);
 
   const junkSurgeText = card.id === 'field_diode_t1';
   const junkLoaderText = /^junk_loader_t[123]$/.test(card.id);
@@ -146,17 +167,147 @@ export function buildCardDescription(
   const inductionPitText = false;
 
   if (coreTapBranchText) {
-    parts.push('Spend 1 Refined Scrap: 8 damage\nOtherwise: no damage\nFactory Reset');
+    const tier = card.card_tier;
+    const directDmg = tier === 3 ? 7 : tier === 2 ? 6 : 5;
+    const j = tier === 3 ? 2 : 1;
+    parts.push('Lose 5 HP (minimum 1).');
+    parts.push(`+${String(j)} Junk.`);
+    parts.push(`Deal ${String(directDmg)} direct damage to the enemy.`);
+    parts.push('Factory Reset');
+    parts.push('Emergency Protocol 1');
   }
 
   if (coreSacrificeText) {
-    parts.push(
-      'Refined Scrap ≥ 1: Bulk 1 per Refined Scrap, Refined Scrap to 0, 12 damage\nRefined Scrap 0: no damage\nFactory Reset',
-    );
+    const strike = tieredNumber(card.card_tier, 7, 9, 11);
+    const j = card.card_tier === 3 ? 2 : 1;
+    const b = card.card_tier;
+    parts.push('Lose 5 HP (minimum 1).');
+    parts.push(`+${String(j)} Junk.`);
+    parts.push(`Bulk ${String(b)}`);
+    parts.push(`This Strike deals ${String(strike)} base damage (uses strike potency).`);
+    parts.push('Factory Reset');
+    parts.push('Emergency Protocol 1');
   }
 
   if (coreRefactoringText) {
-    parts.push('Self 5 damage, Refined Scrap 2, Overclock, Factory Reset');
+    const oc = card.keywords.find((k) => k.type === 'Overclock')?.value ?? 1;
+    const j = card.card_tier === 3 ? 3 : 2;
+    parts.push('Lose 5 HP.');
+    parts.push(`+${String(j)} Junk.`);
+    parts.push(`Overclock ${String(oc)}`);
+    parts.push('Factory Reset');
+    parts.push('Emergency Protocol 1');
+  }
+
+  if (sacrifLumenText) {
+    const t = card.card_tier;
+    parts.push('Lose 2 HP (minimum 1).');
+    if (t === 1) {
+      parts.push('+2 Junk.');
+      parts.push('+1 strike potency.');
+    } else if (t === 2) {
+      parts.push('+2 Junk.');
+      parts.push('+2 strike potency.');
+    } else {
+      parts.push('+3 Junk.');
+      parts.push('+2 strike potency.');
+    }
+  }
+  if (sacrifSpikeText) {
+    const d = card.card_tier === 3 ? 6 : card.card_tier === 2 ? 5 : 4;
+    const j = card.card_tier === 3 ? 2 : 1;
+    parts.push('Lose 5 HP (minimum 1).');
+    parts.push(`+${String(j)} Junk.`);
+    parts.push(`Deal ${String(d)} direct damage to the enemy.`);
+    parts.push('Factory Reset');
+    parts.push('Emergency Protocol 1');
+  }
+  if (sacrifPlateText) {
+    const b = card.card_tier === 3 ? 6 : card.card_tier === 2 ? 5 : 4;
+    const j = card.card_tier === 3 ? 2 : 1;
+    parts.push('Lose 5 HP (minimum 1).');
+    parts.push(`+${String(b)} shield.`);
+    parts.push(`+${String(j)} Junk.`);
+    parts.push('Factory Reset');
+    parts.push('Emergency Protocol 1');
+  }
+  if (sacrifProbeText) {
+    if (card.card_tier === 1) {
+      parts.push('Lose 1 HP (minimum 1).');
+      parts.push('+1 Energy.');
+      parts.push('Expose 1');
+      parts.push('+1 Junk');
+    } else {
+      const ex = card.card_tier === 3 ? 2 : 1;
+      const j = card.card_tier === 3 ? 2 : 1;
+      parts.push('Lose 5 HP (minimum 1).');
+      parts.push('+1 Energy.');
+      parts.push(`Expose ${String(ex)}`);
+      parts.push(`+${String(j)} Junk.`);
+      parts.push('Factory Reset');
+      parts.push('Emergency Protocol 1');
+    }
+  }
+  if (sacrifTetherText) {
+    const j = card.card_tier === 3 ? 4 : card.card_tier === 2 ? 4 : 3;
+    const e = card.card_tier === 3 ? 2 : 1;
+    parts.push('Lose 1 HP (minimum 1).');
+    parts.push(`+${String(j)} Junk.`);
+    parts.push(`+${String(e)} Energy.`);
+  }
+  if (sacrifEchoText) {
+    const j = card.card_tier === 1 ? 2 : 3;
+    parts.push('Lose 5 HP (minimum 1).');
+    parts.push(`+${String(j)} Junk.`);
+    if (card.card_tier === 3) {
+      parts.push('+1 strike potency.');
+    }
+    parts.push('Factory Reset');
+    parts.push('Emergency Protocol 1');
+    parts.push(
+      'Persistent: for the rest of the fight, Core-parts self-damage you take also deals that much non-Strike damage to the enemy (after this card resolves).',
+    );
+  }
+  if (sacrifCinderText) {
+    const b = card.card_tier;
+    const d = card.card_tier === 3 ? 8 : card.card_tier === 2 ? 7 : 6;
+    const j = card.card_tier === 3 ? 2 : 1;
+    parts.push('Lose 5 HP (minimum 1).');
+    parts.push(`+${String(j)} Junk.`);
+    parts.push(`Bulk ${String(b)}`);
+    parts.push(`Deal ${String(d)} direct damage to the enemy.`);
+    parts.push('Factory Reset');
+    parts.push('Emergency Protocol 1');
+  }
+  if (sacrifForgeText) {
+    const n = card.card_tier === 3 ? 2 : 1;
+    const j = card.card_tier === 1 ? 1 : 2;
+    const slotPhrase = n === 1 ? 'slot' : 'slots';
+    parts.push('Lose 5 HP (minimum 1).');
+    parts.push(`+${String(j)} Junk.`);
+    parts.push('Factory Reset');
+    parts.push(
+      `Replace next ${String(n)} Neutral Basic Strike ${slotPhrase} with random Core-parts cards (same tier).`,
+    );
+    parts.push('Emergency Protocol 1');
+  }
+  if (sacrifRiftText) {
+    const s = card.card_tier === 3 ? 6 : card.card_tier === 2 ? 5 : 4;
+    const d = card.card_tier === 3 ? 11 : card.card_tier === 2 ? 9 : 7;
+    const j = card.card_tier === 3 ? 3 : 2;
+    parts.push(`Lose ${String(s)} HP (self-damage, not floored to 1).`);
+    parts.push(`+${String(j)} Junk.`);
+    parts.push(`Deal ${String(d)} direct damage to the enemy.`);
+  }
+  if (sacrifSutureText) {
+    const h = card.card_tier === 1 ? 2 : 3;
+    const j = card.card_tier === 3 ? 3 : 2;
+    parts.push('Lose 3 HP (minimum 1).');
+    parts.push(`+${String(j)} Junk.`);
+    parts.push(`Heal ${String(h)} HP.`);
+    if (card.card_tier === 3) {
+      parts.push('+1 strike potency.');
+    }
   }
 
   const gatheringStrikeText = /^neutral_gathering_strike_t[123]$/.test(card.id);
@@ -243,13 +394,19 @@ export function buildCardDescription(
   if (coreRebirthText) {
     const n = Math.min(3, Math.max(1, card.card_tier));
     const slotPhrase = n === 1 ? 'slot' : 'slots';
+    const j = card.card_tier === 3 || card.card_tier === 2 ? 2 : 1;
+    parts.push('Lose 5 HP (minimum 1).');
+    parts.push(`+${String(j)} Junk.`);
+    parts.push('Factory Reset');
     parts.push(
-      `Refined Scrap 1\nReplace next ${String(n)} Neutral Basic Strike ${slotPhrase} with random CoreParts (same tier)`,
+      `Replace next ${String(n)} Neutral Basic Strike ${slotPhrase} with random Core-parts cards (same tier).`,
     );
+    parts.push('Emergency Protocol 1');
   }
 
   if (
     card.base_damage &&
+    !sacrifCustomText &&
     !coreTapBranchText &&
     !coreSacrificeText &&
     !gatheringStrikeText &&
@@ -269,7 +426,7 @@ export function buildCardDescription(
     }
   }
   const shieldReinf = /^neutral_shield_reinforcement_t[123]$/.test(card.id);
-  if (card.base_block && !shieldReinf) {
+  if (card.base_block && !sacrifCustomText && !shieldReinf) {
     parts.push(
       `Grants ${card.base_block} block (shield absorbs incoming damage before HP).`,
     );
@@ -298,11 +455,25 @@ export function buildCardDescription(
       retain && retain.type === 'SetShieldRoundRetainMultiplier'
         ? retain.retainMultiplier
         : COMBAT_RULES.shieldBlockRetainAtRoundStartDefault;
-    parts.push('Persistent');
-    parts.push(`Shield x${String(x)}`);
+    if (omit) {
+      parts.push(`Persistent: Shield retention x${x.toFixed(2)} for the rest of battle.`);
+    } else if (x === 0.75) {
+      parts.push(
+        'Persistent: for the rest of battle, your Shield retention at round start is x0.75 (you keep 75% instead of the default 50%).',
+      );
+    } else if (x === 1) {
+      parts.push(
+        'Persistent: for the rest of battle, your Shield retention at round start is x1.00 (no Shield decay).',
+      );
+    } else {
+      parts.push(
+        `Persistent: for the rest of battle, your Shield retention at round start is x${x.toFixed(2)}.`,
+      );
+    }
   }
   if (
     card.gain_charge &&
+    !sacrifCustomText &&
     !junkSurgeText &&
     !junkLoaderText &&
     !inductionPitText &&
@@ -317,7 +488,7 @@ export function buildCardDescription(
     const o = card.optional_spend_junk_for_charge;
     parts.push(`May spend ${o.spend} Junk to gain +${o.gainCharge} Energy.`);
   }
-  if (card.gain_junk && !junkLoaderText) {
+  if (card.gain_junk && !sacrifCustomText && !junkLoaderText) {
     parts.push(`Gains ${card.gain_junk} junk.`);
   }
   if (card.gain_core && !coreRefactoringText && !coreRebirthText) {
@@ -341,7 +512,7 @@ export function buildCardDescription(
     }
     parts.push(`${bits.join('; ')} (potency).`);
   }
-  if (card.heal_self) {
+  if (card.heal_self && !sacrifCustomText) {
     parts.push(`Heals ${card.heal_self} HP (self, capped at max).`);
   }
   if (card.charge_cost_if_core_gte) {
@@ -367,12 +538,7 @@ export function buildCardDescription(
     );
   }
 
-  if (
-    !coreRefactoringText &&
-    !coreRebirthText &&
-    !coreTapBranchText &&
-    !coreSacrificeText
-  ) {
+  if (!sacrifCustomText && !coreRefactoringText && !coreRebirthText && !coreTapBranchText && !coreSacrificeText) {
     for (const kw of card.keywords) {
       if (capitalisingStrikeText && kw.type === 'Pierce') {
         continue;
@@ -381,6 +547,9 @@ export function buildCardDescription(
         continue;
       }
       if (junkGeneratorText && kw.type === 'Continuous') {
+        continue;
+      }
+      if (shieldConditioningText && kw.type === 'Persistent') {
         continue;
       }
       if (omit) {
@@ -399,5 +568,5 @@ export function buildCardDescription(
     parts.push(fallbackWhenEmpty(card));
   }
 
-  return parts.join('\n');
+  return stripSelfHpPlayCostFromDescriptionText(parts.join('\n'), card);
 }

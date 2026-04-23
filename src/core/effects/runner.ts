@@ -1,6 +1,6 @@
 import { CardContentService, SeededRandom } from '../content';
 import { gainJunkWithCap } from '../combat/junkEconomy';
-import { syncExposeAuraFromField } from '../combat/state';
+import { addStunnedTurns, syncExposeAuraFromField } from '../combat/state';
 import { replaceOneDeckOccurrence } from '../deckMutation';
 import type { AuraDispatchBudget } from '../combat/auras';
 import { COMBAT_RULES } from '../rules';
@@ -84,6 +84,43 @@ function junkPlusCore(actor: FighterState): number {
   return actor.junk + actor.coreScrap;
 }
 
+function applyOutgoingWeaken(rawDamage: number, actor: FighterState): number {
+  if (rawDamage <= 0) {
+    return 0;
+  }
+  const weaken = actor.weakenStacks ?? 0;
+  if (weaken <= 0) {
+    return rawDamage;
+  }
+  return Math.max(0, rawDamage - weaken);
+}
+
+function applyEmergencyJunkShieldPreMitigation(
+  target: FighterState,
+  incomingDamage: number,
+  isStrike: boolean,
+): number {
+  if (incomingDamage <= 0) {
+    return incomingDamage;
+  }
+  if (!target.traitIds.includes('relic_emergency_junk_shield')) {
+    return incomingDamage;
+  }
+  if (target.junk <= 0) {
+    return incomingDamage;
+  }
+  if (isStrike) {
+    const absorbed = Math.min(target.junk, incomingDamage);
+    target.junk -= absorbed;
+    return incomingDamage - absorbed;
+  }
+  const junkEffective = target.junk * 2;
+  const absorbed = Math.min(junkEffective, incomingDamage);
+  const junkSpent = Math.ceil(absorbed / 2);
+  target.junk = Math.max(0, target.junk - junkSpent);
+  return incomingDamage - absorbed;
+}
+
 const SNAPSHOT_STEP_TYPES = new Set<EffectType>([
   'StrikeDamage',
   'DirectHpDamage',
@@ -107,7 +144,11 @@ function dealDirectHpDamage(
   if (rawDamage <= 0) {
     return;
   }
-  let damage = rawDamage;
+  let damage = applyOutgoingWeaken(rawDamage, actor);
+  damage = applyEmergencyJunkShieldPreMitigation(target, damage, false);
+  if (damage <= 0) {
+    return;
+  }
   let hpLoss: number;
   if (pierce) {
     hpLoss = damage;
@@ -122,6 +163,21 @@ function dealDirectHpDamage(
   if (dispatchDamageAura && damage > 0) {
     ctx.dispatchAuraTrigger(state, target, actor, 'OnDamageTaken');
   }
+}
+
+function maybeMirrorCoreSelfDamageLoss(loss: number, frame: PipelineFrame): void {
+  if (loss <= 0) {
+    return;
+  }
+  const { actor, ctx } = frame;
+  if (!actor.mirrorCoreSelfDamage) {
+    return;
+  }
+  const card = ctx.resolvingCard;
+  if (!card || !card.keywords.some((k) => k.type === 'CoreParts')) {
+    return;
+  }
+  dealDirectHpDamage(loss, false, frame, true);
 }
 
 const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
@@ -165,20 +221,52 @@ const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
       actor.hp = Math.min(actor.hp + step.amount, COMBAT_RULES.startingHp);
     }
   },
-  SelfDamage: (step, { actor }) => {
-    if (step.amount > 0) {
-      actor.hp = Math.max(0, actor.hp - step.amount);
-    }
-  },
-  SelfDamageRespectFloor1: (step, { actor }) => {
+  SelfDamage: (step, frame) => {
     if (step.amount <= 0) {
       return;
     }
+    const { actor } = frame;
+    const before = actor.hp;
+    actor.hp = Math.max(0, actor.hp - step.amount);
+    const loss = before - actor.hp;
+    maybeMirrorCoreSelfDamageLoss(loss, frame);
+  },
+  SelfDamageRespectFloor1: (step, frame) => {
+    if (step.amount <= 0) {
+      return;
+    }
+    const { actor } = frame;
     const room = Math.max(0, actor.hp - 1);
     const loss = Math.min(step.amount, room);
     if (loss > 0) {
       actor.hp -= loss;
     }
+    maybeMirrorCoreSelfDamageLoss(loss, frame);
+  },
+  GainEmergencyProtocolStacks: (step, { actor }) => {
+    if (step.amount > 0) {
+      actor.emergencyProtocolStacks += step.amount;
+    }
+  },
+  SetMirrorCoreSelfDamage: (step, { actor }) => {
+    actor.mirrorCoreSelfDamage = step.active;
+  },
+  ApplyWeaken: (step, { target }) => {
+    if (step.stacks > 0) {
+      target.weakenStacks += step.stacks;
+    }
+  },
+  AddStunnedToSelf: (step, { actor }) => {
+    addStunnedTurns(actor, step.turns);
+  },
+  ScheduleEffectAfterRounds: (step, { actor, state }) => {
+    if (step.delayRounds <= 0 || step.steps.length === 0) {
+      return;
+    }
+    actor.scheduledEffects.push({
+      fireAtRound: state.roundIndex + step.delayRounds,
+      steps: [...step.steps],
+    });
   },
   StrikeDamage: (step, frame) => {
     const { actor, target, state, ctx } = frame;
@@ -227,6 +315,8 @@ const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
         text: `${actor.name} applies Expose (+${String(exposePool)}) to this strike.`,
       });
     }
+    damage = applyOutgoingWeaken(damage, actor);
+    damage = applyEmergencyJunkShieldPreMitigation(target, damage, true);
     if (damage <= 0) {
       return;
     }

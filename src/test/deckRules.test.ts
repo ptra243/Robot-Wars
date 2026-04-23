@@ -42,7 +42,7 @@ describe('validateDeckComposition', () => {
     expect(validateDeckComposition(run, content)).toBe(null);
   });
 
-  it('rejects more than 3 copies of the same non-staple non-UniqueDeck card', () => {
+  it('per-card copy cap is disabled when MAX_COPIES_PER_NON_UNIQUE_CARD_ID is infinite', () => {
     const run = createNewRun(1);
     run.hand = [
       'neutral_feint_t1',
@@ -50,6 +50,6 @@ describe('validateDeckComposition', () => {
       'neutral_feint_t1',
       'neutral_feint_t1',
     ];
-    expect(validateDeckComposition(run, content)).toMatch(/at most 3/i);
+    expect(validateDeckComposition(run, content)).toBe(null);
   });
 });

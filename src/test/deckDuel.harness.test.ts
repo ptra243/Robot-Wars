@@ -28,13 +28,28 @@ describe('deck duel harness', () => {
 
   it('applies starting refined scrap when requested', () => {
     const r = runDeckDuel(content, {
-      player: [...ARCHETYPE_DECKS.refinedScrapCore],
+      player: ['core_tap_t1', 'neutral_basic_strike_t1', 'junk_loader_t1', 'gutter_offering_t1', 'strip_mine_t1', 'junk_recycle_t1', 'salvage_mantle_t1'],
       enemy: [...ARCHETYPE_DECKS.junkSpend],
       seed: 7,
       playerCoreScrap: 2,
     });
     expect(r.initialSnapshot.player.coreScrap).toBe(2);
     expect(r.initialSnapshot.enemy.coreScrap).toBe(0);
+  });
+
+  it('hpSacGraft showcase decklists run to completion', () => {
+    const r0 = runDeckDuel(content, {
+      player: [...ARCHETYPE_DECKS.hpSacGraftAw0],
+      enemy: [...ARCHETYPE_DECKS.junkSpend],
+      seed: 500,
+    });
+    expect(r0.rounds).toBeGreaterThan(0);
+    const r1 = runDeckDuel(content, {
+      player: [...ARCHETYPE_DECKS.hpSacGraftAw1],
+      enemy: [...ARCHETYPE_DECKS.bulkPotencyStrikesShields],
+      seed: 501,
+    });
+    expect(r1.rounds).toBeGreaterThan(0);
   });
 
   it('formatDecklistOrder prints names in queue order', () => {
@@ -56,8 +71,8 @@ describe('deck duel harness', () => {
           player: [...ARCHETYPE_DECKS[playerKey]],
           enemy: [...ARCHETYPE_DECKS[enemyKey]],
           seed: 200 + i * 20 + j,
-          playerCoreScrap: playerKey === 'refinedScrapCore' ? 2 : 0,
-          enemyCoreScrap: enemyKey === 'refinedScrapCore' ? 2 : 0,
+          playerCoreScrap: 0,
+          enemyCoreScrap: 0,
         });
         expect(r.rounds, `${String(playerKey)} vs ${String(enemyKey)}`).toBeGreaterThan(0);
       }

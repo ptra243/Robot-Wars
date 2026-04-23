@@ -61,14 +61,46 @@ export function QueueSlot({
       onDrop={onDrop}
     >
       <div className="forge-poc__slot-index">{String(index + 1).padStart(2, '0')}</div>
-      <div className="forge-poc__slot-cost-badge" aria-label={`Energy cost ${String(card.cost)}`}>
-        <span className="forge-poc__slot-cost-label">EN</span>
-        <span className="forge-poc__slot-cost-value">{card.cost}</span>
+      <div
+        className={[
+          'forge-poc__slot-cost-badge',
+          card.hpPlayCost !== undefined ? 'forge-poc__slot-cost-badge--hp' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        aria-label={
+          card.hpPlayCost !== undefined
+            ? `HP cost ${String(card.hpPlayCost)}`
+            : `Energy cost ${String(card.cost)}`
+        }
+      >
+        <span className="forge-poc__slot-cost-label">
+          {card.hpPlayCost !== undefined ? 'HP' : 'EN'}
+        </span>
+        <span className="forge-poc__slot-cost-value">
+          {card.hpPlayCost !== undefined ? card.hpPlayCost : card.cost}
+        </span>
       </div>
       <div
-        className="forge-poc__slot-art"
-        style={{ backgroundImage: `url(${card.art})` }}
-      />
+        className={`forge-poc__slot-art${
+          card.artFocus === 'core-reactor' ? ' forge-poc__slot-art--core-reactor' : ''
+        }`}
+        style={card.artFocus === 'core-reactor' ? undefined : { backgroundImage: `url(${card.art})` }}
+      >
+        {card.artFocus === 'core-reactor' ? (
+          <>
+            <div className="forge-poc__slot-art-void" aria-hidden />
+            <div className="forge-poc__slot-art-bgi">
+              <img
+                className="forge-poc__slot-art-bgi-img"
+                src={card.art}
+                alt=""
+                draggable={false}
+              />
+            </div>
+          </>
+        ) : null}
+      </div>
       <div className="forge-poc__slot-gloss" />
       <div className="forge-poc__slot-footer">
         <span className="forge-poc__slot-name">{card.name}</span>

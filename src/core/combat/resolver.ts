@@ -16,6 +16,32 @@ import {
 } from './flow';
 import { pushEv, syncExposeAuraFromField } from './state';
 
+function cardHasJunkThreshold(card: CardDef): boolean {
+  if (card.bonus_strike_damage_if_junk_plus_core_gte || card.bonus_block_if_junk_plus_core_gte) {
+    return true;
+  }
+  const effects = getResolvedEffectPipeline(card);
+  return effects.some(
+    (step) =>
+      step.type === 'BranchIfJunkGte' ||
+      (step.type === 'StrikeDamage' && step.bonusDamageIfJunkPlusCoreSumGte !== undefined) ||
+      (step.type === 'ShieldBlock' && step.bonusBlockIfJunkPlusCoreSumGte !== undefined),
+  );
+}
+
+function deckIsAllNeutral(content: CardContentService, actor: FighterState): boolean {
+  const ids = [...actor.deck, ...actor.queue.filter((id): id is string => Boolean(id))];
+  if (ids.length === 0) return false;
+  for (const id of ids) {
+    try {
+      if (!content.get(id).neutral) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function resolveFighter(
   content: CardContentService,
   state: CombatState,
@@ -29,6 +55,9 @@ export function resolveFighter(
   let queuedId = actor.queue[queueIndex];
 
   if (!queuedId) {
+    queuedId = 'neutral_basic_strike_t1';
+  }
+  if (actor.primeDirectiveActiveThisTurn) {
     queuedId = 'neutral_basic_strike_t1';
   }
 
@@ -82,6 +111,8 @@ function resolveCard(
   }
 
   const junkSnapshotAtResolveStart = actor.junk;
+  const chargeBefore = actor.charge;
+  const junkBefore = actor.junk;
   const rawSteps = getResolvedEffectPipeline(card);
   const expanded = expandEffectSteps(rawSteps, actor, junkSnapshotAtResolveStart);
   const firstStrikeIndex = expanded.findIndex((step) => step.type === 'StrikeDamage');
@@ -94,6 +125,17 @@ function resolveCard(
         )
       : expanded;
   const steps = finalizeEffectPipeline(aw0Adjusted);
+  const cardHadDelayScheduling = steps.some((step) => step.type === 'ScheduleEffectAfterRounds');
+  if (actor.traitIds.includes('relic_overclock_mandate') && actor.junk > 40 && cardHasJunkThreshold(card)) {
+    steps.push({ type: 'Keyword', spec: { type: 'Overclock', value: 1 } });
+  }
+  if (
+    actor.traitIds.includes('relic_basic_instincts') &&
+    /^neutral_basic_strike_t[123]$/.test(card.id) &&
+    deckIsAllNeutral(content, actor)
+  ) {
+    steps.push({ type: 'Keyword', spec: { type: 'Overclock', value: 1 } });
+  }
   const { junk: needJunk, core: needCore } = getSpendPrerequisites(steps);
 
   if (needJunk > actor.junk) {
@@ -121,6 +163,7 @@ function resolveCard(
   const auraBudget = createAuraDispatchBudget();
 
   let overclockConsumedThisResolution = false;
+  const queueIdBeforeResolve = actor.queue[queueIndex] ?? null;
 
   const { dealt, blocked, selfDamage } = runEffectPipeline(
     state,
@@ -192,7 +235,16 @@ function resolveCard(
 
   // Dispatch onCardResolved to all active traits on the actor.
   const cardCtx = { state, content, push: (ev: CombatEvent) => pushEv(state, events, ev) };
-  callTraitOnCardResolved(actor, target, card, queueIndex, cardCtx);
+  callTraitOnCardResolved(actor, target, card, queueIndex, cardCtx, {
+    dealt,
+    blocked,
+    selfDamage,
+    transformedCurrentSlot: (actor.queue[queueIndex] ?? null) !== queueIdBeforeResolve,
+    chargeGained: Math.max(0, actor.charge - chargeBefore),
+    junkGained: Math.max(0, actor.junk - junkBefore),
+    junkSpent: Math.max(0, junkBefore - actor.junk),
+    cardHadDelayScheduling,
+  });
 }
 
 function applyKeyword(
@@ -225,7 +277,13 @@ function applyKeyword(
     }
     case 'Overclock':
       if (allowBonusNext && keyword.value > 0) {
-        resolveBonusNext(content, state, actor, target, events, combatSeed);
+        if (actor.overclockBonusUsedThisTurn) {
+          return;
+        }
+        const fired = resolveBonusNext(content, state, actor, target, events, combatSeed);
+        if (fired) {
+          actor.overclockBonusUsedThisTurn = true;
+        }
       }
       return;
     case 'TurboLink':
@@ -299,7 +357,7 @@ function resolveBonusNext(
   target: FighterState,
   events: CombatEvent[],
   combatSeed: number,
-): void {
+): boolean {
   const activeSlots = Math.max(3, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
   const next = (actor.queueCursor + 1) % activeSlots;
   const queuedId = actor.queue[next];
@@ -311,10 +369,11 @@ function resolveBonusNext(
       actor: actor.name,
       text: `${actor.name} bonus resolution fizzles.`,
     });
-    return;
+    return false;
   }
 
   const card = content.get(queuedId);
   resolveCard(content, state, actor, target, card, next, events, false, combatSeed);
   state.globalResolutions += 1;
+  return true;
 }

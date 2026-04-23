@@ -27,6 +27,7 @@ import { ForgeTopBar } from './ForgeTopBar';
 import { HandSection } from './HandSection';
 import { LibraryCard } from './LibraryCard';
 import { PilotPanel } from './PilotPanel';
+import { PocKnockoutCardFilter } from '../PocKnockoutCardFilter';
 import type { ContextMenuState, DragPayload, ForgeCard, HoverState } from './types';
 
 interface ForgePOCProps {
@@ -576,6 +577,7 @@ export function ForgePOC({
       className={`forge-poc forge-poc--scavengers${isRunMode ? ' forge-poc--run' : ''}`}
       style={runBackdropStyle}
     >
+      <PocKnockoutCardFilter />
       <div className="forge-poc__bg" />
       <div className="forge-poc__scanlines" />
       <div className="forge-poc__vignette" />

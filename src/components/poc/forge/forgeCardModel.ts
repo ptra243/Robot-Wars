@@ -2,6 +2,7 @@ import type { CardContentService } from '../../../core/content';
 import { SeededRandom } from '../../../core/content';
 import type { CardDef } from '../../../core/types';
 import { buildCardDescription } from '../../../ui/cardText';
+import { hpPlayCostAmountForUi } from '../../../ui/hpPlayCost';
 import { QUEUE_SIZE } from './constants';
 import type { ForgeCard, ForgeFaction } from './types';
 
@@ -10,9 +11,21 @@ const ART = {
   shield: '/poc/poc-card-shield.png',
   junk: '/poc/poc-card-junk.png',
   overclock: '/poc/poc-card-overclock.png',
+  /** Core sacrifice / factory placeholder — use with `.forge-poc__*-art--core-reactor` crop. */
+  core: '/poc/poc-core-werewolf-mech-reactor-placeholder.png',
 } as const;
 
+/** Scavenger core retool + HP/sacrifice `sacrif_*` lines — shared reactor art + CSS crop. */
+export function isCoreSacrificeLineCardId(id: string): boolean {
+  return (
+    /^(core_tap|core_refactoring|core_rebirth|deep_core_tap)_/.test(id) || /^sacrif_/.test(id)
+  );
+}
+
 function artForCard(card: CardDef): string {
+  if (isCoreSacrificeLineCardId(card.id)) {
+    return ART.core;
+  }
   const tags = card.tags;
   if (card.keywords.some((k) => k.type === 'Overclock')) return ART.overclock;
   if (tags.includes('Strike')) return ART.strike;
@@ -53,17 +66,20 @@ function tierFromDef(card: CardDef): 1 | 2 | 3 {
 export function forgeCardFromDef(card: CardDef): ForgeCard {
   const atk = card.base_damage > 0 ? card.base_damage : undefined;
   const def = card.base_block > 0 ? card.base_block : undefined;
+  const hpPlay = hpPlayCostAmountForUi(card);
   return {
     id: card.id,
     name: card.name,
     tier: tierFromDef(card),
     cost: card.charge_cost,
+    hpPlayCost: hpPlay ?? undefined,
     atk,
     def,
     faction: factionClass(card),
     tags: [...card.tags],
     keywords: card.keywords.map((k) => ({ type: k.type, value: k.value })),
     art: artForCard(card),
+    artFocus: isCoreSacrificeLineCardId(card.id) ? 'core-reactor' : 'default',
     blurb: buildCardDescription(card, { omitTagsAndKeywords: true }),
   };
 }

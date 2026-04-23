@@ -18,12 +18,16 @@ export interface ForgeCard {
   name: string;
   tier: 1 | 2 | 3;
   cost: number;
+  /** When set, show red HP play cost instead of EN (0 energy + self-damage in effects). */
+  hpPlayCost?: number;
   atk?: number;
   def?: number;
   faction: ForgeFaction;
   tags: CardTag[];
   keywords: ForgeKeyword[];
   art: string;
+  /** Tighter background crop for core sacrifice line art (reactor + hand). */
+  artFocus: 'default' | 'core-reactor';
   blurb: string;
 }
 

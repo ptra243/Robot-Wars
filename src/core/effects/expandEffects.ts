@@ -22,6 +22,11 @@ export function expandEffectSteps(
         ...step,
         thenSteps: expandEffectSteps(step.thenSteps, actor, junkSnapshot),
       });
+    } else if (step.type === 'ScheduleEffectAfterRounds') {
+      out.push({
+        ...step,
+        steps: expandEffectSteps(step.steps, actor, junkSnapshot),
+      });
     } else {
       out.push(step);
     }

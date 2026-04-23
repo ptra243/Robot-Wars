@@ -23,6 +23,7 @@ export function makeTestFighter(
     coreScrap: 0,
     potency: 0,
     exposeDamage: 0,
+    weakenStacks: 0,
     deckCursor: 0,
     deckWraps: 0,
     queueCursor: 0,
@@ -38,5 +39,12 @@ export function makeTestFighter(
     strikeResolutionsThisCombat: 0,
     traitIds: [],
     tempUpgrade: null,
+    emergencyProtocolStacks: 0,
+    mirrorCoreSelfDamage: false,
+    overclockBonusUsedThisTurn: false,
+    scheduledEffects: [],
+    lastDeckWrapsSeenForRelics: 0,
+    primeDirectiveActiveThisTurn: false,
+    preventEmergencyProtocolSpendThisTurn: false,
   };
 }

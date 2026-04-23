@@ -13,7 +13,7 @@ describe('playEncounter', () => {
     expect(run.deck).toEqual(['salvage_strike_t1', 'junk_loader_t1']);
   });
 
-  it('on victory, syncs run.deck from combat and removes a transformed core tap id', () => {
+  it('on victory, in-combat Factory Reset does not remove Core Tap from the run (post-combat revert)', () => {
     const run = createNewRun(42);
     run.deck = ['core_tap_t1', 'neutral_basic_strike_t1'];
     run.plannedQueue = Array.from({ length: 9 }, () => null);
@@ -25,7 +25,7 @@ describe('playEncounter', () => {
       return;
     }
 
-    expect(run.deck.includes('core_tap_t1')).toBe(false);
-    expect(run.deck.filter((id) => id === 'neutral_basic_strike_t1').length).toBeGreaterThanOrEqual(2);
+    expect(run.plannedQueue[0]).toBe('core_tap_t1');
+    expect(run.deck.includes('core_tap_t1')).toBe(true);
   });
 });

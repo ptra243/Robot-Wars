@@ -1,6 +1,9 @@
 import type { CardContentService } from '../content';
+import { finalizeEffectPipeline } from '../effects/compileLegacy';
+import { expandEffectSteps } from '../effects/expandEffects';
+import { getSpendPrerequisites, runEffectPipeline } from '../effects/runner';
 import { COMBAT_RULES } from '../rules';
-import { callTraitOnStall } from '../traits';
+import { callTraitOnStall, callTraitOnTurnStart } from '../traits';
 import type { CardDef, CombatEvent, CombatState, FighterState } from '../types';
 import { gainJunkWithCap } from './junkEconomy';
 import { createAuraDispatchBudget, dispatchAuraTrigger } from './auras';
@@ -83,6 +86,19 @@ export function applyTurnStartForFighter(
   });
 }
 
+export function decayWeakenAtTurnEnd(state: CombatState, fighter: FighterState, events: CombatEvent[]): void {
+  if (fighter.weakenStacks <= 0) {
+    return;
+  }
+  fighter.weakenStacks -= 1;
+  pushEv(state, events, {
+    type: 'weaken_decay',
+    round: state.roundIndex,
+    actor: fighter.name,
+    text: `${fighter.name} Weaken decays to ${String(fighter.weakenStacks)}.`,
+  });
+}
+
 /**
  * Same stall pipeline as missing charge (trait hooks, stall count, optional forced skip).
  * For `stunned`, one Stunned stack is consumed after the stall resolves.
@@ -151,8 +167,16 @@ export function beginFighterTurn(
   opponent: FighterState,
   events: CombatEvent[],
 ): boolean {
+  if (actor === state.player) {
+    actor.overclockBonusUsedThisTurn = false;
+  }
+  actor.primeDirectiveActiveThisTurn = false;
+  actor.preventEmergencyProtocolSpendThisTurn = false;
+  resolveScheduledEffectsForTurn(content, state, actor, opponent, events);
   applyPendingRustRangerCircuitBonus(state, actor, events);
   applyContinuousTicks(state, actor, opponent, events);
+  const traitCtx = { state, content, push: (ev: CombatEvent) => pushEv(state, events, ev) };
+  callTraitOnTurnStart(actor, opponent, traitCtx);
   applyTurnStartForFighter(state, actor, opponent, events);
 
   const stun = actor.auras.find((a): a is { type: 'Stunned'; turnsLeft: number } => a.type === 'Stunned');
@@ -161,6 +185,112 @@ export function beginFighterTurn(
     return true;
   }
   return false;
+}
+
+function resolveScheduledEffectsForTurn(
+  content: CardContentService,
+  state: CombatState,
+  actor: FighterState,
+  opponent: FighterState,
+  events: CombatEvent[],
+): void {
+  const ready = actor.scheduledEffects.filter((entry) => entry.fireAtRound <= state.roundIndex);
+  if (ready.length === 0) {
+    return;
+  }
+  actor.scheduledEffects = actor.scheduledEffects.filter((entry) => entry.fireAtRound > state.roundIndex);
+  for (const entry of ready) {
+    const expanded = expandEffectSteps(entry.steps, actor, actor.junk);
+    const steps = finalizeEffectPipeline(expanded);
+    const { junk: needJunk, core: needCore } = getSpendPrerequisites(steps);
+    if (needJunk > actor.junk || needCore > actor.coreScrap) {
+      pushEv(state, events, {
+        type: 'delayed_whiff',
+        round: state.roundIndex,
+        actor: actor.name,
+        text: `${actor.name} cannot pay to resolve a delayed effect.`,
+      });
+      continue;
+    }
+    const auraBudget = createAuraDispatchBudget();
+    runEffectPipeline(
+      state,
+      actor,
+      opponent,
+      steps,
+      {
+        applyKeyword: () => {},
+        dispatchAuraTrigger: (dispatchState, dispatchActor, dispatchTarget, trigger) =>
+          dispatchAuraTrigger(
+            dispatchState,
+            dispatchActor,
+            dispatchTarget,
+            trigger,
+            events,
+            auraBudget,
+          ),
+        auraBudget,
+        pushEv: (event) => pushEv(state, events, event),
+        content,
+      },
+      undefined,
+      actor.junk,
+    );
+    pushEv(state, events, {
+      type: 'delayed_resolve',
+      round: state.roundIndex,
+      actor: actor.name,
+      text: `${actor.name} resolves a delayed effect.`,
+    });
+  }
+}
+
+/**
+ * Emergency Protocol (B): at the end of the player's turn, EP stacks inflict self-damage
+ * equal to the current stack count (minimum 1). If this drops HP to 0 or below and stacks remain,
+ * spend 1 stack, +1 strike potency, and survive at 1 HP. If still 0 with no stacks, caller ends fight.
+ */
+export function resolveEmergencyProtocolEndOfPlayerTurn(state: CombatState, events: CombatEvent[]): void {
+  const p = state.player;
+  if (p.emergencyProtocolStacks > 0) {
+    const selfDamage = Math.max(1, p.emergencyProtocolStacks);
+    p.hp -= selfDamage;
+    pushEv(state, events, {
+      type: 'emergency_protocol_drain',
+      round: state.roundIndex,
+      actor: p.name,
+      text: `${p.name} Emergency Protocol backlash: takes ${selfDamage} self-damage (${String(
+        p.emergencyProtocolStacks,
+      )} stack(s)).`,
+    });
+  }
+  if (p.hp > 0) {
+    return;
+  }
+  if (p.preventEmergencyProtocolSpendThisTurn) {
+    p.hp = 1;
+    pushEv(state, events, {
+      type: 'emergency_protocol_hold',
+      round: state.roundIndex,
+      actor: p.name,
+      text: `${p.name} Emergency Protocol stack is preserved this turn.`,
+    });
+    p.preventEmergencyProtocolSpendThisTurn = false;
+    return;
+  }
+  if (p.emergencyProtocolStacks > 0) {
+    p.emergencyProtocolStacks -= 1;
+    p.potency += 1;
+    p.hp = 1;
+    pushEv(state, events, {
+      type: 'emergency_protocol',
+      round: state.roundIndex,
+      actor: p.name,
+      text: `${p.name} Emergency Protocol — spend 1 stack, +1 strike potency, survive at 1 HP (${String(
+        p.emergencyProtocolStacks,
+      )} stack(s) left).`,
+    });
+  }
 }
 
 export function isContinuousSkipped(actor: FighterState, queueIndex: number, card: CardDef): boolean {

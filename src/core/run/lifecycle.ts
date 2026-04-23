@@ -5,6 +5,27 @@ import { callTraitOnCombatStart } from '../traits';
 import type { CombatResult, RunState } from '../types';
 import { buildEnemyDeck, createPreviewFighter, deckWithBasicsIfEmpty } from './combatSetup';
 import { applyPostCombatRewards, initRunLoop } from './runLoop';
+import {
+  applyQueuePersistenceToPlayerDeck,
+  persistedQueueSlotIdAfterCombat,
+} from './queuePostCombat';
+
+const RELIC_TRAIT_MAP: Record<string, string> = {
+  if_no_shield_gain_shield_2: 'relic_reactive_plating',
+  regen_start_turn_1: 'relic_repair_nanites',
+  neutral_non_basic_gain_junk_2: 'relic_scrap_condenser',
+  hp_pay_damage_equal: 'relic_berserker_instincts',
+  transform_strike_2: 'relic_hot_swap_injector',
+  trash_dynamo: 'relic_trash_dynamo',
+  scrap_recycling: 'relic_scrap_recycling',
+  junk_shrapnel: 'relic_junk_shrapnel',
+  stall_shield_weaken: 'relic_stall_shield_weaken',
+  delay_double_cast: 'relic_delay_double_cast',
+  epic_prime_directive: 'relic_prime_directive',
+  epic_overclock_mandate: 'relic_overclock_mandate',
+  epic_basic_instincts: 'relic_basic_instincts',
+  epic_emergency_junk_shield: 'relic_emergency_junk_shield',
+};
 
 /** Default sandbox hand (cards are not in `run.deck` until {@link loadFatigueDeckFromHand}). */
 export const SANDBOX_STARTER_HAND: string[] = [
@@ -179,6 +200,12 @@ function createCombatSetup(run: RunState, content: CardContentService) {
     true,
     run.loop.playerTraitIds,
   );
+  for (const relicId of run.loop.relicIds) {
+    const mapped = RELIC_TRAIT_MAP[relicId];
+    if (mapped) {
+      player.traitIds.push(mapped);
+    }
+  }
   player.hp = run.loop.playerHp;
   callTraitOnCombatStart(player, content);
 
@@ -193,6 +220,10 @@ function createCombatSetup(run: RunState, content: CardContentService) {
   const potencyStacks = run.loop.relicIds.filter((id) => id === 'potency_start_plus_1').length;
   if (potencyStacks > 0) {
     player.potency += potencyStacks;
+  }
+  const chargeStacks = run.loop.relicIds.filter((id) => id === 'charge_start_plus_2').length;
+  if (chargeStacks > 0) {
+    player.charge += chargeStacks * 2;
   }
 
   // Baron von Boar — The Whole Hog (Aw1): +1 potency per 50 gold at combat start
@@ -232,7 +263,13 @@ export function playEncounter(run: RunState, content: CardContentService): Comba
   return result;
 }
 
-function syncRunFromCombatResult(
+/**
+ * Apply combat outcome to the run after a fight (used by {@link playEncounter};
+ * export for tests and tooling). On defeat, deck/planned queues are restored; on
+ * victory, in-combat-only queue transforms (factory reset, temp tier upgrade) are reverted
+ * to pre-combat planned cards while persisting real grafts and deck sync.
+ */
+export function syncRunFromCombatResult(
   run: RunState,
   result: CombatResult,
   initialPlanned: Array<string | null>,
@@ -251,31 +288,38 @@ function syncRunFromCombatResult(
   }
 
   run.loop.playerHp = Math.max(0, result.finalState.player.hp);
-  run.deck = [...result.finalState.player.deck];
 
+  const finalPlayerQ = result.finalState.player.queue;
+  const nextPlanned: Array<string | null> = [];
   for (let i = 0; i < COMBAT_RULES.queueSize; i += 1) {
-    const finalId = result.finalState.player.queue[i] ?? null;
-    if (finalId === blank && (initialPlanned[i] == null || initialPlanned[i] === '')) {
-      run.plannedQueue[i] = null;
-    } else {
-      run.plannedQueue[i] = finalId;
-    }
+    nextPlanned[i] = persistedQueueSlotIdAfterCombat(
+      initialPlanned[i],
+      finalPlayerQ[i] ?? null,
+      blank,
+    );
   }
-
   // Scrap Ping (Aw0): revert the temporary queue upgrade so it never persists across combats.
   const upgrade = result.finalState.player.tempUpgrade;
   if (upgrade) {
-    run.plannedQueue[upgrade.slotIndex] = upgrade.originalId;
+    nextPlanned[upgrade.slotIndex] = upgrade.originalId;
   }
+  run.plannedQueue = nextPlanned;
+  run.deck = applyQueuePersistenceToPlayerDeck(
+    result.finalState.player.deck,
+    finalPlayerQ,
+    nextPlanned,
+  );
 
+  const finalEnemyQ = result.finalState.enemy.queue;
+  const nextEnemy: Array<string | null> = [];
   for (let i = 0; i < COMBAT_RULES.queueSize; i += 1) {
-    const finalId = result.finalState.enemy.queue[i] ?? null;
-    if (finalId === blank && (initialEnemyPlanned[i] == null || initialEnemyPlanned[i] === '')) {
-      run.enemyPlannedQueue[i] = null;
-    } else {
-      run.enemyPlannedQueue[i] = finalId;
-    }
+    nextEnemy[i] = persistedQueueSlotIdAfterCombat(
+      initialEnemyPlanned[i],
+      finalEnemyQ[i] ?? null,
+      blank,
+    );
   }
+  run.enemyPlannedQueue = nextEnemy;
 }
 
 export function buildDeckSummary(run: RunState, content: CardContentService): string {

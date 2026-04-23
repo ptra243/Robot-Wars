@@ -33,6 +33,17 @@ export interface TraitHookCtx {
   push: (event: CombatEvent) => void;
 }
 
+export interface TraitCardResolutionSummary {
+  dealt: number;
+  blocked: number;
+  selfDamage: number;
+  transformedCurrentSlot: boolean;
+  chargeGained: number;
+  junkGained: number;
+  junkSpent: number;
+  cardHadDelayScheduling: boolean;
+}
+
 /* ── TraitDef ─────────────────────────────────────────────────────────────── */
 
 export interface TraitDef {
@@ -67,7 +78,10 @@ export interface TraitDef {
       /** 0-indexed position in the queue. */
       queueIndex: number,
       ctx: TraitHookCtx,
+      resolution: TraitCardResolutionSummary,
     ) => void;
+    /** Called at the start of this fighter's activation, after turn-start auras. */
+    onTurnStart?: (actor: FighterState, opponent: FighterState, ctx: TraitHookCtx) => void;
   };
 }
 
@@ -285,6 +299,257 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
   //     onRoundStart(actor, ctx) { actor.junk += 1; },
   //   },
   // },
+
+  relic_reactive_plating: {
+    id: 'relic_reactive_plating',
+    label: 'Reactive Plating',
+    text: 'At the start of your turn, if you have no shield, gain 2 shield.',
+    hooks: {
+      onTurnStart(actor, _opponent, ctx) {
+        if (actor.block > 0) return;
+        actor.block += 2;
+        ctx.push({
+          type: 'trait_effect',
+          round: ctx.state.roundIndex,
+          actor: actor.name,
+          text: `Reactive Plating: ${actor.name} gains 2 shield.`,
+        });
+      },
+    },
+  },
+
+  relic_repair_nanites: {
+    id: 'relic_repair_nanites',
+    label: 'Repair Nanites',
+    text: 'At the start of your turn, recover 1 HP.',
+    hooks: {
+      onTurnStart(actor, _opponent, ctx) {
+        const before = actor.hp;
+        actor.hp = Math.min(COMBAT_RULES.startingHp, actor.hp + 1);
+        if (actor.hp === before) return;
+        ctx.push({
+          type: 'trait_effect',
+          round: ctx.state.roundIndex,
+          actor: actor.name,
+          text: `Repair Nanites: ${actor.name} recovers 1 HP.`,
+        });
+      },
+    },
+  },
+
+  relic_scrap_condenser: {
+    id: 'relic_scrap_condenser',
+    label: 'Scrap Condenser',
+    text: 'When you play a neutral non-basic strike card, gain 2 junk.',
+    hooks: {
+      onCardResolved(actor, _target, card, _queueIndex, ctx) {
+        if (!card.neutral) return;
+        if (/^neutral_basic_strike_t[123]$/.test(card.id)) return;
+        actor.junk += 2;
+        ctx.push({
+          type: 'trait_effect',
+          round: ctx.state.roundIndex,
+          actor: actor.name,
+          text: `Scrap Condenser: ${actor.name} gains 2 junk.`,
+        });
+      },
+    },
+  },
+
+  relic_berserker_instincts: {
+    id: 'relic_berserker_instincts',
+    label: 'Berserker Instincts',
+    text: 'When paying HP for a card, deal that much direct damage to the enemy.',
+    hooks: {
+      onCardResolved(actor, target, _card, _queueIndex, ctx, resolution) {
+        if (resolution.selfDamage <= 0) return;
+        const damage = resolution.selfDamage;
+        const absorbed = Math.min(target.block, damage);
+        target.block -= absorbed;
+        const hpLoss = damage - absorbed;
+        if (hpLoss > 0) {
+          target.hp = Math.max(0, target.hp - hpLoss);
+        }
+        ctx.push({
+          type: 'trait_effect',
+          round: ctx.state.roundIndex,
+          actor: actor.name,
+          text: `Berserker Instincts: ${actor.name} reflects ${String(damage)} damage.`,
+        });
+      },
+    },
+  },
+
+  relic_hot_swap_injector: {
+    id: 'relic_hot_swap_injector',
+    label: 'Hot-Swap Injector',
+    text: 'Whenever you transform a card, Strike 2.',
+    hooks: {
+      onCardResolved(actor, target, _card, _queueIndex, ctx, resolution) {
+        if (!resolution.transformedCurrentSlot) return;
+        const damage = 2;
+        const absorbed = Math.min(target.block, damage);
+        target.block -= absorbed;
+        const hpLoss = damage - absorbed;
+        if (hpLoss > 0) {
+          target.hp = Math.max(0, target.hp - hpLoss);
+        }
+        ctx.push({
+          type: 'trait_effect',
+          round: ctx.state.roundIndex,
+          actor: actor.name,
+          text: `Hot-Swap Injector: ${actor.name} triggers Strike 2.`,
+        });
+      },
+    },
+  },
+
+  relic_trash_dynamo: {
+    id: 'relic_trash_dynamo',
+    label: 'Trash Dynamo',
+    text: 'If you gained energy this card, gain 2 junk.',
+    hooks: {
+      onCardResolved(actor, _target, _card, _queueIndex, ctx, resolution) {
+        if (resolution.chargeGained <= 0) return;
+        actor.junk += 2;
+        ctx.push({
+          type: 'trait_effect',
+          round: ctx.state.roundIndex,
+          actor: actor.name,
+          text: `Trash Dynamo: ${actor.name} gains 2 junk.`,
+        });
+      },
+    },
+  },
+
+  relic_scrap_recycling: {
+    id: 'relic_scrap_recycling',
+    label: 'Scrap Recycling',
+    text: 'When you gain junk, recover that much HP (max 5 per card).',
+    hooks: {
+      onCardResolved(actor, _target, _card, _queueIndex, ctx, resolution) {
+        if (resolution.junkGained <= 0) return;
+        const heal = Math.min(5, resolution.junkGained);
+        const before = actor.hp;
+        actor.hp = Math.min(COMBAT_RULES.startingHp, actor.hp + heal);
+        const gained = actor.hp - before;
+        if (gained <= 0) return;
+        ctx.push({
+          type: 'trait_effect',
+          round: ctx.state.roundIndex,
+          actor: actor.name,
+          text: `Scrap Recycling: ${actor.name} recovers ${String(gained)} HP.`,
+        });
+      },
+    },
+  },
+
+  relic_junk_shrapnel: {
+    id: 'relic_junk_shrapnel',
+    label: 'Junk Shrapnel',
+    text: 'When you spend junk, deal that much damage.',
+    hooks: {
+      onCardResolved(actor, target, _card, _queueIndex, ctx, resolution) {
+        if (resolution.junkSpent <= 0) return;
+        const damage = resolution.junkSpent;
+        const absorbed = Math.min(target.block, damage);
+        target.block -= absorbed;
+        const hpLoss = damage - absorbed;
+        if (hpLoss > 0) {
+          target.hp = Math.max(0, target.hp - hpLoss);
+        }
+        ctx.push({
+          type: 'trait_effect',
+          round: ctx.state.roundIndex,
+          actor: actor.name,
+          text: `Junk Shrapnel: ${actor.name} deals ${String(damage)} damage.`,
+        });
+      },
+    },
+  },
+
+  relic_stall_shield_weaken: {
+    id: 'relic_stall_shield_weaken',
+    label: 'Shock Buffer',
+    text: 'When you stall, gain 2 shield and apply 2 Weaken.',
+    hooks: {
+      onStall(actor, card, ctx) {
+        actor.block += 2;
+        const target = actor === ctx.state.player ? ctx.state.enemy : ctx.state.player;
+        target.weakenStacks += 2;
+        ctx.push({
+          type: 'trait_effect',
+          round: ctx.state.roundIndex,
+          actor: actor.name,
+          text: `Shock Buffer: ${actor.name} stalls on ${card.name}, gains 2 shield and applies 2 Weaken.`,
+        });
+      },
+    },
+  },
+
+  relic_delay_double_cast: {
+    id: 'relic_delay_double_cast',
+    label: 'Chrono Fork',
+    text: 'When you cast a card with Delay, its delayed effect is also triggered immediately.',
+    hooks: {
+      onCardResolved(actor, _target, _card, _queueIndex, ctx, resolution) {
+        if (!resolution.cardHadDelayScheduling) return;
+        actor.charge += 1;
+        ctx.push({
+          type: 'trait_effect',
+          round: ctx.state.roundIndex,
+          actor: actor.name,
+          text: `Chrono Fork: ${actor.name} gains +1 energy from immediate delay trigger.`,
+        });
+      },
+    },
+  },
+
+  relic_prime_directive: {
+    id: 'relic_prime_directive',
+    label: 'Prime Directive',
+    text: 'When your deck cycles, gain potency from HP+junk and enter Emergency Protocol mode this turn.',
+    hooks: {
+      onTurnStart(actor, _opponent, ctx) {
+        const last = actor.lastDeckWrapsSeenForRelics ?? 0;
+        if (actor.deckWraps <= last) return;
+        actor.lastDeckWrapsSeenForRelics = actor.deckWraps;
+        const gain = Math.floor((actor.hp + actor.junk) / 5);
+        if (gain > 0) {
+          actor.potency += gain;
+        }
+        actor.primeDirectiveActiveThisTurn = true;
+        actor.preventEmergencyProtocolSpendThisTurn = true;
+        ctx.push({
+          type: 'trait_effect',
+          round: ctx.state.roundIndex,
+          actor: actor.name,
+          text: `Prime Directive: ${actor.name} gains ${String(gain)} potency and enters Emergency Protocol mode.`,
+        });
+      },
+    },
+  },
+
+  relic_overclock_mandate: {
+    id: 'relic_overclock_mandate',
+    label: 'Overclock Mandate',
+    text: 'Cards with junk thresholds also gain >40 junk: Overclock.',
+    hooks: {},
+  },
+
+  relic_basic_instincts: {
+    id: 'relic_basic_instincts',
+    label: 'Basic Instincts',
+    text: 'If your deck is all neutral, basic strikes gain Overclock.',
+    hooks: {},
+  },
+
+  relic_emergency_junk_shield: {
+    id: 'relic_emergency_junk_shield',
+    label: 'Emergency Junk Shield',
+    text: 'Incoming damage hits junk first. Non-strike damage is doubled against junk.',
+    hooks: {},
+  },
 };
 
 /* ── Dispatch helpers ─────────────────────────────────────────────────────── */
@@ -319,8 +584,19 @@ export function callTraitOnCardResolved(
   card: CardDef,
   queueIndex: number,
   ctx: TraitHookCtx,
+  resolution: TraitCardResolutionSummary,
 ): void {
   for (const id of actor.traitIds) {
-    TRAIT_REGISTRY[id]?.hooks.onCardResolved?.(actor, target, card, queueIndex, ctx);
+    TRAIT_REGISTRY[id]?.hooks.onCardResolved?.(actor, target, card, queueIndex, ctx, resolution);
+  }
+}
+
+export function callTraitOnTurnStart(
+  actor: FighterState,
+  opponent: FighterState,
+  ctx: TraitHookCtx,
+): void {
+  for (const id of actor.traitIds) {
+    TRAIT_REGISTRY[id]?.hooks.onTurnStart?.(actor, opponent, ctx);
   }
 }

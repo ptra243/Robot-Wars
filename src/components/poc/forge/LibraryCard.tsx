@@ -1,4 +1,5 @@
 import type { DragEvent as ReactDragEvent, MouseEvent as ReactMouseEvent } from 'react';
+import { ForgeCardFaceArt, ForgeCardFaceText } from './ForgeCardFaceParts';
 import type { ForgeCard } from './types';
 
 interface LibraryCardProps {
@@ -54,18 +55,8 @@ export function LibraryCard({
       onDragLeave={pickMode ? undefined : onDragLeave}
       onDrop={pickMode ? undefined : onDrop}
     >
-      <div
-        className="forge-poc__libcard-art"
-        style={{ backgroundImage: `url(${card.art})` }}
-      >
-        <div className="forge-poc__libcard-scrim" />
-        <div className="forge-poc__libcard-tier">T{card.tier}</div>
-        <div className="forge-poc__libcard-cost">
-          <span className="forge-poc__libcard-cost-label">EN</span>
-          <span className="forge-poc__libcard-cost-value">{card.cost}</span>
-        </div>
-      </div>
-      <div className="forge-poc__libcard-body">
+      <ForgeCardFaceArt card={card} variant="library" />
+      <ForgeCardFaceText variant="library">
         <div className="forge-poc__libcard-name">{card.name}</div>
         <div className="forge-poc__libcard-stats">
           {card.atk !== undefined ? (
@@ -75,7 +66,7 @@ export function LibraryCard({
             <span className="forge-poc__stat-def">DEF {card.def}</span>
           ) : null}
         </div>
-      </div>
+      </ForgeCardFaceText>
     </button>
   );
 }

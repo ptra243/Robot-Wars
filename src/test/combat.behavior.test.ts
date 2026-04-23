@@ -109,16 +109,24 @@ describe('CombatSimulator', () => {
     expect(gatheringResolve?.text).toMatch(/dealt=3/);
   });
 
-  it('Needle Driver Strike uses potency on the hit (10 base + potency)', () => {
+  it('Needle Driver deals base hit without junk, then bonus hit when junk is spent', () => {
     const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['needle_driver_t1']);
     player.charge = 99;
     player.potency = 10;
     const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
     const sim = new CombatSimulator(content, 1);
-    const result = sim.run({ seed: 1, player, enemy });
-    const firstPlayerResolve = result.events.find((e) => e.type === 'resolve' && e.actor === 'Player');
-    expect(firstPlayerResolve?.text).toMatch(/dealt=20/);
-    expect(firstPlayerResolve?.text).toMatch(/Enemy HP=/);
+    const withoutJunk = sim.run({ seed: 1, player: structuredClone(player), enemy: structuredClone(enemy) });
+    const withoutJunkResolve = withoutJunk.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Player',
+    );
+    expect(withoutJunkResolve?.text).toMatch(/dealt=13/);
+
+    const withJunkPlayer = structuredClone(player);
+    withJunkPlayer.junk = 3;
+    const withJunk = sim.run({ seed: 1, player: withJunkPlayer, enemy: structuredClone(enemy) });
+    const withJunkResolve = withJunk.events.find((e) => e.type === 'resolve' && e.actor === 'Player');
+    expect(withJunkResolve?.text).toMatch(/dealt=20/);
+    expect(withJunkResolve?.snapshot?.player.junk).toBe(0);
   });
 
   it('bulk stacks reduce incoming strike damage to HP by 1 per stack and persist', () => {
@@ -356,6 +364,53 @@ describe('CombatSimulator', () => {
     expect(stunnedStall).toBeDefined();
   });
 
+  it('Weaken reduces outgoing enemy damage and decays after enemy turns', () => {
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['neutral_static_clamp_t1']);
+    player.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], ['neutral_basic_strike_t1']);
+    enemy.charge = 99;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 2 });
+    const enemyRound1Resolve = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Enemy' && e.round === 1,
+    );
+    expect(enemyRound1Resolve?.text).toMatch(/dealt=0/);
+    const enemyRound2Resolve = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Enemy' && e.round === 2,
+    );
+    expect(enemyRound2Resolve?.text).toMatch(/dealt=1/);
+    expect(result.finalState.enemy.weakenStacks).toBe(0);
+  });
+
+  it('Delayed Burst resolves at the configured round delay', () => {
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['neutral_delayed_burst_t1']);
+    player.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    enemy.charge = 99;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 3 });
+    const delayedResolve = result.events.find(
+      (e) => e.type === 'delayed_resolve' && e.actor === 'Player' && e.round === 3,
+    );
+    expect(delayedResolve).toBeDefined();
+    const enemyHpAtRoundStart3 = result.events.find(
+      (e) => e.type === 'round_start' && e.round === 3,
+    )?.snapshot?.enemy.hp;
+    expect(enemyHpAtRoundStart3).toBe(38);
+    expect(delayedResolve?.snapshot?.enemy.hp).toBe(32);
+  });
+
+  it('Overdrive Slam applies self-stun and stalls next player activation', () => {
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['neutral_overdrive_slam_t1']);
+    player.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    enemy.charge = 99;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 2 });
+    const stunnedStall = result.events.find((e) => e.type === 'stunned_stall' && e.actor === 'Player');
+    expect(stunnedStall).toBeDefined();
+  });
+
   it('forge sim applies Rust Ranger base junk cap', () => {
     const queue = Array.from({ length: COMBAT_RULES.queueSize }, () => 'junk_loader_t3');
     const report = simulateForgeDeckMetrics(
@@ -382,5 +437,8 @@ describe('CardContentService (new card ids)', () => {
     expect(content.get('neutral_multi_strike_t1').name).toBe('Multi-strike');
     expect(content.get('neutral_feint_t1').name).toBe('Feint');
     expect(content.get('neutral_perpetual_motion_t1').name).toBe('Perpetual Motion');
+    expect(content.get('neutral_static_clamp_t1').name).toBe('Static Clamp');
+    expect(content.get('neutral_delayed_burst_t1').name).toBe('Delayed Burst');
+    expect(content.get('neutral_overdrive_slam_t1').name).toBe('Overdrive Slam');
   });
 });

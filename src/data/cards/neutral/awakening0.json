@@ -962,6 +962,305 @@
 					"retainMultiplier": 1
 				}
 			]
+		},
+		{
+			"id": "neutral_static_clamp_t1",
+			"name": "Static Clamp",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"merge_to": "neutral_static_clamp_t2",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 2,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "ApplyWeaken",
+					"stacks": 2
+				}
+			]
+		},
+		{
+			"id": "neutral_static_clamp_t2",
+			"name": "Static Clamp+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"merge_to": "neutral_static_clamp_t3",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 3,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "ApplyWeaken",
+					"stacks": 3
+				}
+			]
+		},
+		{
+			"id": "neutral_static_clamp_t3",
+			"name": "Static Clamp++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"tags": [
+				"Strike"
+			],
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 4,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "ApplyWeaken",
+					"stacks": 4
+				}
+			]
+		},
+		{
+			"id": "neutral_delayed_shell_t1",
+			"name": "Delayed Shell",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"tags": [
+				"Shield"
+			],
+			"merge_to": "neutral_delayed_shell_t2",
+			"effects": [
+				{
+					"type": "ScheduleEffectAfterRounds",
+					"delayRounds": 1,
+					"steps": [
+						{
+							"type": "ShieldBlock",
+							"baseBlock": 5
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "neutral_delayed_shell_t2",
+			"name": "Delayed Shell+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"tags": [
+				"Shield"
+			],
+			"merge_to": "neutral_delayed_shell_t3",
+			"effects": [
+				{
+					"type": "ScheduleEffectAfterRounds",
+					"delayRounds": 1,
+					"steps": [
+						{
+							"type": "ShieldBlock",
+							"baseBlock": 7
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "neutral_delayed_shell_t3",
+			"name": "Delayed Shell++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"tags": [
+				"Shield"
+			],
+			"effects": [
+				{
+					"type": "ScheduleEffectAfterRounds",
+					"delayRounds": 1,
+					"steps": [
+						{
+							"type": "ShieldBlock",
+							"baseBlock": 9
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "neutral_delayed_burst_t1",
+			"name": "Delayed Burst",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 1,
+			"tags": [
+				"Direct"
+			],
+			"merge_to": "neutral_delayed_burst_t2",
+			"effects": [
+				{
+					"type": "ScheduleEffectAfterRounds",
+					"delayRounds": 2,
+					"steps": [
+						{
+							"type": "DirectHpDamage",
+							"baseDamage": 6,
+							"pierce": false
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "neutral_delayed_burst_t2",
+			"name": "Delayed Burst+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 1,
+			"tags": [
+				"Direct"
+			],
+			"merge_to": "neutral_delayed_burst_t3",
+			"effects": [
+				{
+					"type": "ScheduleEffectAfterRounds",
+					"delayRounds": 2,
+					"steps": [
+						{
+							"type": "DirectHpDamage",
+							"baseDamage": 8,
+							"pierce": false
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "neutral_delayed_burst_t3",
+			"name": "Delayed Burst++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 1,
+			"tags": [
+				"Direct"
+			],
+			"effects": [
+				{
+					"type": "ScheduleEffectAfterRounds",
+					"delayRounds": 2,
+					"steps": [
+						{
+							"type": "DirectHpDamage",
+							"baseDamage": 10,
+							"pierce": false
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "neutral_overdrive_slam_t1",
+			"name": "Overdrive Slam",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 2,
+			"tags": [
+				"Strike"
+			],
+			"merge_to": "neutral_overdrive_slam_t2",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 8,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "AddStunnedToSelf",
+					"turns": 1
+				}
+			]
+		},
+		{
+			"id": "neutral_overdrive_slam_t2",
+			"name": "Overdrive Slam+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 2,
+			"tags": [
+				"Strike"
+			],
+			"merge_to": "neutral_overdrive_slam_t3",
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 10,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "AddStunnedToSelf",
+					"turns": 1
+				}
+			]
+		},
+		{
+			"id": "neutral_overdrive_slam_t3",
+			"name": "Overdrive Slam++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 2,
+			"tags": [
+				"Strike"
+			],
+			"effects": [
+				{
+					"type": "StrikeDamage",
+					"baseDamage": 12,
+					"pierce": false,
+					"useStrikePotency": true
+				},
+				{
+					"type": "AddStunnedToSelf",
+					"turns": 1
+				}
+			]
 		}
 	]
 }

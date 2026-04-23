@@ -23,7 +23,7 @@ export const CARD_TAG_HELP: Record<CardTag, string> = {
 /** Rules text for keyword types (value is shown separately on the card). */
 export const KEYWORD_TYPE_HELP: Record<KeywordType, string> = {
   CoreParts:
-    'Tags a core-parts economy card (filter chip). Core Rebirth upgrades the next Neutral Basic Strike(s) in queue order into one of these at the same tier.',
+    'Tags a core-parts card (filter chip). Core Rebirth (and similar graft) upgrades the next Neutral Basic Strike(s) in queue order into one of these at the same tier.',
   Bulk:
     'Grants bulk stacks. Each stack reduces incoming strike damage to HP by 1 (consumed when mitigating).',
   Pierce:
@@ -31,7 +31,7 @@ export const KEYWORD_TYPE_HELP: Record<KeywordType, string> = {
   Expose:
     'Applies Expose to the target equal to the keyword value. The next Strike that hits that target gains that much damage, then Expose clears.',
   Overclock:
-    'When bonus resolutions are allowed and the value is positive, bonus-resolves the next card in your queue immediately after this one.',
+    'When the value is positive, bonus-resolves the next card in your queue at most once per your turn; the first successful Overclock that turn “uses” the bonus. Overclock carriers are usually 0 energy cost.',
   TurboLink:
     'Spends bulk stacks (at least 1, up to the keyword value, capped by your bulk) as junk, then bonus-resolves the next card in your queue when allowed.',
   Continuous:

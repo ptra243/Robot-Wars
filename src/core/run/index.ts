@@ -35,6 +35,7 @@ export {
   setEnemyPlannedSlot,
   playEncounter,
   buildDeckSummary,
+  syncRunFromCombatResult,
 } from './lifecycle';
 
 export {
@@ -47,6 +48,17 @@ export {
   applyPostCombatRewards,
   type TravelEventResolution,
 } from './runLoop';
+
+export {
+  RELIC_DEFS,
+  type RelicDef,
+  type RelicRarity,
+  type RelicSource,
+  getRelicDef,
+  listRelicsForSource,
+  rollRelicForSource,
+  grantRelic,
+} from './relics';
 
 export {
   buildEncounterSnapshot,

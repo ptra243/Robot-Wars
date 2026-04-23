@@ -1,6 +1,7 @@
 import { SeededRandom, CardContentService, cardOfferStreamSeed } from '../content';
 import { COMBAT_RULES } from '../rules';
 import type { RunState, TravelEventOutcome, TravelNodeType, TravelOffer } from '../types';
+import { grantRelic, rollRelicForSource } from './relics';
 
 const ACT_TRAVEL_DECK_TEMPLATE: TravelNodeType[] = [
   'shop',
@@ -167,9 +168,24 @@ export function applyPostCombatRewards(run: RunState, playerWon: boolean): void 
     run.loop.gold += WIN_GOLD_BATTLE;
   } else if (run.loop.pendingEncounterType === 'elite') {
     run.loop.gold += WIN_GOLD_ELITE;
-    run.loop.relicIds.push('potency_start_plus_1');
+    const rolled = rollRelicForSource(
+      run,
+      'elite',
+      run.seed + run.loop.totalStepsResolved * 19 + run.encounterIndex * 7,
+    );
+    if (rolled) {
+      grantRelic(run, rolled.id);
+    }
   } else {
     run.loop.gold += WIN_GOLD_BOSS;
+    const rolled = rollRelicForSource(
+      run,
+      'boss',
+      run.seed + run.loop.totalStepsResolved * 23 + run.encounterIndex * 11,
+    );
+    if (rolled) {
+      grantRelic(run, rolled.id);
+    }
     run.loop.act += 1;
     run.loop.stepsInAct = 0;
     run.loop.awakening = Math.min(2, run.loop.awakening + 1);
@@ -210,7 +226,7 @@ export interface TravelEventResolution {
 
 export function resolveRandomEvent(run: RunState, content: CardContentService): TravelEventResolution {
   const rng = new SeededRandom(run.seed + run.loop.totalStepsResolved * 41 + run.encounterIndex * 13);
-  const eventType = rng.nextInt(7);
+  const eventType = rng.nextInt(8);
   if (eventType === 0) {
     if (run.deck.length > 0) {
       const index = rng.nextInt(run.deck.length);
@@ -311,6 +327,23 @@ export function resolveRandomEvent(run: RunState, content: CardContentService): 
     };
   }
   if (eventType === 5) {
+    const rolled = rollRelicForSource(
+      run,
+      'event',
+      run.seed + run.loop.totalStepsResolved * 61 + run.encounterIndex * 17,
+    );
+    if (rolled && grantRelic(run, rolled.id)) {
+      return {
+        message: `Random event: gained relic ${rolled.name}.`,
+        outcome: { kind: 'relic_gain', relicId: rolled.id },
+      };
+    }
+    return {
+      message: 'Random event: no eligible relic reward.',
+      outcome: { kind: 'noop', reason: 'no_relic_available' },
+    };
+  }
+  if (eventType === 6) {
     run.loop.hearts = Math.max(0, run.loop.hearts - 1);
     run.remainingLosses = run.loop.hearts;
     return {

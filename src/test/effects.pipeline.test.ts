@@ -50,7 +50,7 @@ describe('effect pipeline', () => {
     );
   });
 
-  it('Core Tap: 0 refined scrap only factory-resets (no damage); ≥1 spends and deals 8', () => {
+  it('Core Tap: self + direct + factory (HP/junk line; no refined-scrap branch)', () => {
     const sim = new CombatSimulator(content, 1);
     const run = (core: number) => {
       const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['core_tap_t1']);
@@ -59,7 +59,7 @@ describe('effect pipeline', () => {
       const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
       return sim.run({ seed: 1, player, enemy });
     };
-    const firstCoreTapHp = (result: ReturnType<typeof run>) => {
+    const firstCoreTapEnemyHp = (result: ReturnType<typeof run>) => {
       const ev = result.events.find(
         (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Core Tap'),
       );
@@ -71,13 +71,14 @@ describe('effect pipeline', () => {
       );
       return ev?.snapshot?.playerQueue?.[0];
     };
-    expect(firstCoreTapHp(run(0))).toBe(40);
+    // 5 direct to enemy (t1)
+    expect(firstCoreTapEnemyHp(run(0))).toBe(40 - 5);
     expect(firstCoreTapQueue0(run(0))).toBe('neutral_basic_strike_t1');
-    expect(firstCoreTapHp(run(1))).toBe(40 - 8);
+    expect(firstCoreTapEnemyHp(run(1))).toBe(40 - 5);
     expect(firstCoreTapQueue0(run(1))).toBe('neutral_basic_strike_t1');
   });
 
-  it('Core Sacrifice: ≥1 refined scrap spends all for bulk, deals 12, transforms slot; 0 scrap only transforms', () => {
+  it('Core Sacrifice: self + junk + bulk + strike + factory (no refined-scrap branch)', () => {
     const sim = new CombatSimulator(content, 1);
     const run = (core: number) => {
       const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['deep_core_tap_t1']);
@@ -90,15 +91,16 @@ describe('effect pipeline', () => {
       result.events.find(
         (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Core Sacrifice'),
       );
-    expect(sacEv(run(0))?.snapshot?.enemy.hp).toBe(40);
+    // Strike 7 base (t1)
+    expect(sacEv(run(0))?.snapshot?.enemy.hp).toBe(40 - 7);
     expect(sacEv(run(0))?.snapshot?.playerQueue?.[0]).toBe('neutral_basic_strike_t1');
-    expect(sacEv(run(3))?.snapshot?.enemy.hp).toBe(40 - 12);
-    expect(sacEv(run(3))?.snapshot?.player.coreScrap).toBe(0);
-    expect(sacEv(run(3))?.snapshot?.player.bulkStacks).toBe(3);
+    expect(sacEv(run(3))?.snapshot?.enemy.hp).toBe(40 - 7);
+    expect(sacEv(run(3))?.snapshot?.player.coreScrap).toBe(3);
+    expect(sacEv(run(3))?.snapshot?.player.bulkStacks).toBe(1);
     expect(sacEv(run(3))?.snapshot?.playerQueue?.[0]).toBe('neutral_basic_strike_t1');
   });
 
-  it('Core Rebirth: gains refined scrap and replaces a Neutral Basic Strike slot with a CoreParts card', () => {
+  it('Core Rebirth: self + junk + factory + replace Neutral Basic with CoreParts card', () => {
     const sim = new CombatSimulator(content, 42);
     const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], [
       'core_rebirth_t1',
@@ -110,7 +112,7 @@ describe('effect pipeline', () => {
     const ev = result.events.find(
       (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Core Rebirth'),
     );
-    expect(ev?.snapshot?.player.coreScrap).toBeGreaterThanOrEqual(1);
+    expect(ev?.snapshot?.player.junk).toBeGreaterThanOrEqual(1);
     const upgrades = result.events.filter(
       (e) => e.type === 'core_rebirth_queue' && e.actor === 'Player' && e.text.includes('→'),
     );
@@ -145,6 +147,34 @@ describe('effect pipeline', () => {
     expect(q[0]).toBe('neutral_basic_strike_t2');
     const basicCount = q.filter((id) => id === 'neutral_basic_strike_t1').length;
     expect(basicCount).toBe(6);
+  });
+
+  it('Core-parts self-damage mirrors to the enemy when mirror is active (Core bleed echo)', () => {
+    const sim = new CombatSimulator(content, 1);
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['core_tap_t1']);
+    player.charge = 99;
+    player.mirrorCoreSelfDamage = true;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    const result = sim.run({ seed: 1, player, enemy });
+    const ev = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Core Tap'),
+    );
+    // 5 direct + 5 mirrored from self = 10 to enemy (t1).
+    expect(ev?.snapshot?.enemy.hp).toBe(40 - 10);
+  });
+
+  it('Corebleed Oath sets mirror on the fighter after the pipeline (last effect)', () => {
+    const sim = new CombatSimulator(content, 1);
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['sacrif_echo_t1']);
+    player.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    const result = sim.run({ seed: 1, player, enemy });
+    const ev = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Corebleed Oath'),
+    );
+    expect(ev).toBeDefined();
+    // Snapshots omit mirrorCoreSelfDamage; assert on end-of-sim state after the card has resolved.
+    expect(result.finalState.player.mirrorCoreSelfDamage).toBe(true);
   });
 
   it('explicit effects list matches legacy Basic Strike resolution (enemy HP)', () => {

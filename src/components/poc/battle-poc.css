@@ -55,7 +55,8 @@
   );
 
   position: fixed;
-  inset: 0;
+  /* Leave room for the persistent run HUD at the top. */
+  inset: var(--run-hud-height, 40px) 0 0 0;
   z-index: 1000;
   color: var(--bp-text);
   background: var(--bp-bg);
@@ -469,6 +470,54 @@
   border-bottom: 1px solid var(--bp-border);
 }
 
+/* Core sacrifice: <img> + same knockout filter as stage mech sprites. */
+.battle-poc__chip-art--core-reactor {
+  background: #000;
+  --bgi-zoom: 3.1;
+  --bgi-px: 0.52;
+  --bgi-py: 0.36;
+}
+
+.battle-poc__chip:hover .battle-poc__chip-art--core-reactor {
+  --bgi-zoom: 3.7;
+  --bgi-px: 0.48;
+  --bgi-py: 0.31;
+}
+
+.battle-poc__chip-art-void {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #000;
+  pointer-events: none;
+}
+
+.battle-poc__chip-art-bgi {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.battle-poc__chip-art-bgi-img {
+  position: absolute;
+  left: calc(var(--bgi-px) * 100% * (1 - var(--bgi-zoom)));
+  top: calc(var(--bgi-py) * 100% * (1 - var(--bgi-zoom)));
+  width: calc(var(--bgi-zoom) * 100%);
+  height: calc(var(--bgi-zoom) * 100%);
+  object-fit: cover;
+  object-position: calc(var(--bgi-px, 0.5) * 100%) calc(var(--bgi-py, 0.4) * 100%);
+  display: block;
+  pointer-events: none;
+  filter: url(#poc-knockout-card-art) drop-shadow(0 2px 7px rgba(0, 0, 0, 0.42));
+  transition:
+    left 0.45s ease,
+    top 0.45s ease,
+    width 0.45s ease,
+    height 0.45s ease;
+}
+
 .battle-poc__chip-meta {
   display: flex;
   align-items: center;
@@ -491,6 +540,20 @@
   color: var(--bp-text-strong);
   font-weight: 700;
   padding-left: 6px;
+}
+
+.battle-poc__chip-cost--hp {
+  color: #ff6b6b;
+  text-shadow: 0 0 6px rgba(255, 80, 80, 0.45);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.battle-poc__chip-cost-hp-lbl {
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  opacity: 0.9;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1648,6 +1711,17 @@
 }
 
 .battle-poc__result-btn--assist:hover {
+  border-color: var(--bp-enemy, #ff4455);
+  box-shadow: 0 0 18px rgba(255, 68, 85, 0.45);
+}
+
+.battle-poc__result-btn--analyze {
+  margin-top: 10px;
+  border-color: var(--bp-enemy, #ff4455);
+  color: var(--bp-enemy, #ff4455);
+}
+
+.battle-poc__result-btn--analyze:hover {
   border-color: var(--bp-enemy, #ff4455);
   box-shadow: 0 0 18px rgba(255, 68, 85, 0.45);
 }

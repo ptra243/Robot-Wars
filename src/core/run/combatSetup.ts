@@ -61,6 +61,7 @@ export function createPreviewFighter(
     coreScrap,
     potency: 0,
     exposeDamage: 0,
+    weakenStacks: 0,
     deckCursor: 0,
     deckWraps: 0,
     queueCursor: 0,
@@ -76,6 +77,13 @@ export function createPreviewFighter(
     strikeResolutionsThisCombat: 0,
     traitIds: [...traitIds],
     tempUpgrade: null,
+    emergencyProtocolStacks: 0,
+    mirrorCoreSelfDamage: false,
+    overclockBonusUsedThisTurn: false,
+    scheduledEffects: [],
+    lastDeckWrapsSeenForRelics: 0,
+    primeDirectiveActiveThisTurn: false,
+    preventEmergencyProtocolSpendThisTurn: false,
   };
 }
 
