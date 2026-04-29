@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { RunState } from '../../core/types';
+import { useGameStore } from '../../stores/gameStore';
 import {
   LIBRARY_FACTION_IDS,
   LIBRARY_FILTER_LABELS,
@@ -15,11 +16,8 @@ import {
   SANDBOX_ACTIVE_SLOTS_MIN,
   SANDBOX_CORE_MAX,
 } from './deckBuilderSandboxLimits';
-import { cloneRun } from '../../core/run';
-
 interface DeckBuilderLibraryPanelProps {
   run: RunState;
-  setRun: Dispatch<SetStateAction<RunState>>;
   librarySearch: string;
   onLibrarySearchChange: (value: string) => void;
   libraryFactionFilter: LibraryFactionFilter;
@@ -30,7 +28,6 @@ interface DeckBuilderLibraryPanelProps {
 
 export function DeckBuilderLibraryPanel({
   run,
-  setRun,
   librarySearch,
   onLibrarySearchChange,
   libraryFactionFilter,
@@ -38,6 +35,9 @@ export function DeckBuilderLibraryPanel({
   libraryTagFilter,
   setLibraryTagFilter,
 }: DeckBuilderLibraryPanelProps) {
+  const handleSetSandboxActiveQueueSlots = useGameStore((s) => s.handleSetSandboxActiveQueueSlots);
+  const handleSetSandboxPlayerCoreScrap = useGameStore((s) => s.handleSetSandboxPlayerCoreScrap);
+  const handleSetSandboxEnemyCoreScrap = useGameStore((s) => s.handleSetSandboxEnemyCoreScrap);
   return (
     <div className="deck-builder-library-panel" aria-label="Library filters and search">
       <div className="deck-builder-library-toolbar">
@@ -118,10 +118,7 @@ export function DeckBuilderLibraryPanel({
               onChange={(e) => {
                 const raw = e.target.value;
                 const next = raw === '' ? SANDBOX_ACTIVE_SLOTS_MAX : clampActiveSlots(Number(raw));
-                setRun((prev) => ({
-                  ...cloneRun(prev),
-                  sandboxActiveQueueSlots: next,
-                }));
+                handleSetSandboxActiveQueueSlots(next);
               }}
               aria-label="Active queue slots used in battle"
             />
@@ -140,10 +137,7 @@ export function DeckBuilderLibraryPanel({
               onChange={(e) => {
                 const raw = e.target.value;
                 const next = raw === '' ? 0 : clampSandboxCore(Number(raw));
-                setRun((prev) => ({
-                  ...cloneRun(prev),
-                  sandboxPlayerCoreScrap: next,
-                }));
+                handleSetSandboxPlayerCoreScrap(next);
               }}
               aria-label="Player starting refined scrap"
             />
@@ -162,10 +156,7 @@ export function DeckBuilderLibraryPanel({
               onChange={(e) => {
                 const raw = e.target.value;
                 const next = raw === '' ? 0 : clampSandboxCore(Number(raw));
-                setRun((prev) => ({
-                  ...cloneRun(prev),
-                  sandboxEnemyCoreScrap: next,
-                }));
+                handleSetSandboxEnemyCoreScrap(next);
               }}
               aria-label="Enemy starting refined scrap"
             />

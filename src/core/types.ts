@@ -3,6 +3,10 @@ export type CardTag =
   | 'Strike'
   | 'Shield'
   | 'Direct'
+  | 'Virus'
+  | 'Evade'
+  | 'Shuriken'
+  | 'Stance'
   | 'Junk'
   | 'Bulk'
   | 'Potency'
@@ -13,11 +17,16 @@ export type CardTag =
 export type KeywordType =
   | 'Bulk'
   | 'Overclock'
+  | 'Switch'
   | 'Expose'
   | 'Pierce'
   | 'Continuous'
   | 'TurboLink'
   | 'FactoryReset'
+  | 'Virus'
+  | 'Evade'
+  | 'Shuriken'
+  | 'Stance'
   /** Marks “core parts” economy cards (refined scrap, transforms); used for filters and Core Rebirth pool. */
   | 'CoreParts'
   /** Deckbuilding only: at most one copy of any UniqueDeck card across hand+deck (see deck rules). */
@@ -29,6 +38,8 @@ export interface KeywordSpec {
   type: KeywordType;
   value: number;
 }
+
+export type StanceType = 'dragon' | 'tiger' | 'bird' | 'tortoise';
 
 /** Ordered card effects (JSON `effects` or compiled from legacy scalars). */
 export type EffectStep =
@@ -95,6 +106,7 @@ export type EffectStep =
       thenSteps: EffectStep[];
       elseSteps: EffectStep[];
     }
+  | { type: 'BranchIfChargeGte'; minCharge: number; thenSteps: EffectStep[]; elseSteps: EffectStep[] }
   /**
    * HP damage to the opponent that does not count as a Strike resolution (no Gathering tally).
    * Uses the same block/bulk mitigation path as strikes unless Pierce is true.
@@ -160,7 +172,25 @@ export type EffectStep =
    * Rest-of-battle: this fighter's Shield retention at each round start uses this multiplier instead of the
    * global default (e.g. 0.75 = only 25% of shield decays per round).
    */
-  | { type: 'SetShieldRoundRetainMultiplier'; retainMultiplier: number };
+  | { type: 'SetShieldRoundRetainMultiplier'; retainMultiplier: number }
+  | { type: 'SetStance'; stance: StanceType }
+  | { type: 'BranchIfActorStance'; stance: StanceType; thenSteps: EffectStep[]; elseSteps: EffectStep[] }
+  | { type: 'BranchIfActorActivatedStance'; stance: StanceType; thenSteps: EffectStep[]; elseSteps: EffectStep[] }
+  | { type: 'GainShuriken'; amount: number }
+  | { type: 'SpendAllShuriken' }
+  | { type: 'DirectHpDamagePerShurikenSpent'; damagePerShuriken: number; pierce?: boolean }
+  | { type: 'DirectHpDamagePerActivatedStance'; damagePerStance: number; pierce?: boolean }
+  | { type: 'GainEvade'; amount: number }
+  | { type: 'ApplyVirus'; stacks: number }
+  | { type: 'SetNextTigerCardOverclock'; active: boolean }
+  | { type: 'SetNextTigerCardPiercePotency'; pierce: boolean; potencyGain: number; potencyAfterCardLoss: number }
+  | { type: 'SetNextTigerCardExposePerEnergy'; amountPerEnergy: number; cap: number }
+  | { type: 'SetNextTigerCardExtraStrikeFromTargetVirus'; cap: number }
+  | { type: 'SetNextShurikenUnloadImbueVirusPerHit'; stacksPerHit: number }
+  | { type: 'ConsumeShieldForDirectDamage'; shieldPerDamage: number; maxShieldSpend?: number }
+  | { type: 'GainVirulentRetribution'; amount: number }
+  | { type: 'ConsumeAllShurikenGainShield'; shieldPerShuriken: number; gainVirulentRetributionIfAny?: number }
+  | { type: 'ShieldBlockAfterRounds'; amount: number; delayRounds: number };
 
 export interface CardDef {
   id: string;
@@ -308,6 +338,24 @@ export interface FighterState {
   primeDirectiveActiveThisTurn?: boolean;
   /** Prime Directive: do not consume Emergency Protocol stacks this turn. */
   preventEmergencyProtocolSpendThisTurn?: boolean;
+  /** Cyberpunk ninja stance system (null = no active stance). */
+  stance?: StanceType | null;
+  shuriken?: number;
+  evadeStacks?: number;
+  virusStacks?: number;
+  virulentRetributionStacks?: number;
+  nextTigerCardOverclock?: boolean;
+  nextTigerCardPierce?: boolean;
+  nextTigerCardPotencyGain?: number;
+  nextTigerCardPotencyAfterCardLoss?: number;
+  nextTigerCardExposePerEnergy?: { amountPerEnergy: number; cap: number } | null;
+  nextTigerCardExtraStrikeFromTargetVirusCap?: number | null;
+  nextShurikenUnloadImbueVirusPerHit?: number;
+  activatedDragonThisCombat?: boolean;
+  activatedTigerThisCombat?: boolean;
+  activatedBirdThisCombat?: boolean;
+  activatedTortoiseThisCombat?: boolean;
+  lastResolvedCardFaction?: string | null;
 }
 
 export interface CombatState {
@@ -323,11 +371,13 @@ export interface CombatFighterSnapshot {
   hp: number;
   block: number;
   charge: number;
+  shuriken?: number;
   junk: number;
   bulkStacks: number;
   coreScrap: number;
   potency: number;
   exposeDamage: number;
+  virusStacks?: number;
   weakenStacks?: number;
   /** Times the fatigue deck has wrapped (player only; used for deck-cycle stats). */
   deckWraps?: number;
@@ -345,6 +395,9 @@ export interface CombatEventSnapshot {
   /** Planned queue card ids per slot (length = queue size); required for correct replay scrub after in-combat queue transforms (e.g. Factory Reset). */
   playerQueue?: Array<string | null>;
   enemyQueue?: Array<string | null>;
+  /** Inert slots `index >= active*Slots` are null — not Neutral Basic. Same as {@link FighterState.activeQueueSlots}. */
+  playerActiveQueueSlots?: number;
+  enemyActiveQueueSlots?: number;
   /** Thermal fatigue (global); rounds elapsed increments each fatigue tick while armed. */
   fatigueArmed?: boolean;
   fatigueRoundsElapsed?: number;
@@ -433,6 +486,10 @@ export interface RunLoopState {
   playerHp: number;
   /** Maximum HP cap for the run (combat baseline; can rise with future meta upgrades). */
   playerHpMax: number;
+  /**
+   * Max HP from non-relic progression only (enemy starting HP mirrors this before relic-only bumps).
+   */
+  playerHpBaseMax: number;
   hearts: number;
   gold: number;
   rerolls: number;
@@ -448,6 +505,18 @@ export interface RunLoopState {
   retryAvailable: boolean;
   /** Battle / replay UI speed (1× / 2× / 4×); persisted for this run. */
   battleReplaySpeed: 1 | 2 | 4;
+  /**
+   * First N **battle** (non-elite) encounters use all-basic enemy programs; decremented in {@link rollEnemyLoadout}.
+   */
+  earlyBattleBasicsRemaining: number;
+  /**
+   * Endless act 4 ramp index (0 in acts 1–3). Increment when entering act 4+ combats.
+   */
+  act4BattleIndex: number;
+  /**
+   * After the act 3 boss, travel is replaced with endless battles (no shop/event/elite pulls).
+   */
+  infiniteMode: boolean;
 }
 
 export interface RunState {
@@ -460,13 +529,22 @@ export interface RunState {
   hand: string[];
   plannedQueue: Array<string | null>;
   enemyPlannedQueue: Array<string | null>;
-  /** Deck sandbox: active queue slots used in battle simulation (min 3, max 9). */
+  /** Deck sandbox: active queue slots used in battle simulation (min 5, max 9). */
   sandboxActiveQueueSlots: number;
   /** Deck sandbox: starting refined scrap (`coreScrap`) for the player when combat begins (preview + encounters). */
   sandboxPlayerCoreScrap: number;
   /** Deck sandbox: starting refined scrap (`coreScrap`) for the enemy when combat begins. */
   sandboxEnemyCoreScrap: number;
   loop: RunLoopState;
+  /**
+   * Fatigue deck for the **next** `playEncounter` when generated by `rollEnemyLoadout`.
+   * Cleared after `createCombatSetup` reads it.
+   */
+  combatEnemyFatigueDeck?: string[] | null;
+  /**
+   * Opponent in-combat relic for this encounter only; mapped to enemy traits in `createCombatSetup`.
+   */
+  combatOpponentRelicId?: string | null;
 }
 
 export interface ArenaSnapshot {

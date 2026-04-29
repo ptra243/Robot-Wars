@@ -34,6 +34,8 @@ export {
   setPlayerPlannedSlot,
   setEnemyPlannedSlot,
   playEncounter,
+  assertDeckLegalForCombat,
+  buildCombatSetupFromRun,
   buildDeckSummary,
   syncRunFromCombatResult,
 } from './lifecycle';
@@ -46,8 +48,30 @@ export {
   resolveRandomEvent,
   applyLossRetryChoice,
   applyPostCombatRewards,
+  stepsCapForAct,
   type TravelEventResolution,
 } from './runLoop';
+
+export {
+  activeQueueSlotsForAct,
+  ensureOpponentBatteryInProgram,
+  makeEnemyRng,
+  mergeAfterDraft,
+  orderOpponentProgramByHeuristic,
+  sortFullMergedByHeuristic,
+  orderOpponentProgramThreeBands,
+  orderOpponentProgramActSlotBands,
+  slotBandMembershipPerIndex,
+  A3_LAYOUT_BY_THEME,
+  preferredA3LayoutForTheme,
+  cardCanDealEnemyHpDamage,
+  ensureHpDamageInProgram,
+  prepareEnemyForCombat,
+  rollEnemyLoadout,
+  type A3SlotBandLayout,
+  type EnemyRollInput,
+  type EnemyRollResult,
+} from './enemyRoll';
 
 export {
   RELIC_DEFS,
@@ -58,6 +82,7 @@ export {
   listRelicsForSource,
   rollRelicForSource,
   grantRelic,
+  getRelicDescription,
 } from './relics';
 
 export {

@@ -24,7 +24,7 @@ export function advanceQueue(
   _state?: CombatState,
   _events?: CombatEvent[],
 ): void {
-  const activeSlots = Math.max(3, Math.min(COMBAT_RULES.queueSize, fighter.activeQueueSlots));
+  const activeSlots = Math.max(5, Math.min(COMBAT_RULES.queueSize, fighter.activeQueueSlots));
   const prevQ = fighter.queueCursor;
   fighter.queueCursor = (fighter.queueCursor + 1) % activeSlots;
 
@@ -110,7 +110,7 @@ export function performStallOnCurrentQueuedCard(
   events: CombatEvent[],
   variant: 'charge' | 'stunned',
 ): void {
-  const activeSlots = Math.max(3, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
+  const activeSlots = Math.max(5, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
   const queueIndex = actor.queueCursor % activeSlots;
   const queuedId = actor.queue[queueIndex] ?? 'neutral_basic_strike_t1';
   const card = content.get(queuedId);
@@ -167,6 +167,10 @@ export function beginFighterTurn(
   opponent: FighterState,
   events: CombatEvent[],
 ): boolean {
+  if (actor.stance === 'dragon') actor.activatedDragonThisCombat = true;
+  else if (actor.stance === 'tiger') actor.activatedTigerThisCombat = true;
+  else if (actor.stance === 'bird') actor.activatedBirdThisCombat = true;
+  else if (actor.stance === 'tortoise') actor.activatedTortoiseThisCombat = true;
   if (actor === state.player) {
     actor.overclockBonusUsedThisTurn = false;
   }
@@ -175,6 +179,7 @@ export function beginFighterTurn(
   resolveScheduledEffectsForTurn(content, state, actor, opponent, events);
   applyPendingRustRangerCircuitBonus(state, actor, events);
   applyContinuousTicks(state, actor, opponent, events);
+  applyVirusTick(state, actor, events);
   const traitCtx = { state, content, push: (ev: CombatEvent) => pushEv(state, events, ev) };
   callTraitOnTurnStart(actor, opponent, traitCtx);
   applyTurnStartForFighter(state, actor, opponent, events);
@@ -185,6 +190,21 @@ export function beginFighterTurn(
     return true;
   }
   return false;
+}
+
+/** Virus is a start-of-turn DoT that bypasses shield and persists until cleared. */
+function applyVirusTick(state: CombatState, actor: FighterState, events: CombatEvent[]): void {
+  const stacks = actor.virusStacks ?? 0;
+  if (stacks <= 0) {
+    return;
+  }
+  actor.hp = Math.max(0, actor.hp - stacks);
+  pushEv(state, events, {
+    type: 'virus_tick',
+    round: state.roundIndex,
+    actor: actor.name,
+    text: `${actor.name} suffers ${String(stacks)} virus damage.`,
+  });
 }
 
 function resolveScheduledEffectsForTurn(

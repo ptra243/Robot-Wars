@@ -12,7 +12,7 @@ export function ensureQueue(fighter: FighterState): void {
     fighter.queue.push(null);
   }
   const active = fighter.activeQueueSlots ?? COMBAT_RULES.queueSize;
-  fighter.activeQueueSlots = Math.max(3, Math.min(COMBAT_RULES.queueSize, Math.floor(active)));
+  fighter.activeQueueSlots = Math.max(5, Math.min(COMBAT_RULES.queueSize, Math.floor(active)));
   fighter.queueCursor %= fighter.activeQueueSlots;
 }
 
@@ -81,6 +81,8 @@ export function buildSnapshot(state: CombatState): CombatEventSnapshot {
     enemyQueueCursor: state.enemy.queueCursor,
     playerQueue: [...state.player.queue],
     enemyQueue: [...state.enemy.queue],
+    playerActiveQueueSlots: state.player.activeQueueSlots,
+    enemyActiveQueueSlots: state.enemy.activeQueueSlots,
     fatigueArmed: state.fatigueArmed,
     fatigueRoundsElapsed: state.fatigueRoundsElapsed,
   };
@@ -92,11 +94,13 @@ function fighterToSnapshot(fighter: FighterState): CombatFighterSnapshot {
     hp: fighter.hp,
     block: fighter.block,
     charge: fighter.charge,
+    shuriken: fighter.shuriken && fighter.shuriken > 0 ? fighter.shuriken : undefined,
     junk: fighter.junk,
     bulkStacks: fighter.bulkStacks,
     coreScrap: fighter.coreScrap,
     potency: fighter.potency,
     exposeDamage: fighter.exposeDamage,
+    virusStacks: fighter.virusStacks && fighter.virusStacks > 0 ? fighter.virusStacks : undefined,
     weakenStacks: fighter.weakenStacks > 0 ? fighter.weakenStacks : undefined,
     deckWraps: fighter.deckWraps,
     stunnedTurnsLeft: stun && stun.turnsLeft > 0 ? stun.turnsLeft : undefined,

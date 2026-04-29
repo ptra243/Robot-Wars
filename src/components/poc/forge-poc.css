@@ -21,6 +21,7 @@
   --fp-f-scav: #e08a3a;
   --fp-f-overclock: #a466d6;
   --fp-f-aegis: #58aec7;
+  --fp-f-cyberpunk: #4dd2ff;
   --fp-f-neutral: #94a3b8;
 
   /* Accent overridden by .forge-poc--<faction> */
@@ -93,6 +94,22 @@
   --fp-accent: var(--fp-f-neutral);
   --fp-accent-soft: rgba(148, 163, 184, 0.16);
   --fp-accent-glow: rgba(148, 163, 184, 0.22);
+}
+
+.forge-poc--cyberpunk {
+  --fp-accent: var(--fp-f-cyberpunk);
+  --fp-accent-soft: rgba(77, 210, 255, 0.18);
+  --fp-accent-glow: rgba(77, 210, 255, 0.3);
+}
+
+.forge-poc--view-player {
+  box-shadow: inset 0 0 40px color-mix(in srgb, var(--fp-accent) 28%, transparent);
+}
+
+.forge-poc--view-enemy {
+  --fp-accent: #e24b57;
+  --fp-accent-soft: rgba(226, 75, 87, 0.2);
+  --fp-accent-glow: rgba(226, 75, 87, 0.34);
 }
 
 /* --- backdrops ---------------------------------------------------------- */
@@ -308,6 +325,31 @@
   align-items: center;
 }
 
+.forge-poc__view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--fp-border-strong);
+  clip-path: var(--fp-clip-card);
+  overflow: hidden;
+}
+
+.forge-poc__view-toggle-btn {
+  border: 0;
+  background: rgba(10, 14, 22, 0.85);
+  color: var(--fp-text-dim);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+.forge-poc__view-toggle-btn--active {
+  color: var(--fp-accent);
+  background: var(--fp-accent-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fp-accent) 65%, transparent);
+}
+
 /* --- buttons ------------------------------------------------------------ */
 
 .forge-poc__btn {
@@ -402,6 +444,9 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px 24px 10px;
+  border: 1px solid var(--fp-border);
+  clip-path: var(--fp-clip-panel);
+  background: color-mix(in srgb, var(--fp-panel) 80%, transparent);
 }
 
 .forge-poc__program-head {
@@ -459,6 +504,10 @@
   position: relative;
 }
 
+.forge-poc__queue--read-only {
+  cursor: default;
+}
+
 .forge-poc__slot {
   position: relative;
   aspect-ratio: 3 / 4;
@@ -482,6 +531,32 @@
   color: var(--fp-text-dim);
   border-style: dashed;
   opacity: 0.55;
+}
+
+.forge-poc__slot--locked {
+  pointer-events: none;
+  opacity: 0.4;
+  border-style: dotted;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+}
+
+.forge-poc__slot-locked-hint {
+  font-size: 6px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fp-text-dim);
+  text-align: center;
+  margin-top: 2px;
+  max-width: 100%;
+  padding: 0 2px;
+  line-height: 1.15;
+  opacity: 0.9;
+}
+
+.forge-poc__slot--read-only {
+  filter: grayscale(0.5);
+  opacity: 0.5;
 }
 
 /* DnD highlight — flashes an accent border and scrim on the hovered slot. */
@@ -694,6 +769,7 @@
 .forge-poc__slot--scavengers { border-color: rgba(224, 138, 58, 0.55); }
 .forge-poc__slot--overclock  { border-color: rgba(164, 102, 214, 0.5); }
 .forge-poc__slot--aegis      { border-color: rgba(88, 174, 199, 0.5); }
+.forge-poc__slot--cyberpunk  { border-color: rgba(77, 210, 255, 0.5); }
 .forge-poc__slot--neutral    { border-color: rgba(159, 180, 204, 0.4); }
 
 /* --- main grid ---------------------------------------------------------- */
@@ -719,6 +795,9 @@
   min-height: 0;
   overflow-y: auto;
   padding: 0;
+  border: 1px solid var(--fp-border);
+  clip-path: var(--fp-clip-panel);
+  background: color-mix(in srgb, var(--fp-panel) 84%, transparent);
 }
 
 .forge-poc__pilot::-webkit-scrollbar { width: 6px; }
@@ -984,6 +1063,10 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  border: 1px solid var(--fp-border);
+  clip-path: var(--fp-clip-panel);
+  padding: 10px;
+  background: color-mix(in srgb, var(--fp-panel) 84%, transparent);
 }
 
 .forge-poc__section-head {
@@ -1096,6 +1179,7 @@
 .forge-poc__libcard--scavengers { border-color: rgba(224, 138, 58, 0.55); }
 .forge-poc__libcard--overclock  { border-color: rgba(164, 102, 214, 0.5); }
 .forge-poc__libcard--aegis      { border-color: rgba(88, 174, 199, 0.5); }
+.forge-poc__libcard--cyberpunk  { border-color: rgba(77, 210, 255, 0.5); }
 .forge-poc__libcard--neutral    { border-color: rgba(159, 180, 204, 0.4); }
 
 .forge-poc__libcard--selected {
@@ -1363,6 +1447,7 @@
 .forge-poc__popover-card--scavengers { border-color: rgba(224, 138, 58, 0.7); }
 .forge-poc__popover-card--overclock  { border-color: rgba(164, 102, 214, 0.6); }
 .forge-poc__popover-card--aegis      { border-color: rgba(88, 174, 199, 0.6); }
+.forge-poc__popover-card--cyberpunk  { border-color: rgba(77, 210, 255, 0.6); }
 .forge-poc__popover-card--neutral    { border-color: var(--fp-border-strong); }
 
 .forge-poc__popover-tier-nav {

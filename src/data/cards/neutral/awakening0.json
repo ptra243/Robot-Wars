@@ -233,7 +233,7 @@
 			"neutral": true,
 			"awakening_min": 0,
 			"card_tier": 2,
-			"charge_cost": 2,
+			"charge_cost": 1,
 			"keywords": [
 				{
 					"type": "Overclock",
@@ -258,7 +258,7 @@
 			"neutral": true,
 			"awakening_min": 0,
 			"card_tier": 3,
-			"charge_cost": 1,
+			"charge_cost": 0,
 			"keywords": [
 				{
 					"type": "Overclock",

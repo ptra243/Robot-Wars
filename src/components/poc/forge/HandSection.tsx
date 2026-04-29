@@ -18,6 +18,9 @@ interface HandSectionProps {
   onHandContextMenu: (e: ReactMouseEvent<HTMLElement>, handIdx: number) => void;
   onMergeCards: (fromPayload: DragPayload, toHandIdx: number) => void;
   canMergeCards: (a: ForgeCard, b: ForgeCard) => boolean;
+  readOnly?: boolean;
+  sectionTitle?: string;
+  sectionSubtitle?: string;
 }
 
 export function HandSection({
@@ -34,6 +37,9 @@ export function HandSection({
   onHandContextMenu,
   onMergeCards,
   canMergeCards,
+  readOnly = false,
+  sectionTitle = 'HAND',
+  sectionSubtitle = 'Hover to inspect · double-click to add · right-click to reroll · drag same card to tier-up',
 }: HandSectionProps) {
   const [mergeTargetIdx, setMergeTargetIdx] = useState<number | null>(null);
 
@@ -79,10 +85,8 @@ export function HandSection({
   return (
     <section className="forge-poc__center">
       <div className="forge-poc__section-head">
-        <span className="forge-poc__section-eyebrow">{'//'} HAND</span>
-        <span className="forge-poc__section-sub">
-          Hover to inspect · double-click to add · right-click to reroll · drag same card to tier-up
-        </span>
+        <span className="forge-poc__section-eyebrow">{'//'} {sectionTitle}</span>
+        <span className="forge-poc__section-sub">{sectionSubtitle}</span>
       </div>
 
       <div
@@ -113,13 +117,16 @@ export function HandSection({
           <LibraryCard
             key={`${card.id}-${String(idx)}`}
             card={card}
-            isDragging={dragging?.source === 'hand' && dragging.index === idx}
+            isDragging={!readOnly && dragging?.source === 'hand' && dragging.index === idx}
             isMergeTarget={mergeTargetIdx === idx}
             onHover={setHoverCardAt}
             onAssign={() => {
-              assignNextEmpty(idx);
+              if (!readOnly) {
+                assignNextEmpty(idx);
+              }
             }}
             onDragStart={(e) => {
+              if (readOnly) return;
               const payload: DragPayload = { source: 'hand', index: idx };
               dragPayloadRef.current = payload;
               e.dataTransfer.effectAllowed = 'move';
@@ -133,10 +140,18 @@ export function HandSection({
               setDragOverSlot(null);
               setMergeTargetIdx(null);
             }}
-            onContextMenu={(e) => onHandContextMenu(e, idx)}
-            onDragOver={(e) => handleCardDragOver(e, idx, card)}
-            onDragLeave={() => handleCardDragLeave(idx)}
-            onDrop={(e) => handleCardDrop(e, idx)}
+            onContextMenu={(e) => {
+              if (!readOnly) onHandContextMenu(e, idx);
+            }}
+            onDragOver={(e) => {
+              if (!readOnly) handleCardDragOver(e, idx, card);
+            }}
+            onDragLeave={() => {
+              if (!readOnly) handleCardDragLeave(idx);
+            }}
+            onDrop={(e) => {
+              if (!readOnly) handleCardDrop(e, idx);
+            }}
           />
         ))}
         {hand.length === 0 ? (

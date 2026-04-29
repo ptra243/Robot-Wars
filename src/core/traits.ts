@@ -20,6 +20,13 @@ import { COMBAT_RULES } from './rules';
 import type { CardContentService } from './content';
 import type { CardDef, CombatEvent, CombatState, FighterState } from './types';
 
+function markStanceActivated(actor: FighterState, stance: 'dragon' | 'tiger' | 'bird' | 'tortoise'): void {
+  if (stance === 'dragon') actor.activatedDragonThisCombat = true;
+  else if (stance === 'tiger') actor.activatedTigerThisCombat = true;
+  else if (stance === 'bird') actor.activatedBirdThisCombat = true;
+  else actor.activatedTortoiseThisCombat = true;
+}
+
 /* ── Context objects ──────────────────────────────────────────────────────── */
 
 /**
@@ -281,6 +288,176 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
     label: 'Riding the Circuit',
     text: 'Each time your deck cycles back to slot 1, your maximum junk capacity increases by 2.',
     hooks: {},
+  },
+
+  /* ────────────────────────────────────────────────────────────────────────
+   * CYBERPUNK NINJAS — FOUR SYMBOLS
+   * ──────────────────────────────────────────────────────────────────────── */
+  seiryu_base: {
+    id: 'seiryu_base',
+    label: 'Azure Opening',
+    text: 'Start in Dragon stance. Neutral cards gain +1 Energy.',
+    hooks: {
+      onCombatStart(fighter) {
+        fighter.stance = 'dragon';
+      },
+      onCardResolved(actor, _target, card) {
+        if (!card.neutral) return;
+        actor.charge += 1;
+        markStanceActivated(actor, 'dragon');
+      },
+    },
+  },
+  seiryu_aw0: {
+    id: 'seiryu_aw0',
+    label: 'Storm Economy',
+    text: 'When you resolve a Dragon card, gain 1 Energy. When your card has Direct, gain 1 Energy.',
+    hooks: {
+      onCardResolved(actor, _target, card) {
+        if (card.id.includes('dragon') || card.id.includes('_dragon_')) {
+          actor.charge += 1;
+        }
+        if (card.tags.includes('Direct')) {
+          actor.charge += 1;
+        }
+      },
+    },
+  },
+  seiryu_aw1: {
+    id: 'seiryu_aw1',
+    label: 'Dragon Routes',
+    text: 'Duo cards ending in Dragon gain +1 Energy on resolution.',
+    hooks: {
+      onCardResolved(actor, _target, card) {
+        if (card.id.includes('_dragon_t')) {
+          actor.charge += 1;
+        }
+      },
+    },
+  },
+  suzaku_base: {
+    id: 'suzaku_base',
+    label: 'Vermilion Opening',
+    text: 'Start in Bird stance. Neutral cards gain +1 shuriken.',
+    hooks: {
+      onCombatStart(fighter) {
+        fighter.stance = 'bird';
+      },
+      onCardResolved(actor, _target, card) {
+        if (!card.neutral) return;
+        actor.shuriken = (actor.shuriken ?? 0) + 1;
+        markStanceActivated(actor, 'bird');
+      },
+    },
+  },
+  suzaku_aw0: {
+    id: 'suzaku_aw0',
+    label: 'Sky Rhythm',
+    text: 'Every second Bird card grants Overclock and +1 Evade to your next Tiger card.',
+    hooks: {
+      onCardResolved(actor, _target, card, _q, _ctx) {
+        if (!(card.id.includes('bird') || card.id.includes('_bird_'))) return;
+        const count = ((actor as FighterState & { suzakuBirdCount?: number }).suzakuBirdCount ?? 0) + 1;
+        (actor as FighterState & { suzakuBirdCount?: number }).suzakuBirdCount = count;
+        if (count % 2 === 0) {
+          actor.nextTigerCardOverclock = true;
+          actor.evadeStacks = (actor.evadeStacks ?? 0) + 1;
+        }
+      },
+    },
+  },
+  suzaku_aw1: {
+    id: 'suzaku_aw1',
+    label: 'Dual Vectors',
+    text: 'Duo cards entering Bird grant +1 shuriken.',
+    hooks: {
+      onCardResolved(actor, _target, card) {
+        if (card.id.includes('_bird_t')) {
+          actor.shuriken = (actor.shuriken ?? 0) + 1;
+        }
+      },
+    },
+  },
+  byakko_base: {
+    id: 'byakko_base',
+    label: 'White Opening',
+    text: 'Start in Tiger stance. Neutral cards apply Expose 1.',
+    hooks: {
+      onCombatStart(fighter) {
+        fighter.stance = 'tiger';
+      },
+      onCardResolved(actor, target, card) {
+        if (!card.neutral) return;
+        markStanceActivated(actor, 'tiger');
+        target.exposeDamage = Math.min(COMBAT_RULES.maxExposeArm, target.exposeDamage + 1);
+        syncExposeAuraFromField(target);
+      },
+    },
+  },
+  byakko_aw0: {
+    id: 'byakko_aw0',
+    label: 'Hunting Window',
+    text: 'Tiger cards apply Expose 1 before their strikes.',
+    hooks: {
+      onCardResolved(_actor, target, card) {
+        if (!(card.id.includes('tiger') || card.id.includes('_tiger_'))) return;
+        target.exposeDamage = Math.min(COMBAT_RULES.maxExposeArm, target.exposeDamage + 1);
+        syncExposeAuraFromField(target);
+      },
+    },
+  },
+  byakko_aw1: {
+    id: 'byakko_aw1',
+    label: 'Dual Hunts',
+    text: 'Duo cards entering Tiger gain +1 strike potency this card.',
+    hooks: {
+      onCardResolved(actor, _target, card) {
+        if (card.id.includes('_tiger_t')) {
+          actor.potency += 1;
+        }
+      },
+    },
+  },
+  genbu_base: {
+    id: 'genbu_base',
+    label: 'Black Opening',
+    text: 'Start in Tortoise stance. Neutral cards grant 2 shield.',
+    hooks: {
+      onCombatStart(fighter) {
+        fighter.stance = 'tortoise';
+      },
+      onCardResolved(actor, _target, card) {
+        if (!card.neutral) return;
+        actor.block += 2;
+        markStanceActivated(actor, 'tortoise');
+      },
+    },
+  },
+  genbu_aw0: {
+    id: 'genbu_aw0',
+    label: 'Virulent Retribution',
+    text: 'Shield retains at 75%. Playing a Tortoise card grants Virulent Retribution.',
+    hooks: {
+      onCombatStart(fighter) {
+        fighter.shieldRoundRetainMultiplier = 0.75;
+      },
+      onCardResolved(actor, _target, card) {
+        if (!(card.id.includes('tortoise') || card.id.includes('_tortoise_'))) return;
+        actor.virulentRetributionStacks = (actor.virulentRetributionStacks ?? 0) + 1;
+      },
+    },
+  },
+  genbu_aw1: {
+    id: 'genbu_aw1',
+    label: 'Dual Shells',
+    text: 'Duo cards ending in Tortoise gain 2 shield.',
+    hooks: {
+      onCardResolved(actor, _target, card) {
+        if (card.id.includes('_tortoise_t')) {
+          actor.block += 2;
+        }
+      },
+    },
   },
 
   /* ────────────────────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 import { SeededRandom, CardContentService, cardOfferStreamSeed } from '../content';
 import { COMBAT_RULES } from '../rules';
 import type { RunState, TravelEventOutcome, TravelNodeType, TravelOffer } from '../types';
+import { activeQueueSlotsForAct, prepareEnemyForCombat } from './enemyRoll';
 import { grantRelic, rollRelicForSource } from './relics';
 
 const ACT_TRAVEL_DECK_TEMPLATE: TravelNodeType[] = [
@@ -21,7 +22,17 @@ const ACT_TRAVEL_DECK_TEMPLATE: TravelNodeType[] = [
   'battle',
 ];
 
-const STEPS_PER_ACT = 10;
+/** Per-act path length before a boss is forced; act 4 (`infiniteMode`) has no cap. */
+export function stepsCapForAct(act: number): number {
+  if (act <= 1) return 5;
+  if (act === 2) return 7;
+  if (act === 3) return 9;
+  return 0;
+}
+
+const ACT4_PLAYER_HP_RAMP = 3;
+const ACT4_ENEMY_STARTING_HP_BONUS = 2;
+export { ACT4_ENEMY_STARTING_HP_BONUS };
 const STARTING_HEARTS = 3;
 const STARTING_GOLD = 50;
 const STARTING_REROLLS = 3;
@@ -43,6 +54,9 @@ function shuffleTravelDeck(seed: number, act: number): TravelNodeType[] {
 }
 
 function drawTravelNode(run: RunState): TravelNodeType | null {
+  if (run.loop.infiniteMode) {
+    return 'battle';
+  }
   const draw = run.loop.travelDrawPile;
   if (draw.length > 0) {
     return draw.shift() ?? null;
@@ -64,6 +78,13 @@ function drawTravelNode(run: RunState): TravelNodeType | null {
 }
 
 function refillOneOffer(run: RunState, index: number): void {
+  if (run.loop.infiniteMode) {
+    run.loop.travelOffers[index] = {
+      id: `endless_battle_${String(run.loop.totalStepsResolved)}_${String(index)}`,
+      type: 'battle',
+    };
+    return;
+  }
   const node = drawTravelNode(run);
   run.loop.travelOffers[index] = node
     ? {
@@ -80,6 +101,7 @@ export function initRunLoop(run: RunState): void {
   run.loop.awakening = 0;
   run.loop.playerHp = COMBAT_RULES.startingHp;
   run.loop.playerHpMax = COMBAT_RULES.startingHp;
+  run.loop.playerHpBaseMax = COMBAT_RULES.startingHp;
   run.loop.hearts = STARTING_HEARTS;
   run.loop.gold = STARTING_GOLD;
   run.loop.rerolls = STARTING_REROLLS;
@@ -94,6 +116,10 @@ export function initRunLoop(run: RunState): void {
   run.loop.playerTraitIds = [];
   run.loop.retryAvailable = false;
   run.loop.battleReplaySpeed = 1;
+  run.loop.earlyBattleBasicsRemaining = 2;
+  run.loop.act4BattleIndex = 0;
+  run.loop.infiniteMode = false;
+  run.sandboxActiveQueueSlots = activeQueueSlotsForAct(run.loop.act);
   run.remainingLosses = STARTING_HEARTS;
   run.spirit.awakening = 0;
   for (let i = 0; i < run.loop.travelOffers.length; i += 1) {
@@ -116,7 +142,8 @@ export function resolveTravelPick(run: RunState, slotIndex: number): TravelOffer
   run.loop.stepsInAct += 1;
   run.loop.totalStepsResolved += 1;
   run.loop.travelDiscard.push(offer.type);
-  if (run.loop.stepsInAct >= STEPS_PER_ACT && offer.type !== 'boss') {
+  const cap = run.loop.infiniteMode ? 1_000_000 : stepsCapForAct(run.loop.act);
+  if (cap > 0 && run.loop.stepsInAct >= cap && offer.type !== 'boss') {
     forceBossOffer(run);
   } else {
     refillOneOffer(run, slotIndex);
@@ -141,7 +168,11 @@ export function rerollTravelOffers(run: RunState): boolean {
   return true;
 }
 
-export function setupEncounterForNode(run: RunState, nodeType: TravelNodeType): void {
+export function setupEncounterForNode(
+  run: RunState,
+  nodeType: TravelNodeType,
+  content?: CardContentService,
+): void {
   if (nodeType !== 'battle' && nodeType !== 'elite' && nodeType !== 'boss') {
     run.loop.pendingEncounterType = null;
     run.loop.enemyHpMultiplier = 1;
@@ -152,7 +183,11 @@ export function setupEncounterForNode(run: RunState, nodeType: TravelNodeType): 
   run.loop.pendingEncounterType = nodeType;
   run.loop.retryAvailable = true;
   run.loop.freeCardRerollsThisFight = 0;
-  run.loop.enemyHpMultiplier = nodeType === 'elite' ? 2 : nodeType === 'boss' ? 4 : 1;
+  run.loop.enemyHpMultiplier = 1;
+  if (content) {
+    // Pre-roll enemy so Forge can preview enemy program/deck before deploy.
+    prepareEnemyForCombat(run, content);
+  }
 }
 
 export function applyPostCombatRewards(run: RunState, playerWon: boolean): void {
@@ -163,6 +198,16 @@ export function applyPostCombatRewards(run: RunState, playerWon: boolean): void 
     run.loop.hearts = Math.max(0, run.loop.hearts - 1);
     run.remainingLosses = run.loop.hearts;
     return;
+  }
+  run.loop.playerHpMax += 10;
+  run.loop.playerHpBaseMax += 10;
+  run.loop.playerHp = run.loop.playerHpMax;
+  if (run.loop.pendingEncounterType === 'battle' || run.loop.pendingEncounterType === 'elite') {
+    if (run.loop.act >= 4) {
+      run.loop.act4BattleIndex += 1;
+      run.loop.playerHpMax += ACT4_PLAYER_HP_RAMP;
+      run.loop.playerHp = run.loop.playerHpMax;
+    }
   }
   if (run.loop.pendingEncounterType === 'battle') {
     run.loop.gold += WIN_GOLD_BATTLE;
@@ -190,8 +235,14 @@ export function applyPostCombatRewards(run: RunState, playerWon: boolean): void 
     run.loop.stepsInAct = 0;
     run.loop.awakening = Math.min(2, run.loop.awakening + 1);
     run.spirit.awakening = run.loop.awakening;
-    run.loop.travelDrawPile = shuffleTravelDeck(run.seed + run.loop.act * 97, run.loop.act);
-    run.loop.travelDiscard = [];
+    if (run.loop.act === 4) {
+      run.loop.infiniteMode = true;
+      run.loop.travelDrawPile = [];
+      run.loop.travelDiscard = [];
+    } else {
+      run.loop.travelDrawPile = shuffleTravelDeck(run.seed + run.loop.act * 97, run.loop.act);
+      run.loop.travelDiscard = [];
+    }
     run.loop.travelOffers = [null, null, null];
     for (let i = 0; i < run.loop.travelOffers.length; i += 1) {
       refillOneOffer(run, i);

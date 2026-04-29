@@ -2,10 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { CardContentService } from '../core/content';
 import type { CardTag } from '../core/types';
 import './poc/forge-poc.css';
-import { forgeCardFromDef } from './poc/forge/forgeCardModel';
-import { CardHoverPopover } from './poc/forge/CardHoverPopover';
-import { LibraryCard } from './poc/forge/LibraryCard';
-import type { ForgeCard } from './poc/forge/types';
+import { forgeCardFromDef } from '../features/forge/forgeCardModel';
+import { CardHoverPopover, LibraryCard } from '../features/forge/ui';
+import type { ForgeCard } from '../features/forge/ui';
 
 interface CompendiumViewProps {
   onExit: () => void;
@@ -19,7 +18,13 @@ interface CompendiumHover {
   clientY: number;
 }
 
-type CompendiumTag = CardTag | 'Core';
+type FactionScopedTag = 'dragon' | 'tiger' | 'bird' | 'turtle' | 'core' | 'junk';
+type CompendiumTag = CardTag | 'Core' | FactionScopedTag;
+
+const FACTION_TAGS: Record<string, FactionScopedTag[]> = {
+  CYBERPUNK: ['dragon', 'tiger', 'bird', 'turtle'],
+  SCAVENGERS: ['core', 'junk'],
+};
 
 export function CompendiumView({ onExit }: CompendiumViewProps) {
   const content = useMemo(() => CardContentService.loadDefault(1), []);
@@ -85,20 +90,63 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
     }
     return [...s].sort((a, b) => a - b);
   }, [baseCards]);
+  const allDynamicTags = useMemo(() => {
+    const s = new Set<FactionScopedTag>();
+    for (const card of baseCards) {
+      if (card.faction === 'cyberpunk') {
+        if (card.id.includes('dragon')) s.add('dragon');
+        if (card.id.includes('tiger')) s.add('tiger');
+        if (card.id.includes('bird')) s.add('bird');
+        if (card.id.includes('tortoise')) s.add('turtle');
+      }
+      if (card.faction === 'scavengers') {
+        if (card.keywords.some((k) => k.type === 'CoreParts')) s.add('core');
+        if (card.tags.includes('Junk')) s.add('junk');
+      }
+    }
+    return [...s];
+  }, [baseCards]);
+  const visibleTags = useMemo(() => {
+    if (activeFactions.length === 0) {
+      return allTags;
+    }
+    const scoped = new Set<FactionScopedTag>();
+    for (const faction of activeFactions) {
+      for (const tag of FACTION_TAGS[faction] ?? []) {
+        if (allDynamicTags.includes(tag)) {
+          scoped.add(tag);
+        }
+      }
+    }
+    return [...scoped];
+  }, [activeFactions, allDynamicTags, allTags]);
 
   const filteredCards = useMemo(() => {
     return baseCards.filter((card) => {
       const tagOk =
         activeTags.length === 0 ||
-        activeTags.every((tag) =>
-          tag === 'Core' ? card.keywords.some((k) => k.type === 'CoreParts') : card.tags.includes(tag),
-        );
+        activeTags.every((tag) => {
+          if (tag === 'Core') return card.keywords.some((k) => k.type === 'CoreParts');
+          if (tag === 'dragon') return card.faction === 'cyberpunk' && card.id.includes('dragon');
+          if (tag === 'tiger') return card.faction === 'cyberpunk' && card.id.includes('tiger');
+          if (tag === 'bird') return card.faction === 'cyberpunk' && card.id.includes('bird');
+          if (tag === 'turtle') return card.faction === 'cyberpunk' && card.id.includes('tortoise');
+          if (tag === 'core') {
+            return card.faction === 'scavengers' && card.keywords.some((k) => k.type === 'CoreParts');
+          }
+          if (tag === 'junk') return card.faction === 'scavengers' && card.tags.includes('Junk');
+          return card.tags.includes(tag);
+        });
       const factionOk =
         activeFactions.length === 0 || activeFactions.includes(card.faction.toUpperCase());
       const awakeningOk = activeAwakening.length === 0 || activeAwakening.includes(card.awakeningMin);
       return tagOk && factionOk && awakeningOk;
     });
   }, [baseCards, activeTags, activeFactions, activeAwakening]);
+
+  useEffect(() => {
+    setActiveTags((prev) => prev.filter((tag) => visibleTags.includes(tag)));
+  }, [visibleTags]);
 
   const hoverFamilyCards = useMemo(() => {
     if (!hover) {
@@ -270,7 +318,7 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
           <div style={{ border: '1px solid rgba(224,138,58,0.35)', padding: 10, background: 'rgba(8,12,20,0.7)' }}>
             <div style={{ marginBottom: 8, color: '#e08a3a', fontSize: 11, letterSpacing: '0.2em' }}>TAGS</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {allTags.map((tag) => {
+              {visibleTags.map((tag) => {
                 const active = activeTags.includes(tag);
                 return (
                   <button

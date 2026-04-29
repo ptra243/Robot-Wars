@@ -6,6 +6,7 @@ import type { CardDef } from '../core/types';
 export type LibraryFilterId =
   | 'neutral'
   | 'scavenger'
+  | 'cyberpunk'
   | 'strike'
   | 'shield'
   | 'expose'
@@ -23,6 +24,7 @@ export type LibraryFilterId =
 export const LIBRARY_FILTER_ORDER: LibraryFilterId[] = [
   'neutral',
   'scavenger',
+  'cyberpunk',
   'strike',
   'shield',
   'expose',
@@ -38,12 +40,12 @@ export const LIBRARY_FILTER_ORDER: LibraryFilterId[] = [
 ];
 
 /** Faction chips (deck builder library toolbar — first group). */
-export const LIBRARY_FACTION_IDS = ['neutral', 'scavenger'] as const;
+export const LIBRARY_FACTION_IDS = ['neutral', 'scavenger', 'cyberpunk'] as const;
 export type LibraryFactionId = (typeof LIBRARY_FACTION_IDS)[number];
 export type LibraryFactionFilter = null | LibraryFactionId;
 
 /** Tag / mechanic chips — everything except faction ids (second group). */
-export type LibraryTagFilterId = Exclude<LibraryFilterId, 'neutral' | 'scavenger'>;
+export type LibraryTagFilterId = Exclude<LibraryFilterId, 'neutral' | 'scavenger' | 'cyberpunk'>;
 
 export const LIBRARY_TAG_FILTER_ORDER: LibraryTagFilterId[] = [
   'strike',
@@ -65,6 +67,7 @@ export type LibraryTagFilter = null | LibraryTagFilterId;
 export const LIBRARY_FILTER_LABELS: Record<LibraryFilterId, string> = {
   neutral: 'Neutral',
   scavenger: 'Scavenger',
+  cyberpunk: 'Cyberpunk Ninja',
   strike: 'Strike',
   shield: 'Shield',
   expose: 'Expose',
@@ -85,6 +88,8 @@ export function cardMatchesLibraryFilter(card: CardDef, filter: LibraryFilterId)
       return card.neutral === true;
     case 'scavenger':
       return card.neutral === false && card.faction === 'scavengers';
+    case 'cyberpunk':
+      return card.neutral === false && card.faction === 'cyberpunk';
     case 'strike':
       return card.tags.includes('Strike');
     case 'shield':

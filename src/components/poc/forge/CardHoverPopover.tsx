@@ -1,4 +1,5 @@
 import { CARD_TAG_HELP, KEYWORD_TYPE_HELP } from '../../../ui/keywordTagGlossary';
+import { CardDescriptionRich } from '../../CardDescriptionRich';
 import { ForgeCardFaceArt, ForgeCardFaceText } from './ForgeCardFaceParts';
 import type { ForgeCard, HoverState } from './types';
 
@@ -184,7 +185,9 @@ function PopoverCard({
             </div>
           ) : null}
         </div>
-        <p className="forge-poc__popover-blurb">{card.blurb}</p>
+        <p className="forge-poc__popover-blurb">
+          <CardDescriptionRich text={card.blurb} />
+        </p>
       </ForgeCardFaceText>
     </div>
   );

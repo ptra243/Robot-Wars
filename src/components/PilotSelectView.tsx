@@ -10,7 +10,14 @@ import { NEUTRAL_STARTER_DECK } from '../core/draft';
 import { useGameStore } from '../stores/gameStore';
 import { useRunCardContent } from '../hooks/useRunCardContent';
 import { buildCardDescription } from '../ui/cardText';
+import { CardDescriptionRich } from './CardDescriptionRich';
 import './pilot-select.css';
+
+function factionLabel(faction: string): string {
+  if (faction === 'cyberpunk') return 'Cyberpunk Ninjas';
+  if (faction === 'scavengers') return 'Scavengers';
+  return faction;
+}
 
 function DeckMiniCard({ cardId, seed }: { cardId: string; seed: number }) {
   const content = useRunCardContent(seed);
@@ -21,7 +28,7 @@ function DeckMiniCard({ cardId, seed }: { cardId: string; seed: number }) {
   try {
     const card = content.get(cardId);
     name = card.name;
-    faction = card.neutral ? 'Neutral' : 'Scavengers';
+    faction = card.neutral ? 'Neutral' : factionLabel(card.faction);
     tags = card.tags.join(' · ');
     desc = buildCardDescription(card, { omitTagsAndKeywords: false });
   } catch {
@@ -33,7 +40,9 @@ function DeckMiniCard({ cardId, seed }: { cardId: string; seed: number }) {
       <span className="deck-mini-card__faction">{faction}</span>
       <span className="deck-mini-card__name">{name}</span>
       {tags ? <span className="deck-mini-card__tags">{tags}</span> : null}
-      <div className="deck-mini-card__tooltip">{desc}</div>
+      <div className="deck-mini-card__tooltip">
+        <CardDescriptionRich text={desc} />
+      </div>
     </div>
   );
 }
@@ -57,7 +66,7 @@ function PilotCardDisplay({ pilot }: { pilot: PilotDef }) {
       {/* Info */}
       <div className="pilot-card-new__info">
         <div>
-          <span className="pilot-card-new__faction">Scavengers</span>
+          <span className="pilot-card-new__faction">{factionLabel(pilot.faction)}</span>
           <div className="pilot-card-new__name">{pilot.name}</div>
           <p className="pilot-card-new__flavor">{pilot.flavor}</p>
         </div>

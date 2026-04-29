@@ -11,6 +11,12 @@ const ART = {
   shield: '/poc/poc-card-shield.png',
   junk: '/poc/poc-card-junk.png',
   overclock: '/poc/poc-card-overclock.png',
+  cyberDragon: '/poc/poc-card-cyberpunk-dragon.png',
+  cyberTiger: '/poc/poc-card-cyberpunk-tiger.png',
+  cyberBird: '/poc/poc-card-cyberpunk-bird.png',
+  cyberTortoise: '/poc/poc-card-cyberpunk-tortoise.png',
+  cyberDuo: '/poc/poc-card-cyberpunk-duo.png',
+  cyberGlue: '/poc/poc-card-cyberpunk-glue.png',
   /** Core sacrifice / factory placeholder — use with `.forge-poc__*-art--core-reactor` crop. */
   core: '/poc/poc-core-werewolf-mech-reactor-placeholder.png',
 } as const;
@@ -25,6 +31,15 @@ export function isCoreSacrificeLineCardId(id: string): boolean {
 function artForCard(card: CardDef): string {
   if (isCoreSacrificeLineCardId(card.id)) {
     return ART.core;
+  }
+  if (card.faction === 'cyberpunk') {
+    if (card.id.includes('_duo_')) return ART.cyberDuo;
+    if (card.id.includes('masterful_form')) return ART.cyberGlue;
+    if (card.id.includes('dragon')) return ART.cyberDragon;
+    if (card.id.includes('tiger')) return ART.cyberTiger;
+    if (card.id.includes('bird')) return ART.cyberBird;
+    if (card.id.includes('tortoise')) return ART.cyberTortoise;
+    return ART.cyberGlue;
   }
   const tags = card.tags;
   if (card.keywords.some((k) => k.type === 'Overclock')) return ART.overclock;
@@ -48,6 +63,7 @@ function factionClass(card: CardDef): ForgeFaction {
     case 'neutral':
     case 'overclock':
     case 'aegis':
+    case 'cyberpunk':
       return card.faction;
     default:
       return 'neutral';
@@ -150,7 +166,7 @@ export function resolveMergeUpgradeFromIds(
 
 function eligibleForForgePoc(card: CardDef): boolean {
   if (card.awakening_min > 1) return false;
-  return card.faction === 'scavengers' || card.neutral;
+  return card.faction === 'scavengers' || card.faction === 'cyberpunk' || card.neutral;
 }
 
 /**

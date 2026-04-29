@@ -11,7 +11,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "generate:card-descriptions": "tsx scripts/generateCardDescriptions.ts",
-    "migrate:legacy-effects": "tsx scripts/migrateLegacyCardEffects.ts"
+    "migrate:legacy-effects": "tsx scripts/migrateLegacyCardEffects.ts",
+    "build:opponent-piles": "tsx scripts/opponentPiles.mts",
+    "sim:draft-damage": "vitest run src/test/draftCountDamageSim.test.ts --reporter=verbose",
+    "sim:band-ordering": "vitest run src/test/bandOrderingSim.test.ts --reporter=verbose"
   },
   "dependencies": {
     "phaser": "^4.0.0",

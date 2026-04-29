@@ -5,6 +5,28 @@ import { stripSelfHpPlayCostFromDescriptionText } from './hpPlayCost';
 export interface BuildCardDescriptionOptions {
   /** Omit tag/keyword summary lines (e.g. when shown in a side glossary). */
   omitTagsAndKeywords?: boolean;
+  /** Active player trait IDs used for context-sensitive description notes. */
+  activeTraitIds?: readonly string[];
+}
+
+export function cyberpunkNeutralTraitBonusLine(
+  card: CardDef,
+  activeTraitIds: readonly string[] | undefined,
+): string | null {
+  if (!card.neutral || !activeTraitIds || activeTraitIds.length === 0) return null;
+  if (activeTraitIds.includes('seiryu_base')) {
+    return '[[trait-bonus:dragon]]Pilot bonus (Azure Opening): neutral card also grants +1 Energy and counts as Dragon stance activation.[[/trait-bonus]]';
+  }
+  if (activeTraitIds.includes('suzaku_base')) {
+    return '[[trait-bonus:bird]]Pilot bonus (Vermilion Opening): neutral card also grants +1 Shuriken and counts as Bird stance activation.[[/trait-bonus]]';
+  }
+  if (activeTraitIds.includes('byakko_base')) {
+    return '[[trait-bonus:tiger]]Pilot bonus (White Opening): neutral card also applies Expose 1 and counts as Tiger stance activation.[[/trait-bonus]]';
+  }
+  if (activeTraitIds.includes('genbu_base')) {
+    return '[[trait-bonus:tortoise]]Pilot bonus (Black Opening): neutral card also grants Shield 2 and counts as Tortoise stance activation.[[/trait-bonus]]';
+  }
+  return null;
 }
 
 /** Explains how “Continuous N: …” lines split one-time resolve vs tick (Drone Uplink, Perpetual Motion, etc.). */
@@ -25,6 +47,8 @@ export function keywordEffectLine(spec: KeywordSpec): string {
       return v > 0
         ? `Overclock ${v}: bonus-resolves the next card in your queue once per your turn (first eligible Overclock on that turn; no energy cost on Overclock carriers).`
         : `Overclock: bonus chain requires a positive keyword value.`;
+    case 'Switch':
+      return `Switch ${v}: set your current stance; stance-conditional lines only activate while you are in the required stance.`;
     case 'TurboLink':
       return `TurboLink ${v}: spend between 1 and ${v} bulk stacks for junk, then bonus-resolve the next queued card when allowed.`;
     case 'Continuous':
@@ -41,6 +65,14 @@ export function keywordEffectLine(spec: KeywordSpec): string {
       return `UniqueDeck: your deck may include at most one copy of any card with this keyword (hand + fatigue deck combined).`;
     case 'Persistent':
       return `Persistent: marks a rest-of-battle effect on this card (see printed rules). Counts toward the Continuous/Persistent deck limit.`;
+    case 'Virus':
+      return `Virus ${v}: apply ${v} virus stack(s).`;
+    case 'Evade':
+      return `Evade ${v}: gain ${v} evade stack(s). Each stack negates one incoming Strike packet.`;
+    case 'Shuriken':
+      return `Shuriken ${v}: gain ${v} shuriken stack(s) for unload cards.`;
+    case 'Stance':
+      return `Stance ${v}: stance-tech marker for Four Symbols cards.`;
   }
 }
 
@@ -71,6 +103,34 @@ function perpetualChargeFromEffects(card: CardDef):
   for (const step of card.effects ?? []) {
     if (step.type === 'GrantPerpetualRoundCharge') {
       return { chargePerRound: step.chargePerRound, totalRounds: step.totalRounds };
+    }
+  }
+  return undefined;
+}
+
+function firstStrikeBaseDamage(card: CardDef): number | undefined {
+  for (const step of card.effects ?? []) {
+    if (step.type === 'StrikeDamage') {
+      return step.baseDamage;
+    }
+  }
+  return undefined;
+}
+
+function firstDelayedStep(card: CardDef):
+  | { delayRounds: number; kind: 'direct' | 'shield'; amount: number }
+  | undefined {
+  for (const step of card.effects ?? []) {
+    if (step.type !== 'ScheduleEffectAfterRounds') {
+      continue;
+    }
+    for (const delayed of step.steps) {
+      if (delayed.type === 'DirectHpDamage') {
+        return { delayRounds: step.delayRounds, kind: 'direct', amount: delayed.baseDamage };
+      }
+      if (delayed.type === 'ShieldBlock') {
+        return { delayRounds: step.delayRounds, kind: 'shield', amount: delayed.baseBlock };
+      }
     }
   }
   return undefined;
@@ -129,6 +189,161 @@ const JUNK_THRESHOLD_CARD_TEXT: Record<string, { full: string; compact: string }
   },
 };
 
+const CYBERPUNK_CARD_TEXT: Record<string, { full: string; compact: string }> = {
+  ninja_tortoise_guard_t1: {
+    full: 'Shield 4.\nSwitch stance to Tortoise.\nTags: Shield, Stance.',
+    compact: 'Shield 4.\nSwitch to Tortoise.',
+  },
+  ninja_tortoise_virus_t1: {
+    full: 'Shield 3.\nIf in Tortoise: apply Virus 2.\nTags: Shield, Virus, Stance.',
+    compact: 'Shield 3.\n**Tortoise Stance**: **Virus** 2.',
+  },
+  ninja_tiger_mark_t1: {
+    full: 'Expose 1.\nSwitch stance to Tiger.\nTags: Expose, Stance.',
+    compact: 'Expose 1.\nSwitch to Tiger.',
+  },
+  ninja_tiger_double_strike_t1: {
+    full: 'Strike 3.\nIf in Tiger: Strike 3 again.\nTags: Strike, Stance.',
+    compact: 'Strike 3.\n**Tiger Stance**: Strike 3.',
+  },
+  ninja_dragon_charge_t1: {
+    full: 'Gain 1 Energy.\nSwitch stance to Dragon.\nTags: Energy, Stance.',
+    compact: 'Energy 1.\nSwitch to Dragon.',
+  },
+  ninja_dragon_threshold_bolt_t1: {
+    full: 'Gain 1 Energy.\nIf in Dragon and Energy >= 6: deal 5 direct damage.\nIf in Dragon and Energy >= 11: deal another 5 direct damage.\nTags: Direct, Energy, Stance.',
+    compact: 'Energy 1.\nDragon thresholds: 6/11 EN -> 5+5 direct.',
+  },
+  ninja_bird_reload_t1: {
+    full: 'Gain 1 shuriken.\nSwitch stance to Bird.\nTags: Shuriken, Stance.',
+    compact: 'Shuriken +1.\nSwitch to Bird.',
+  },
+  ninja_bird_unload_t1: {
+    full: 'Gain 1 **Shuriken**.\n**Bird Stance**: spend all **Shuriken**, deal 3 **Direct** damage per Shuriken spent.\nTags: Shuriken, Direct, Stance.',
+    compact: '**Shuriken** +1.\n**Bird Stance**: unload for 3 **Direct** each.',
+  },
+  ninja_masterful_form_t1: {
+    full: 'Gain 1 Energy.\nAdaptive glue stance card.\nTags: Energy, Stance.',
+    compact: 'Energy 1.\nGlue stance enabler.',
+  },
+  ninja_smoke_step_t1: {
+    full: 'Gain 1 Evade.\nTags: Evade, Stance.',
+    compact: 'Evade 1.',
+  },
+  ninja_switch_harmony_kernel_t1: {
+    full: 'Gain 1 Energy.\nHeal 2.\nPersistent payoff shell for stance-switch decks.\nTags: Energy, Stance.',
+    compact: 'Energy 1.\nHeal 2.\nPersistent switch payoff.',
+  },
+  ninja_dragon_ambush_t1: {
+    full: 'Your next Tiger card applies bonus Expose per Energy (capped).\nTags: Stance, Expose.',
+    compact: 'Next Tiger scales Expose from Energy (cap).',
+  },
+  ninja_tiger_ambush_t1: {
+    full: 'Your next Tiger Strike gains Pierce and +3 potency this card, then lose 3 potency after it resolves.\nTags: Stance, Strike, Potency.',
+    compact: 'Next Tiger Strike: Pierce, +3 potency, then -3 potency.',
+  },
+  ninja_bird_overclock_t1: {
+    full: 'Gain 2 shuriken.\nYour next Tiger card gains Overclock.\nTags: Stance, Shuriken.',
+    compact: 'Shuriken +2.\nNext Tiger gains Overclock.',
+  },
+  ninja_tortoise_virus_pulse_t1: {
+    full: 'Shield 4.\nApply Virus 3.\nTags: Virus, Shield, Stance.',
+    compact: 'Shield 4.\nVirus 3.',
+  },
+  ninja_mono_dragon_focus_t1: {
+    full: 'Gain 1 Energy.\nIf in Dragon: deal 8 direct damage.\nMono-stance payoff card.\nTags: Stance, Energy, Direct.',
+    compact: 'Energy 1.\n**Dragon Stance**: 8 **Direct**.',
+  },
+  ninja_mono_tiger_focus_t1: {
+    full: 'Strike 4.\nIf in Tiger: Expose 2, then Strike 4 again.\nMono-stance payoff card.\nTags: Stance, Strike, Expose.',
+    compact: 'Strike 4.\n**Tiger Stance**: **Expose** 2 + Strike 4.',
+  },
+  ninja_mono_bird_focus_t1: {
+    full: 'Gain 2 shuriken.\nIf in Bird: spend all shuriken for 4 direct damage per shuriken.\nMono-stance payoff card.\nTags: Stance, Shuriken, Direct.',
+    compact: 'Shuriken +2.\n**Bird Stance**: unload for 4 **Direct** each.',
+  },
+  ninja_mono_tortoise_focus_t1: {
+    full: 'Shield 5.\nIf in Tortoise: apply Virus 3 and gain Virulent Retribution 1.\nMono-stance payoff card.\nTags: Stance, Shield, Virus.',
+    compact: 'Shield 5.\nTortoise: Virus 3 + Retribution 1.',
+  },
+  ninja_compass_release_t1: {
+    full: 'Deal 8 direct damage.\nGain 1 Energy.\nCompass payoff finisher.\nTags: Direct, Stance.',
+    compact: 'Direct 8.\nEnergy 1.\nCompass finisher.',
+  },
+  ninja_celestial_formation_t1: {
+    full: 'Deal 5 direct damage per different stance you have activated this battle.\nMulti-stance payoff card.\nTags: Direct, Stance.',
+    compact: '5 direct per activated stance.',
+  },
+  ninja_taiji_formation_t1: {
+    full: '**Dragon**: 6 **Direct** damage.\n**Tiger**: **Weaken** 3.\n**Tortoise**: **Shield** 6.\n**Bird**: **Evade** 1.\nEach line activates only if that stance has been activated this battle.\nTags: Stance, Direct, Shield.',
+    compact:
+      '**Dragon**: 6 **Direct**.\n**Tiger**: **Weaken** 3.\n**Tortoise**: **Shield** 6.\n**Bird**: **Evade** 1.',
+  },
+  ninja_all_out_attack_t1: {
+    full: '**Dragon**: **Potency** 2.\n**Tortoise**: **Virus** 5.\n**Tiger**: **Strike** 8.\n**Bird**: **Overclock**.\nEach line activates only if that stance has been activated this battle.\nTags: Stance, Strike, Virus, Potency.',
+    compact:
+      '**Dragon**: **Potency** 2.\n**Tortoise**: **Virus** 5.\n**Tiger**: **Strike** 8.\n**Bird**: **Overclock**.',
+  },
+  ninja_duo_dragon_tiger_t1: {
+    full: '**Direct** 3.\n**Dragon**: Next Tiger card gains bonus **Expose** per **Energy** (cap 4).\nSwitch **Tiger**.\nTags: Stance, Direct, Expose.',
+    compact:
+      '**Direct** 3.\n**Dragon**: Next Tiger gains **Expose** per **Energy**.\nSwitch **Tiger**.',
+  },
+  ninja_duo_tiger_dragon_t1: {
+    full: '**Expose** 1.\n**Tiger**: Gain 1 **Energy** and 1 **Potency**.\nSwitch **Dragon**.\nTags: Stance, Energy, Potency.',
+    compact: '**Expose** 1.\n**Tiger**: **Energy** 1, **Potency** 1.\nSwitch **Dragon**.',
+  },
+  ninja_duo_dragon_bird_t1: {
+    full: 'Gain 1 **Energy**.\n**Dragon**: Gain 2 **Shuriken**.\nSwitch **Bird**.\nTags: Stance, Shuriken, Energy.',
+    compact: '**Energy** 1.\n**Dragon**: **Shuriken** 2.\nSwitch **Bird**.',
+  },
+  ninja_duo_bird_dragon_t1: {
+    full: 'Unload: deal 2 **Direct** damage per **Shuriken** spent.\n**Bird**: Gain 2 **Energy**.\nSwitch **Dragon**.\nTags: Stance, Direct, Shuriken.',
+    compact:
+      'Unload 2 **Direct** per **Shuriken**.\n**Bird**: **Energy** 2.\nSwitch **Dragon**.',
+  },
+  ninja_duo_dragon_tortoise_t1: {
+    full: '**Shield** 3.\n**Dragon**: You may spend 2 **Energy** to gain **Shield** 6 and delayed **Shield** 4.\nSwitch **Tortoise**.\nTags: Stance, Shield, Energy.',
+    compact:
+      '**Shield** 3.\n**Dragon**: Pay 2 **Energy** -> **Shield** 6 + delayed **Shield** 4.\nSwitch **Tortoise**.',
+  },
+  ninja_duo_tortoise_dragon_t1: {
+    full: '**Shield** 4.\n**Tortoise**: Consume up to 8 **Shield** to deal **Direct** damage (2 Shield -> 1 damage).\nSwitch **Dragon**.\nTags: Stance, Direct, Shield.',
+    compact:
+      '**Shield** 4.\n**Tortoise**: Convert **Shield** into **Direct** damage.\nSwitch **Dragon**.',
+  },
+  ninja_duo_tiger_bird_t1: {
+    full: 'Gain 1 **Shuriken**.\n**Tiger**: Apply **Expose** 2 and your next Tiger card gains **Overclock**.\nSwitch **Bird**.\nTags: Stance, Shuriken, Expose.',
+    compact:
+      '**Shuriken** 1.\n**Tiger**: **Expose** 2, next Tiger gains **Overclock**.\nSwitch **Bird**.',
+  },
+  ninja_duo_bird_tiger_t1: {
+    full: 'Gain 1 **Evade**.\n**Bird**: Your next Tiger card gains **Overclock**.\nSwitch **Tiger**.\nTags: Stance, Evade.',
+    compact:
+      '**Evade** 1.\n**Bird**: Next Tiger gains **Overclock**.\nSwitch **Tiger**.',
+  },
+  ninja_duo_tiger_tortoise_t1: {
+    full: '**Shield** 4.\n**Tiger**: Gain 2 **Potency** and 1 **Virulent Retribution**.\nSwitch **Tortoise**.\nTags: Stance, Shield, Potency.',
+    compact:
+      '**Shield** 4.\n**Tiger**: **Potency** 2 + **Virulent Retribution** 1.\nSwitch **Tortoise**.',
+  },
+  ninja_duo_tortoise_tiger_t1: {
+    full: 'Apply **Virus** 2.\n**Tortoise**: Next Tiger card gains extra **Strike**s from target **Virus** (cap 3).\nSwitch **Tiger**.\nTags: Stance, Strike, Virus.',
+    compact:
+      '**Virus** 2.\n**Tortoise**: Next Tiger gains extra **Strike**s from **Virus**.\nSwitch **Tiger**.',
+  },
+  ninja_duo_bird_tortoise_t1: {
+    full: 'Gain 1 **Shuriken**.\n**Bird**: Consume all **Shuriken**, gain 3 **Shield** per Shuriken and 1 **Virulent Retribution**.\nSwitch **Tortoise**.\nTags: Stance, Shield, Shuriken.',
+    compact:
+      '**Shuriken** 1.\n**Bird**: Consume **Shuriken** -> **Shield** + **Virulent Retribution**.\nSwitch **Tortoise**.',
+  },
+  ninja_duo_tortoise_bird_t1: {
+    full: 'Gain 1 **Shuriken**.\n**Tortoise**: Your next Shuriken unload applies **Virus** per hit.\nSwitch **Bird**.\nTags: Stance, Shuriken, Virus.',
+    compact:
+      '**Shuriken** 1.\n**Tortoise**: Next unload imbues **Virus**.\nSwitch **Bird**.',
+  },
+};
+
 /** Shared card body text for previews (deck builder dock, combat hover, etc.). */
 export function buildCardDescription(
   card: CardDef,
@@ -140,7 +355,16 @@ export function buildCardDescription(
   const junkThresholdPinned = JUNK_THRESHOLD_CARD_TEXT[card.id];
   if (junkThresholdPinned) {
     const raw = omit ? junkThresholdPinned.compact : junkThresholdPinned.full;
-    return stripSelfHpPlayCostFromDescriptionText(raw, card);
+    const base = stripSelfHpPlayCostFromDescriptionText(raw, card);
+    const bonus = cyberpunkNeutralTraitBonusLine(card, options?.activeTraitIds);
+    return bonus ? `${base}\n${bonus}` : base;
+  }
+  const cyberpunkPinned = CYBERPUNK_CARD_TEXT[card.id];
+  if (cyberpunkPinned) {
+    const raw = omit ? cyberpunkPinned.compact : cyberpunkPinned.full;
+    const base = stripSelfHpPlayCostFromDescriptionText(raw, card);
+    const bonus = cyberpunkNeutralTraitBonusLine(card, options?.activeTraitIds);
+    return bonus ? `${base}\n${bonus}` : base;
   }
 
   const coreTapBranchText = /^core_tap_t[123]$/.test(card.id);
@@ -340,6 +564,13 @@ export function buildCardDescription(
     parts.push('Strike 3 (potency applies)\nNext Strike: Pierce');
   }
 
+  const overdriveSlamText = /^neutral_overdrive_slam_t[123]$/.test(card.id);
+  if (overdriveSlamText) {
+    const strike = firstStrikeBaseDamage(card) ?? card.base_damage ?? 0;
+    parts.push(`Strike: ${String(strike)}`);
+    parts.push('Self: Stunned 1');
+  }
+
   const multiStrikeText = /^neutral_multi_strike_t[123]$/.test(card.id);
   if (multiStrikeText) {
     const d = card.card_tier;
@@ -350,6 +581,30 @@ export function buildCardDescription(
   const stripMineText = card.id === 'strip_mine_t1';
   if (stripMineText) {
     parts.push('Spend 2 Junk: mitigate 3 from next enemy Strike to you');
+  }
+
+  const needleDriverText = /^needle_driver_t[123]$/.test(card.id);
+  if (needleDriverText) {
+    const tier = card.card_tier;
+    const base = tier === 3 ? 7 : tier === 2 ? 5 : 3;
+    const bonus = tier === 3 ? 11 : tier === 2 ? 9 : 7;
+    parts.push(`Strike ${String(base)} (potency applies).`);
+    parts.push(`If you have at least 3 junk: spend 3 junk, then Strike ${String(bonus)} (no potency).`);
+  }
+
+  const delayedShellText = /^neutral_delayed_shell_t[123]$/.test(card.id);
+  const delayedBurstText = /^neutral_delayed_burst_t[123]$/.test(card.id);
+  const delayedSpec = delayedShellText || delayedBurstText ? firstDelayedStep(card) : undefined;
+  if (delayedSpec) {
+    if (delayedSpec.kind === 'shield') {
+      parts.push(
+        `Delayed ${String(delayedSpec.delayRounds)}: after ${String(delayedSpec.delayRounds)} combat round(s), gain Shield ${String(delayedSpec.amount)}.`,
+      );
+    } else {
+      parts.push(
+        `Delayed ${String(delayedSpec.delayRounds)}: after ${String(delayedSpec.delayRounds)} combat round(s), deal ${String(delayedSpec.amount)} non-Strike damage.`,
+      );
+    }
   }
 
   const exposeDroneUplinkText = /^neutral_expose_drone_uplink_t[12]$/.test(card.id);
@@ -404,6 +659,7 @@ export function buildCardDescription(
     parts.push('Emergency Protocol 1');
   }
 
+
   if (
     card.base_damage &&
     !sacrifCustomText &&
@@ -413,7 +669,11 @@ export function buildCardDescription(
     !capitalisingStrikeText &&
     !siphoningStrikeText &&
     !neutralFeintText &&
-    !multiStrikeText
+    !multiStrikeText &&
+    !overdriveSlamText &&
+    !needleDriverText &&
+    !delayedShellText &&
+    !delayedBurstText
   ) {
     if (card.tags.includes('Direct')) {
       parts.push(
@@ -568,5 +828,7 @@ export function buildCardDescription(
     parts.push(fallbackWhenEmpty(card));
   }
 
-  return stripSelfHpPlayCostFromDescriptionText(parts.join('\n'), card);
+  const base = stripSelfHpPlayCostFromDescriptionText(parts.join('\n'), card);
+  const bonus = cyberpunkNeutralTraitBonusLine(card, options?.activeTraitIds);
+  return bonus ? `${base}\n${bonus}` : base;
 }

@@ -3,11 +3,20 @@ import type { CardContentService } from '../content';
 import type { CombatSetup, FighterState, RunState } from '../types';
 
 /**
- * Empty planning slots are stored as {@link COMBAT_RULES.blankQueueSlotCardId} so in-combat effects that
- * look for Neutral Basic Strike ids (e.g. Core Rebirth) see real entries — resolve-time fallback still applies if null slips in.
+ * Empty **active** planning slots (indices below `activeQueueSlots`) are stored as
+ * {@link COMBAT_RULES.blankQueueSlotCardId} so in-combat effects (e.g. Core Rebirth) see real basic ids in the real program.
+ * Out-of-width indices stay `null` (inert; the resolver only advances within active width).
  */
-export function materializeQueueBlankSlots(queue: Array<string | null>, size: number): string[] {
+export function materializeQueueBlankSlots(
+  queue: Array<string | null>,
+  size: number,
+  activeQueueSlots: number = COMBAT_RULES.queueSize,
+): Array<string | null> {
+  const ac = Math.max(5, Math.min(COMBAT_RULES.queueSize, Math.floor(activeQueueSlots)));
   return Array.from({ length: size }, (_, index) => {
+    if (index >= ac) {
+      return null;
+    }
     const id = queue[index];
     if (id == null || id === '') {
       return COMBAT_RULES.blankQueueSlotCardId;
@@ -43,10 +52,10 @@ export function createPreviewFighter(
   materializeBlankQueueSlots = false,
   traitIds: string[] = [],
 ): FighterState {
-  const clampedActive = Math.max(3, Math.min(COMBAT_RULES.queueSize, Math.floor(activeQueueSlots)));
+  const clampedActive = Math.max(5, Math.min(COMBAT_RULES.queueSize, Math.floor(activeQueueSlots)));
   const padded = Array.from({ length: COMBAT_RULES.queueSize }, (_, index) => queue[index] ?? null);
   const queueData = materializeBlankQueueSlots
-    ? materializeQueueBlankSlots(padded, COMBAT_RULES.queueSize)
+    ? materializeQueueBlankSlots(padded, COMBAT_RULES.queueSize, clampedActive)
     : padded;
   return {
     name,
@@ -84,11 +93,33 @@ export function createPreviewFighter(
     lastDeckWrapsSeenForRelics: 0,
     primeDirectiveActiveThisTurn: false,
     preventEmergencyProtocolSpendThisTurn: false,
+    stance: null,
+    shuriken: 0,
+    evadeStacks: 0,
+    virusStacks: 0,
+    virulentRetributionStacks: 0,
+    nextTigerCardOverclock: false,
+    nextTigerCardPierce: false,
+    nextTigerCardPotencyGain: 0,
+    nextTigerCardPotencyAfterCardLoss: 0,
+    nextTigerCardExposePerEnergy: null,
+    nextTigerCardExtraStrikeFromTargetVirusCap: null,
+    nextShurikenUnloadImbueVirusPerHit: 0,
+    activatedDragonThisCombat: false,
+    activatedTigerThisCombat: false,
+    activatedBirdThisCombat: false,
+    activatedTortoiseThisCombat: false,
+    lastResolvedCardFaction: null,
   };
 }
 
 export function buildEnemyDeck(run: RunState, content: CardContentService): string[] {
   const awakening = run.loop.awakening;
+  if (run.combatEnemyFatigueDeck && run.combatEnemyFatigueDeck.length > 0) {
+    const built = deckWithBasicsIfEmpty([...run.combatEnemyFatigueDeck]);
+    run.combatEnemyFatigueDeck = null;
+    return built;
+  }
   const encounterType = run.loop.pendingEncounterType;
   if (encounterType === 'battle' || encounterType === 'elite' || encounterType === 'boss') {
     return Array.from({ length: 7 }, () => 'neutral_basic_strike_t1');

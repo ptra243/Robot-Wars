@@ -53,6 +53,50 @@ export const PILOT_DEFS: PilotDef[] = [
       aw1: 'rust_ranger_aw1',
     },
   },
+  {
+    id: 'seiryu',
+    name: 'Seiryu',
+    flavor: 'Azure discipline. Charge the storm, then cut once.',
+    faction: 'cyberpunk',
+    traitIds: {
+      base: 'seiryu_base',
+      aw0: 'seiryu_aw0',
+      aw1: 'seiryu_aw1',
+    },
+  },
+  {
+    id: 'suzaku',
+    name: 'Suzaku',
+    flavor: 'Vermilion velocity. Stay airborne and weaponize tempo.',
+    faction: 'cyberpunk',
+    traitIds: {
+      base: 'suzaku_base',
+      aw0: 'suzaku_aw0',
+      aw1: 'suzaku_aw1',
+    },
+  },
+  {
+    id: 'byakko',
+    name: 'Byakko',
+    flavor: 'White tiger execution. Expose, overclock, finish.',
+    faction: 'cyberpunk',
+    traitIds: {
+      base: 'byakko_base',
+      aw0: 'byakko_aw0',
+      aw1: 'byakko_aw1',
+    },
+  },
+  {
+    id: 'genbu',
+    name: 'Genbu',
+    flavor: 'Black shell doctrine. Fortify, endure, retaliate.',
+    faction: 'cyberpunk',
+    traitIds: {
+      base: 'genbu_base',
+      aw0: 'genbu_aw0',
+      aw1: 'genbu_aw1',
+    },
+  },
 ];
 
 export function getPilotById(id: string): PilotDef | undefined {
@@ -64,6 +108,10 @@ export const PILOT_PORTRAITS: Record<string, string> = {
   glint: '/poc/poc-glint.png',
   baron_von_boar: '/poc/poc-baron-von-boar.png',
   rust_ranger: '/poc/poc-rust-ranger.png',
+  seiryu: '/poc/poc-card-cyberpunk-dragon.png',
+  suzaku: '/poc/poc-card-cyberpunk-bird.png',
+  byakko: '/poc/poc-card-cyberpunk-tiger.png',
+  genbu: '/poc/poc-card-cyberpunk-tortoise.png',
 };
 
 export function getPilotPortraitUrl(pilotId: string): string {
@@ -75,6 +123,10 @@ export const PILOT_SELECT_BACKGROUNDS: Record<string, string> = {
   glint: '/pilot-select-bg.png',
   baron_von_boar: '/baron-pilot-select-bg.png',
   rust_ranger: '/rust-ranger-pilot-select-bg.png',
+  seiryu: '/pilot-select-bg.png',
+  suzaku: '/pilot-select-bg.png',
+  byakko: '/pilot-select-bg.png',
+  genbu: '/pilot-select-bg.png',
 };
 
 export function getPilotSelectBackgroundUrl(pilotId: string): string {
@@ -87,6 +139,10 @@ export const PILOT_MECH_SPRITES: Record<string, string> = {
   baron_von_boar: '/poc/poc-mech-baron-von-boar-sprite.png',
   /** Placeholder until Rust Ranger battle sprite exists. */
   rust_ranger: '/poc/poc-mech-glint-sprite.png',
+  seiryu: '/poc/poc-mech-enemy-sprite.png',
+  suzaku: '/poc/poc-mech-enemy-sprite.png',
+  byakko: '/poc/poc-mech-enemy-sprite.png',
+  genbu: '/poc/poc-mech-enemy-sprite.png',
 };
 
 export function getPilotMechSpriteUrl(pilotId: string): string {

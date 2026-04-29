@@ -1,19 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties } from 'react';
 import { CardContentService } from '../../core/content';
 import { getPilotById, getPilotMechSpriteUrl, getPilotPortraitUrl } from '../../core/pilots';
+import { COMBAT_RULES } from '../../core/rules';
 import type { CombatFighterSnapshot, CombatResult } from '../../core/types';
-import { buildCardDescription } from '../../ui/cardText';
 import {
   BattleAnalysisModal,
   type BattleAnalysisRoundMetrics,
 } from './forge/BattleAnalysisModal';
-import { cardArtUrlFromDef, isCoreSacrificeLineCardId } from './forge/forgeCardModel';
-import { hpPlayCostAmountForUi } from '../../ui/hpPlayCost';
 import { PocKnockoutCardFilter } from './PocKnockoutCardFilter';
+import {
+  type BattlePocSpeed as Speed,
+  type BattlePocStage as Stage,
+  SpeedControl,
+  StageControl,
+} from './BattlePocControls';
+import { BattlePocDeckStrip } from './BattlePocDeckStrip';
+import { BattlePocPilotHUD, BATTLE_POC_ENERGY_BAR_CAP, BATTLE_POC_SHIELD_BAR_CAP } from './BattlePocPilotHUD';
+import { battleCardFromId, type BattleCard, DECK_SIZE, ATTACK_DAMAGE } from './battlePocCardModel';
 import './battle-poc.css';
-
-type Speed = 1 | 2 | 4;
 
 interface BattlePOCProps {
   onExit: () => void;
@@ -34,25 +39,6 @@ interface BattlePOCProps {
   onReplaySpeedChange?: (s: Speed) => void;
 }
 
-interface BattleCard {
-  id: string;
-  name: string;
-  cost: number;
-  /** 0 energy + self-damage in effects: show red HP chip instead of EN. */
-  hpPlayCost?: number;
-  atk: number;
-  /** Shield value when this is primarily a Shield card. */
-  def?: number;
-  text: string;
-  art: string;
-  /** Match forge lib / queue art crop for core sacrifice placeholder. */
-  artFocus: 'default' | 'core-reactor';
-  /** Visual row in expanded chip: Strike (ATK) vs Shield (DEF). */
-  statKind: 'strike' | 'shield' | 'other';
-  /** If true, this card is hidden from the viewer (fog-of-war preview). */
-  fog?: boolean;
-}
-
 function parseResolveDamage(text: string): number {
   const m = /dealt=(\d+)/.exec(text);
   return m ? Number(m[1] ?? '0') : 0;
@@ -67,6 +53,8 @@ type Phase =
   | 'intro'
   | 'player-reveal'
   | 'player-strike'
+  /** Final punch frame held before sliding back (see PLAYER_STRIKE_HOLD_MS). */
+  | 'player-strike-hold'
   | 'player-recover'
   | 'enemy-reveal'
   | 'enemy-strike'
@@ -74,13 +62,6 @@ type Phase =
   | 'victory'
   | 'defeat';
 
-/**
- * Arena stage preset.
- * - `alley` — `poc-bg-alley-dusk.png` (clean dusk alley + platform, no UI baked in).
- * - `market` — high-noon duel strip illustration (`poc-bg-duel-market.png`): stalls, saloon, crowd.
- * - `neon` — saturated cyber plaza (`poc-bg-battlefield`).
- */
-type Stage = 'alley' | 'market' | 'neon';
 type MechPose = 'idle' | 'attackWindup' | 'attackContact' | 'hurt' | 'defeat';
 
 interface MechPoseSet {
@@ -91,22 +72,55 @@ interface MechPoseSet {
   defeat: string;
 }
 
-const DECK_SIZE = 9;
+interface SpriteSheetSpec {
+  frameCount: number;
+  fps: number;
+  /**
+   * Per-frame aspect ratio (W/H), used to letterbox the strip inside the
+   * landscape mech container so a portrait-leaning source doesn't get squished
+   * vertically. Compute as `(sourceWidth / frameCount) / sourceHeight`.
+   */
+  frameAspect?: number;
+}
+
+const BLANK_QUEUE_ID = COMBAT_RULES.blankQueueSlotCardId;
+
+function padQueueToDeckSize(q: ReadonlyArray<string | null> | string[] | undefined): (string | null)[] {
+  return Array.from({ length: DECK_SIZE }, (_, i) => (q && i < q.length ? (q[i] as string | null) : null));
+}
+
+function lockedProgramBattleCard(index: number): BattleCard {
+  return {
+    id: `__locked__${String(index)}`,
+    name: '—',
+    cost: 0,
+    atk: 0,
+    text: 'This program step is not used in the current act.',
+    art: '',
+    artFocus: 'default',
+    statKind: 'other',
+    locked: true,
+  };
+}
+
 const PLAYER_MAX_HP = 50;
 const ENEMY_MAX_HP = 50;
-const ATTACK_DAMAGE = 6;
-/** Visual cap for energy / shield bar fill (combat has no hard energy max). */
-const ENERGY_BAR_CAP = 12;
-const SHIELD_BAR_CAP = 40;
+
+/** Frozen impact pose after the strip finishes, before returning to idle. */
+const PLAYER_STRIKE_HOLD_MS = 500;
 
 const PHASE_DURATIONS: Record<Phase, number> = {
   intro: 900,
-  'player-reveal': 650,
-  'player-strike': 520,
-  'player-recover': 360,
-  'enemy-reveal': 650,
+  /* Slightly longer windup so the rush reads before the strip runs. */
+  'player-reveal': 820,
+  /* Overridden at runtime for Glint strip length — keep non-zero for typing. */
+  'player-strike': 1000,
+  'player-strike-hold': PLAYER_STRIKE_HOLD_MS,
+  /* Return slide + settle before enemy turn / next program card advance. */
+  'player-recover': 580,
+  'enemy-reveal': 700,
   'enemy-strike': 520,
-  'enemy-recover': 360,
+  'enemy-recover': 380,
   victory: 0,
   defeat: 0,
 };
@@ -119,12 +133,14 @@ const ENEMY_MECH_POSES: MechPoseSet = {
   defeat: '/poc/poc-mech-enemy-sprite.png',
 };
 
+const GLINT_PUNCH_STRIP = '/poc/poc-mech-glint-punch-strip.png';
+
 const GLINT_POSES: MechPoseSet = {
-  idle: '/poc/poc-mech-glint-sprite.png',
-  attackWindup: '/poc/poc-mech-glint-sprite.png',
-  attackContact: '/poc/poc-mech-glint-sprite.png',
-  hurt: '/poc/poc-mech-glint-sprite.png',
-  defeat: '/poc/poc-mech-glint-sprite.png',
+  idle: GLINT_PUNCH_STRIP,
+  attackWindup: GLINT_PUNCH_STRIP,
+  attackContact: GLINT_PUNCH_STRIP,
+  hurt: GLINT_PUNCH_STRIP,
+  defeat: GLINT_PUNCH_STRIP,
 };
 
 const BARON_POSES: MechPoseSet = {
@@ -135,7 +151,41 @@ const BARON_POSES: MechPoseSet = {
   defeat: '/poc/poc-mech-baron-von-boar-sprite.png',
 };
 
-const makeDeck = (prefix: string, fogLast: boolean): BattleCard[] =>
+/**
+ * Optional strip animation metadata by image URL.
+ *
+ * `fps` is the rate at which frame transitions occur during the attack play-once
+ * cycle (`steps(N, jump-none)`). For an N-frame strip there are N-1 transitions,
+ * so total play time is `(N - 1) / fps` seconds. `player-strike` lasts that long;
+ * then `player-strike-hold` (500ms) freezes the last frame before recover.
+ */
+const MECH_SPRITE_SHEETS: Record<string, SpriteSheetSpec | undefined> = {
+  // Source: 1746×376 sliced into 6 equal columns of 291×376 each (frame
+  // aspect ≈ 0.77 — closer to square than the original 0.54 portrait).
+  // Each frame is independently bbox-cropped from the AI source then
+  // pasted centered into a uniform column wide enough to contain the
+  // widest pose (the fully-extended punch + impact burst). See
+  // `scripts/sliceGlintStrip.ps1` for the slicing pipeline.
+  [GLINT_PUNCH_STRIP]: { frameCount: 6, fps: 5, frameAspect: 291 / 376 },
+};
+
+/**
+ * Strip attack length = (N−1)/fps for N frames. Static pilots use a fixed beat.
+ * `player-strike` phase duration uses this so the strip can finish, then
+ * `player-strike-hold` keeps the last frame for PLAYER_STRIKE_HOLD_MS.
+ */
+function playerStrikePhaseMsForPilot(pilotId: string): number {
+  if (pilotId === 'glint') {
+    const spec = MECH_SPRITE_SHEETS[GLINT_PUNCH_STRIP];
+    if (spec) {
+      const transitions = Math.max(1, spec.frameCount - 1);
+      return Math.max(120, Math.round((transitions / Math.max(spec.fps, 1)) * 1000));
+    }
+  }
+  return 780;
+}
+
+const makeDeck = (prefix: string): BattleCard[] =>
   Array.from({ length: DECK_SIZE }, (_, i) => ({
     id: `${prefix}-${i + 1}`,
     name: 'Basic Attack',
@@ -145,7 +195,6 @@ const makeDeck = (prefix: string, fogLast: boolean): BattleCard[] =>
     art: '/poc/poc-card-attack.png',
     artFocus: 'default' as const,
     statKind: 'strike' as const,
-    fog: fogLast && i === DECK_SIZE - 1,
   }));
 
 function buffChipsFromSnapshot(s: CombatFighterSnapshot): { key: string; label: string }[] {
@@ -162,6 +211,9 @@ function debuffChipsFromSnapshot(s: CombatFighterSnapshot): { key: string; label
   if (s.exposeDamage > 0) {
     out.push({ key: 'exp', label: `EXPOSE +${String(s.exposeDamage)}` });
   }
+  if ((s.virusStacks ?? 0) > 0) {
+    out.push({ key: 'virus', label: `VIRUS ${String(s.virusStacks ?? 0)}` });
+  }
   if (s.stunnedTurnsLeft != null && s.stunnedTurnsLeft > 0) {
     out.push({ key: 'stun', label: `STUN ${String(s.stunnedTurnsLeft)}` });
   }
@@ -169,46 +221,12 @@ function debuffChipsFromSnapshot(s: CombatFighterSnapshot): { key: string; label
 }
 
 const isPlayerPhase = (p: Phase): boolean =>
-  p === 'player-reveal' || p === 'player-strike' || p === 'player-recover';
+  p === 'player-reveal' ||
+  p === 'player-strike' ||
+  p === 'player-strike-hold' ||
+  p === 'player-recover';
 const isEnemyPhase = (p: Phase): boolean =>
   p === 'enemy-reveal' || p === 'enemy-strike' || p === 'enemy-recover';
-
-function battleCardFromId(id: string, content: CardContentService): BattleCard {
-  try {
-    const card = content.get(id);
-    const hasStrike = card.tags.includes('Strike');
-    const hasShield = card.tags.includes('Shield');
-    const statKind: BattleCard['statKind'] =
-      hasShield && !hasStrike ? 'shield' : hasStrike ? 'strike' : 'other';
-    const atkV = card.base_damage > 0 ? card.base_damage : 0;
-    const defV = card.base_block > 0 ? card.base_block : 0;
-    const primary = statKind === 'shield' ? defV || atkV : atkV || defV;
-    const hpPlay = hpPlayCostAmountForUi(card) ?? undefined;
-    return {
-      id,
-      name: card.name,
-      cost: card.charge_cost,
-      hpPlayCost: hpPlay,
-      atk: primary,
-      def: statKind === 'shield' && defV > 0 ? defV : undefined,
-      text: buildCardDescription(card, { omitTagsAndKeywords: true }),
-      art: cardArtUrlFromDef(card),
-      artFocus: isCoreSacrificeLineCardId(id) ? 'core-reactor' : 'default',
-      statKind,
-    };
-  } catch {
-    return {
-      id,
-      name: id,
-      cost: 1,
-      atk: ATTACK_DAMAGE,
-      text: `Deal ${ATTACK_DAMAGE} damage.`,
-      art: '/poc/poc-card-attack.png',
-      artFocus: 'default',
-      statKind: 'strike',
-    };
-  }
-}
 
 function poseSetForPilot(pilotId: string, fallbackSrc: string): MechPoseSet {
   if (pilotId === 'baron_von_boar') {
@@ -245,8 +263,8 @@ export function BattlePOC({
   const replayContent = useMemo(() => CardContentService.loadDefault(seed), [seed]);
   const replayEvents = combatResult?.events ?? [];
   const hasReplay = replayEvents.length > 0;
-  const playerDeck = useMemo(() => makeDeck('p', false), []);
-  const enemyDeck = useMemo(() => makeDeck('e', true), []);
+  const playerDeck = useMemo(() => makeDeck('p'), []);
+  const enemyDeck = useMemo(() => makeDeck('e'), []);
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [turnIndex, setTurnIndex] = useState(0);
@@ -259,6 +277,8 @@ export function BattlePOC({
   const [replayResultVisible, setReplayResultVisible] = useState(false);
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [analysisSide, setAnalysisSide] = useState<'player' | 'enemy'>('player');
+
+  const playerStrikeMs = useMemo(() => playerStrikePhaseMsForPilot(pilotId), [pilotId]);
 
   useEffect(() => {
     if (replaySpeed !== undefined) {
@@ -291,12 +311,17 @@ export function BattlePOC({
     if (paused) return undefined;
     if (phase === 'victory' || phase === 'defeat') return undefined;
 
-    const duration = PHASE_DURATIONS[phase] / speed;
+    const duration =
+      (phase === 'player-strike' ? playerStrikeMs : PHASE_DURATIONS[phase]) / speed;
     const timer = window.setTimeout(() => {
       if (phase === 'player-strike') {
         const next = Math.max(0, enemyHP - ATTACK_DAMAGE);
         setEnemyHP(next);
-        setPhase(next <= 0 ? 'victory' : 'player-recover');
+        setPhase(next <= 0 ? 'victory' : 'player-strike-hold');
+        return;
+      }
+      if (phase === 'player-strike-hold') {
+        setPhase('player-recover');
         return;
       }
       if (phase === 'enemy-strike') {
@@ -336,7 +361,7 @@ export function BattlePOC({
     }, duration);
 
     return () => window.clearTimeout(timer);
-  }, [phase, paused, playerHP, enemyHP, turnIndex, speed]);
+  }, [phase, paused, playerHP, enemyHP, turnIndex, speed, playerStrikeMs]);
 
   useEffect(() => {
     if (!hasReplay || paused) {
@@ -382,57 +407,102 @@ export function BattlePOC({
       ? replayEvents[Math.max(0, replayStep - 1)]?.snapshot
       : combatResult?.initialSnapshot;
   const replayDone = hasReplay && replayStep >= replayEvents.length - 1;
+  const replayPlayerActive = useMemo(() => {
+    if (!combatResult) {
+      return DECK_SIZE;
+    }
+    return Math.max(
+      5,
+      Math.min(
+        COMBAT_RULES.queueSize,
+        Math.floor(
+          replaySnapshot?.playerActiveQueueSlots ??
+            combatResult.initialSnapshot.playerActiveQueueSlots ??
+            combatResult.finalState.player.activeQueueSlots,
+        ),
+      ),
+    );
+  }, [combatResult, replaySnapshot]);
+  const replayEnemyActive = useMemo(() => {
+    if (!combatResult) {
+      return DECK_SIZE;
+    }
+    return Math.max(
+      5,
+      Math.min(
+        COMBAT_RULES.queueSize,
+        Math.floor(
+          replaySnapshot?.enemyActiveQueueSlots ??
+            combatResult.initialSnapshot.enemyActiveQueueSlots ??
+            combatResult.finalState.enemy.activeQueueSlots,
+        ),
+      ),
+    );
+  }, [combatResult, replaySnapshot]);
   /** Per replay frame: queue is updated by Factory Reset / transforms; must not freeze on initial snapshot. */
-  const replayPlayerQueueIds = useMemo(() => {
+  const replayPlayerQueueRaw = useMemo((): (string | null)[] => {
     const fromSnap = replaySnapshot?.playerQueue;
     if (fromSnap && fromSnap.length > 0) {
-      return fromSnap.map((id) => id ?? 'neutral_basic_strike_t1');
+      return padQueueToDeckSize(fromSnap);
     }
-    return (
-      combatResult?.initialSnapshot.playerQueue?.map((id) => id ?? 'neutral_basic_strike_t1') ??
-      Array.from({ length: DECK_SIZE }, () => 'neutral_basic_strike_t1')
-    );
+    if (combatResult?.initialSnapshot.playerQueue) {
+      return padQueueToDeckSize(combatResult.initialSnapshot.playerQueue);
+    }
+    return Array.from({ length: DECK_SIZE }, () => null);
   }, [replaySnapshot?.playerQueue, combatResult?.initialSnapshot.playerQueue]);
   const replayPlayerDeck = useMemo(
     () =>
-      replayPlayerQueueIds.map((id, i) => ({
-        ...battleCardFromId(id, replayContent),
-        id: `rp-${String(i)}-${id}`,
-      })),
-    [replayPlayerQueueIds, replayContent],
+      replayPlayerQueueRaw.map((id, i) => {
+        if (i >= replayPlayerActive) {
+          return { ...lockedProgramBattleCard(i), id: `rp-${String(i)}-locked` };
+        }
+        return {
+          ...battleCardFromId(id ?? BLANK_QUEUE_ID, replayContent),
+          id: `rp-${String(i)}-${id ?? 'blank'}`,
+        };
+      }),
+    [replayPlayerQueueRaw, replayPlayerActive, replayContent],
   );
-  const replayEnemyQueueIds = useMemo(() => {
+  const replayEnemyQueueRaw = useMemo((): (string | null)[] => {
     const fromSnap = replaySnapshot?.enemyQueue;
     if (fromSnap && fromSnap.length > 0) {
-      return fromSnap.map((id) => id ?? 'neutral_basic_strike_t1');
+      return padQueueToDeckSize(fromSnap);
     }
-    return (
-      combatResult?.initialSnapshot.enemyQueue?.map((id) => id ?? 'neutral_basic_strike_t1') ??
-      combatResult?.enemyDeckUsed ??
-      Array.from({ length: DECK_SIZE }, () => 'neutral_basic_strike_t1')
-    );
+    if (combatResult?.initialSnapshot.enemyQueue) {
+      return padQueueToDeckSize(combatResult.initialSnapshot.enemyQueue);
+    }
+    if (combatResult?.enemyDeckUsed) {
+      return padQueueToDeckSize(combatResult.enemyDeckUsed);
+    }
+    return Array.from({ length: DECK_SIZE }, () => null);
   }, [replaySnapshot?.enemyQueue, combatResult?.initialSnapshot.enemyQueue, combatResult?.enemyDeckUsed]);
   const replayEnemyDeck = useMemo(
     () =>
-      replayEnemyQueueIds.slice(0, DECK_SIZE).map((id, i) => ({
-        ...battleCardFromId(id, replayContent),
-        id: `re-${String(i)}-${id}`,
-        fog: i === DECK_SIZE - 1,
-      })),
-    [replayEnemyQueueIds, replayContent],
+      replayEnemyQueueRaw.map((id, i) => {
+        if (i >= replayEnemyActive) {
+          return {
+            ...lockedProgramBattleCard(i),
+            id: `re-${String(i)}-locked`,
+          };
+        }
+        return {
+          ...battleCardFromId(id ?? BLANK_QUEUE_ID, replayContent),
+          id: `re-${String(i)}-${id ?? 'blank'}`,
+        };
+      }),
+    [replayEnemyQueueRaw, replayEnemyActive, replayContent],
   );
   const uiPlayerDeck = hasReplay ? replayPlayerDeck : playerDeck;
   const uiEnemyDeck = hasReplay ? replayEnemyDeck : enemyDeck;
-  // Real deck size from the live queue at this replay step (Factory Reset can change program cards per slot).
-  const uiDeckSize = hasReplay
-    ? (replayPlayerQueueIds.length > 0
-        ? replayPlayerQueueIds.length
-        : (combatResult?.initialSnapshot.playerQueue?.length ?? DECK_SIZE))
-    : DECK_SIZE;
-  // Use playerQueueCursor (accurate 0-based slot index) instead of roundIndex-1
-  // so the highlighted card is always the one that actually resolved.
-  const uiTurnIndex = hasReplay
-    ? Math.max(0, Math.min(uiDeckSize - 1, replaySnapshot?.playerQueueCursor ?? 0))
+  // Program width for cursor clamp / ROUND readout (live steps are only within this width).
+  const uiProgramWidth = hasReplay ? replayPlayerActive : DECK_SIZE;
+  const uiEnemyProgramWidth = hasReplay ? replayEnemyActive : DECK_SIZE;
+  // Use queue cursors (0-based slot) so highlight matches the fighter that is resolving.
+  const uiPlayerTurnIndex = hasReplay
+    ? Math.max(0, Math.min(uiProgramWidth - 1, replaySnapshot?.playerQueueCursor ?? 0))
+    : turnIndex;
+  const uiEnemyTurnIndex = hasReplay
+    ? Math.max(0, Math.min(uiEnemyProgramWidth - 1, replaySnapshot?.enemyQueueCursor ?? 0))
     : turnIndex;
   // Real starting HP from the initial combat snapshot (game uses 40, not 50).
   const uiPlayerMaxHp = hasReplay
@@ -443,8 +513,9 @@ export function BattlePOC({
     : ENEMY_MAX_HP;
   const uiPlayerHp = hasReplay ? (replaySnapshot?.player.hp ?? uiPlayerMaxHp) : playerHP;
   const uiEnemyHp = hasReplay ? (replaySnapshot?.enemy.hp ?? uiEnemyMaxHp) : enemyHP;
+  const pTurnCard = uiPlayerDeck[uiPlayerTurnIndex];
   const activePlayerCard =
-    uiPlayerDeck[uiTurnIndex] ?? battleCardFromId('neutral_basic_strike_t1', replayContent);
+    pTurnCard && !pTurnCard.locked ? pTurnCard : battleCardFromId(BLANK_QUEUE_ID, replayContent);
   const replayPhase: Phase =
     replayDone && combatResult && replayResultVisible
       ? combatResult.playerWon
@@ -461,27 +532,11 @@ export function BattlePOC({
           : 'intro';
   const uiPhase = hasReplay ? replayPhase : phase;
 
-  // Fog cards are revealed (fog cleared) once the enemy has actually played
-  // them (enemy-strike phase or later). This lets the player see what was
-  // hidden after the fact without spoiling it before the card resolves.
-  const uiEnemyDeckRevealed = useMemo(
-    () =>
-      uiEnemyDeck.map((card, i) => {
-        if (!card.fog) return card;
-        const played =
-          uiTurnIndex > i ||
-          (uiTurnIndex === i &&
-            (uiPhase === 'enemy-strike' ||
-              uiPhase === 'enemy-recover' ||
-              uiPhase === 'victory' ||
-              uiPhase === 'defeat'));
-        return played ? { ...card, fog: false } : card;
-      }),
-    [uiEnemyDeck, uiTurnIndex, uiPhase],
-  );
-
+  const eTurnCard = uiEnemyDeck[uiEnemyTurnIndex];
   const activeEnemyCard =
-    uiEnemyDeckRevealed[uiTurnIndex] ?? battleCardFromId('neutral_basic_strike_t1', replayContent);
+    eTurnCard && !eTurnCard.locked
+      ? eTurnCard
+      : battleCardFromId(BLANK_QUEUE_ID, replayContent);
   const eventType = activeEvent?.type ?? '';
   const playerStrikeStyle: 'rush' | 'overhead' = pilotId === 'baron_von_boar' ? 'overhead' : 'rush';
   const playerDamageTaken = Math.max(
@@ -506,7 +561,7 @@ export function BattlePOC({
       ? 'defeat'
       : uiPhase === 'enemy-strike'
         ? 'hurt'
-        : uiPhase === 'player-strike'
+        : uiPhase === 'player-strike' || uiPhase === 'player-strike-hold'
           ? 'attackContact'
           : uiPhase === 'player-reveal'
             ? 'attackWindup'
@@ -514,7 +569,7 @@ export function BattlePOC({
   const enemyPose: MechPose =
     uiPhase === 'victory'
       ? 'defeat'
-      : uiPhase === 'player-strike'
+      : uiPhase === 'player-strike' || uiPhase === 'player-strike-hold'
         ? 'hurt'
         : uiPhase === 'enemy-strike'
           ? 'attackContact'
@@ -523,6 +578,24 @@ export function BattlePOC({
             : 'idle';
   const playerMechSrcResolved = playerPoseSet[playerPose];
   const enemyMechSrcResolved = enemyPoseSet[enemyPose];
+  const playerAnimState: MechAnimState =
+    playerPose === 'defeat'
+      ? 'defeat'
+      : playerPose === 'hurt'
+        ? 'hurt'
+        : uiPhase === 'player-strike-hold'
+          ? 'attackHold'
+          : playerPose === 'attackWindup' || playerPose === 'attackContact'
+            ? 'attack'
+            : 'idle';
+  const enemyAnimState: MechAnimState =
+    enemyPose === 'defeat'
+      ? 'defeat'
+      : enemyPose === 'hurt'
+        ? 'hurt'
+        : enemyPose === 'attackWindup' || enemyPose === 'attackContact'
+          ? 'attack'
+          : 'idle';
 
   const statusText = useMemo(() => {
     if (hasReplay) {
@@ -538,13 +611,13 @@ export function BattlePOC({
         return `${playerHudName} reveals ${playerDeck[turnIndex].name}`;
       case 'player-strike':
         return `${playerHudName} strikes — ${ATTACK_DAMAGE} damage`;
+      case 'player-strike-hold':
+        return `${playerHudName} holds — impact`;
       case 'player-recover':
         return `${playerHudName} resolves`;
       case 'enemy-reveal': {
         const card = enemyDeck[turnIndex];
-        return card.fog
-          ? `ARES-01 reveals UNKNOWN instruction`
-          : `ARES-01 reveals ${card.name}`;
+        return `ARES-01 reveals ${card.name}`;
       }
       case 'enemy-strike':
         return `ARES-01 strikes — ${ATTACK_DAMAGE} damage`;
@@ -729,12 +802,12 @@ export function BattlePOC({
       <div className="battle-poc__scrim" />
 
       {/* Enemy deck: top strip — topbar chrome is baked in as topChrome */}
-      <DeckStrip
-        cards={uiEnemyDeckRevealed}
-        activeIndex={uiTurnIndex}
-        active={isEnemyPhase(uiPhase)}
+      <BattlePocDeckStrip
+        cards={uiEnemyDeck}
+        activeIndex={uiEnemyTurnIndex}
+        expandChips={isEnemyPhase(uiPhase) && (uiPhase === 'enemy-reveal' || uiPhase === 'enemy-strike')}
         side="enemy"
-        phase={uiPhase}
+        programWidth={uiEnemyProgramWidth}
         topChrome={
           <header className="battle-poc__topbar">
             <div className="battle-poc__topbar-brand">
@@ -742,7 +815,7 @@ export function BattlePOC({
               <span className="battle-poc__topbar-title">COMBAT · ACT I · RUN 001</span>
             </div>
             <div className="battle-poc__topbar-turn">
-              ROUND <strong>{uiTurnIndex + 1}</strong> / {uiDeckSize}
+              ROUND <strong>{uiPlayerTurnIndex + 1}</strong> / {uiProgramWidth}
             </div>
             <div className="battle-poc__topbar-controls">
               <StageControl value={stage} onChange={setStage} />
@@ -788,7 +861,7 @@ export function BattlePOC({
         ) : null}
         {stage === 'market' ? <div className="battle-poc__ground" aria-hidden /> : null}
         {/* Pilot HUDs overlay the stage corners */}
-        <PilotHUD
+        <BattlePocPilotHUD
           side="left"
           name={playerHudName}
           subtitle="SCAVENGER · AWAKENING 1"
@@ -799,14 +872,15 @@ export function BattlePOC({
           taking={uiPhase === 'enemy-strike'}
           theme="ally"
           energy={hasReplay && rp ? rp.charge : undefined}
-          energyCap={ENERGY_BAR_CAP}
+          energyCap={BATTLE_POC_ENERGY_BAR_CAP}
           shield={hasReplay && rp ? rp.block : undefined}
-          shieldCap={SHIELD_BAR_CAP}
+          shieldCap={BATTLE_POC_SHIELD_BAR_CAP}
+          shurikenStacks={hasReplay && rp ? (rp.shuriken ?? 0) : undefined}
         />
         <div className="battle-poc__vs">
           <span>VS</span>
         </div>
-        <PilotHUD
+        <BattlePocPilotHUD
           side="right"
           name="ARES-01"
           subtitle="CORPORATE · AEGIS STRIKE"
@@ -814,12 +888,12 @@ export function BattlePOC({
           hp={uiEnemyHp}
           maxHp={uiEnemyMaxHp}
           active={isEnemyPhase(uiPhase)}
-          taking={uiPhase === 'player-strike'}
+          taking={uiPhase === 'player-strike' || uiPhase === 'player-strike-hold'}
           theme="enemy"
           energy={hasReplay && re ? re.charge : undefined}
-          energyCap={ENERGY_BAR_CAP}
+          energyCap={BATTLE_POC_ENERGY_BAR_CAP}
           shield={hasReplay && re ? re.block : undefined}
-          shieldCap={SHIELD_BAR_CAP}
+          shieldCap={BATTLE_POC_SHIELD_BAR_CAP}
         />
 
         {/* Mechs — independently positioned sprites on top of shared bg */}
@@ -836,7 +910,11 @@ export function BattlePOC({
           {hasReplay && rp ? (
             <AuraChipRow variant="buff" chips={buffChipsFromSnapshot(rp)} a11y="Player buffs" />
           ) : null}
-          <img src={playerMechSrcResolved} alt={pilot ? `${pilot.name}'s mech` : 'Player mech'} />
+          <MechSprite
+            src={playerMechSrcResolved}
+            alt={pilot ? `${pilot.name}'s mech` : 'Player mech'}
+            animState={playerAnimState}
+          />
           {hasReplay && rp ? (
             <AuraChipRow variant="debuff" chips={debuffChipsFromSnapshot(rp)} a11y="Player debuffs" />
           ) : null}
@@ -847,13 +925,15 @@ export function BattlePOC({
             'battle-poc__mech--enemy',
             `battle-poc__mech--${uiPhase}`,
             `battle-poc__mech--pose-${enemyPose}`,
-            uiPhase === 'player-strike' ? 'battle-poc__mech--hurt' : '',
+            uiPhase === 'player-strike' || uiPhase === 'player-strike-hold'
+              ? 'battle-poc__mech--hurt'
+              : '',
           ].join(' ')}
         >
           {hasReplay && re ? (
             <AuraChipRow variant="buff" chips={buffChipsFromSnapshot(re)} a11y="Enemy buffs" />
           ) : null}
-          <img src={enemyMechSrcResolved} alt="Enemy mech" />
+          <MechSprite src={enemyMechSrcResolved} alt="Enemy mech" animState={enemyAnimState} />
           {hasReplay && re ? (
             <AuraChipRow variant="debuff" chips={debuffChipsFromSnapshot(re)} a11y="Enemy debuffs" />
           ) : null}
@@ -885,12 +965,17 @@ export function BattlePOC({
       </main>
 
       {/* Player deck: bottom strip — statusbar chrome is baked in as bottomChrome */}
-      <DeckStrip
+      <BattlePocDeckStrip
         cards={uiPlayerDeck}
-        activeIndex={uiTurnIndex}
-        active={isPlayerPhase(uiPhase)}
+        activeIndex={uiPlayerTurnIndex}
+        expandChips={
+          isPlayerPhase(uiPhase) &&
+          (uiPhase === 'player-reveal' ||
+            uiPhase === 'player-strike' ||
+            uiPhase === 'player-strike-hold')
+        }
         side="player"
-        phase={uiPhase}
+        programWidth={uiProgramWidth}
         bottomChrome={
           <footer className="battle-poc__statusbar">
             <div className="battle-poc__status-marker" />
@@ -898,7 +983,7 @@ export function BattlePOC({
             <div className="battle-poc__status-hint">
               {hasReplay
                 ? `REPLAY · event ${String(replayStep + 1)} / ${String(replayEvents.length)}`
-                : 'POC · auto-plays · both decks: 9× Basic Attack · enemy card 9 hidden'}
+                : 'POC · auto-plays · both decks: 9× Basic Attack'}
             </div>
           </footer>
         }
@@ -936,68 +1021,6 @@ export function BattlePOC({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Speed selector (1x / 2x / 4x segmented)                                     */
-/* -------------------------------------------------------------------------- */
-
-function SpeedControl({ value, onChange }: { value: Speed; onChange: (s: Speed) => void }) {
-  const options: Speed[] = [1, 2, 4];
-  return (
-    <div className="battle-poc__speed" role="group" aria-label="Battle speed">
-      <span className="battle-poc__speed-label">SPEED</span>
-      {options.map((opt) => (
-        <button
-          key={opt}
-          type="button"
-          className={[
-            'battle-poc__speed-btn',
-            value === opt ? 'battle-poc__speed-btn--active' : '',
-          ].join(' ')}
-          onClick={() => {
-            onChange(opt);
-          }}
-          aria-pressed={value === opt}
-        >
-          {opt}×
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Stage selector (alley / duel strip / neon)                                  */
-/* -------------------------------------------------------------------------- */
-
-function StageControl({ value, onChange }: { value: Stage; onChange: (s: Stage) => void }) {
-  const options: { id: Stage; label: string }[] = [
-    { id: 'alley', label: 'ALLEY' },
-    { id: 'market', label: 'DUEL' },
-    { id: 'neon', label: 'NEON' },
-  ];
-  return (
-    <div className="battle-poc__speed" role="group" aria-label="Arena stage">
-      <span className="battle-poc__speed-label">STAGE</span>
-      {options.map((opt) => (
-        <button
-          key={opt.id}
-          type="button"
-          className={[
-            'battle-poc__speed-btn',
-            value === opt.id ? 'battle-poc__speed-btn--active' : '',
-          ].join(' ')}
-          onClick={() => {
-            onChange(opt.id);
-          }}
-          aria-pressed={value === opt.id}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
 /* Mech aura chips (replay)                                                    */
 /* -------------------------------------------------------------------------- */
 
@@ -1027,241 +1050,47 @@ function AuraChipRow({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Pilot HUD                                                                   */
-/* -------------------------------------------------------------------------- */
+type MechAnimState = 'idle' | 'attack' | 'attackHold' | 'hurt' | 'defeat';
 
-interface PilotHUDProps {
-  side: 'left' | 'right';
-  name: string;
-  subtitle: string;
-  portrait: string;
-  hp: number;
-  maxHp: number;
-  active: boolean;
-  taking: boolean;
-  theme: 'ally' | 'enemy';
-  energy?: number;
-  energyCap?: number;
-  shield?: number;
-  shieldCap?: number;
-}
+function MechSprite({
+  src,
+  alt,
+  animState,
+}: {
+  src: string;
+  alt: string;
+  animState: MechAnimState;
+}) {
+  const strip = MECH_SPRITE_SHEETS[src];
+  if (!strip) {
+    const imgAnim = animState === 'attackHold' ? 'attack' : animState;
+    return (
+      <img className={`battle-poc__mech-sprite battle-poc__mech-sprite--${imgAnim}`} src={src} alt={alt} />
+    );
+  }
 
-const HUD_PIPS = 20; // one pip per 5 % of max HP
-
-function PilotHUD({
-  side,
-  name,
-  subtitle,
-  portrait,
-  hp,
-  maxHp,
-  active,
-  taking,
-  theme,
-  energy,
-  energyCap,
-  shield,
-  shieldCap,
-}: PilotHUDProps) {
-  const activePips = Math.round(Math.max(0, Math.min(1, hp / maxHp)) * HUD_PIPS);
-  const ec = energyCap ?? ENERGY_BAR_CAP;
-  const sc = shieldCap ?? SHIELD_BAR_CAP;
-  const energyPct =
-    energy !== undefined ? Math.max(0, Math.min(1, energy / Math.max(ec, 1))) : null;
-  const shieldPct =
-    shield !== undefined ? Math.max(0, Math.min(1, shield / Math.max(sc, 1))) : null;
-
+  // (N - 1) / fps because the strip runs with steps(N, jump-none) — N stops
+  // distributed evenly across the duration with N-1 transitions.
+  const transitions = Math.max(1, strip.frameCount - 1);
+  const durationMs = Math.max(120, Math.round((transitions / Math.max(strip.fps, 1)) * 1000));
+  const styleVars: CSSProperties & Record<string, string | number> = {
+    backgroundImage: `url(${src})`,
+    ['--bp-sheet-frames' as string]: strip.frameCount,
+    ['--bp-sheet-dur' as string]: `${String(durationMs)}ms`,
+  };
+  if (strip.frameAspect) {
+    styleVars['--bp-frame-aspect'] = String(strip.frameAspect);
+  }
+  const stripModifier =
+    animState === 'attackHold' ? 'attack-hold' : animState === 'attack' ? 'attack' : animState;
   return (
     <div
-      className={[
-        'battle-poc__hud',
-        `battle-poc__hud--${side}`,
-        `battle-poc__hud--${theme}`,
-        active ? 'battle-poc__hud--active' : '',
-        taking ? 'battle-poc__hud--taking' : '',
-      ].join(' ')}
-    >
-      <div className="battle-poc__hud-portrait">
-        <img src={portrait} alt={`${name} portrait`} />
-        <div className="battle-poc__hud-portrait-frame" />
-      </div>
-      <div className="battle-poc__hud-body">
-        <div className="battle-poc__hud-name">{name}</div>
-        <div className="battle-poc__hud-subtitle">{subtitle}</div>
-        {shieldPct !== null ? (
-          <div className="battle-poc__res battle-poc__res--shield" title="Shield (block)">
-            <span className="battle-poc__res-label">SH</span>
-            <div className="battle-poc__res-track">
-              <div className="battle-poc__res-fill battle-poc__res-fill--shield" style={{ width: `${String(shieldPct * 100)}%` }} />
-            </div>
-            <span className="battle-poc__res-num">{String(shield ?? 0)}</span>
-          </div>
-        ) : null}
-        <div className="battle-poc__hud-pips-row">
-          <div className="battle-poc__hud-pips">
-            {Array.from({ length: HUD_PIPS }, (_, i) => {
-              // Each pip's color is determined by its position in the HP track,
-              // not the current HP fraction, so the zone boundaries are always
-              // visible. Pips drain from the right (high HP) to the left (low HP).
-              let state: string;
-              if (i >= activePips) {
-                state = 'empty';
-              } else if (i <= 2) {
-                state = 'red';    // 0–15 %
-              } else if (i <= 9) {
-                state = 'yellow'; // 15–50 %
-              } else {
-                state = 'green';  // 50–100 %
-              }
-              return <span key={i} className={`battle-poc__hud-pip battle-poc__hud-pip--${state}`} />;
-            })}
-          </div>
-          <span className="battle-poc__hud-hp-num">
-            {hp}<span className="battle-poc__hud-hp-max"> /{maxHp}</span>
-          </span>
-        </div>
-        {energyPct !== null ? (
-          <div className="battle-poc__res battle-poc__res--energy" title="Energy (charge)">
-            <span className="battle-poc__res-label">EN</span>
-            <div className="battle-poc__res-track">
-              <div className="battle-poc__res-fill battle-poc__res-fill--energy" style={{ width: `${String(energyPct * 100)}%` }} />
-            </div>
-            <span className="battle-poc__res-num">{String(energy ?? 0)}</span>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Deck strip (horizontal)                                                     */
-/* -------------------------------------------------------------------------- */
-
-interface DeckStripProps {
-  cards: BattleCard[];
-  activeIndex: number;
-  active: boolean;
-  side: 'player' | 'enemy';
-  phase: Phase;
-  topChrome?: ReactNode;
-  bottomChrome?: ReactNode;
-}
-
-function DeckStrip({ cards, activeIndex, active, side, phase, topChrome, bottomChrome }: DeckStripProps) {
-  // A chip "expands" into a full card during its own side's reveal + strike
-  // phases. It stays `--active` (highlighted) for the whole round so the
-  // player can see which card most recently resolved, even after it has
-  // shrunk back to chip size during recover.
-  const expandingPhase =
-    side === 'player'
-      ? phase === 'player-reveal' || phase === 'player-strike'
-      : phase === 'enemy-reveal' || phase === 'enemy-strike';
-  return (
-    <aside className={`battle-poc__strip battle-poc__strip--${side}`}>
-      {topChrome}
-      <div className="battle-poc__strip-label">
-        <span>{side === 'player' ? 'BATTLE PROGRAM' : 'ENEMY PROGRAM'}</span>
-        <span className="battle-poc__strip-counter">
-          {activeIndex + 1}/{cards.length}
-        </span>
-      </div>
-      <ol className="battle-poc__strip-list">
-        {cards.map((card, i) => {
-          const isActive = i === activeIndex;
-          const isExpanded = isActive && active && expandingPhase;
-          return (
-            <li
-              key={card.id}
-              className={[
-                'battle-poc__chip',
-                `battle-poc__chip--${side}`,
-                isActive ? 'battle-poc__chip--active' : '',
-                isExpanded ? 'battle-poc__chip--expanded' : '',
-                card.fog ? 'battle-poc__chip--fog' : '',
-              ].join(' ')}
-            >
-              <div className="battle-poc__chip-index">{String(i + 1).padStart(2, '0')}</div>
-              <div
-                className={[
-                  'battle-poc__chip-art',
-                  !card.fog && card.artFocus === 'core-reactor' ? 'battle-poc__chip-art--core-reactor' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                style={
-                  card.fog
-                    ? { backgroundImage: 'none' }
-                    : card.artFocus === 'core-reactor'
-                      ? { backgroundImage: 'none' }
-                      : { backgroundImage: `url(${card.art})` }
-                }
-              >
-                {!card.fog && card.artFocus === 'core-reactor' ? (
-                  <>
-                    <div className="battle-poc__chip-art-void" aria-hidden />
-                    <div className="battle-poc__chip-art-bgi">
-                      <img
-                        className="battle-poc__chip-art-bgi-img"
-                        src={card.art}
-                        alt=""
-                        draggable={false}
-                      />
-                    </div>
-                  </>
-                ) : null}
-                {card.fog ? <div className="battle-poc__chip-fog">?</div> : null}
-              </div>
-              <div className="battle-poc__chip-meta">
-                <span className="battle-poc__chip-name">{card.fog ? 'UNKNOWN' : card.name}</span>
-                {card.hpPlayCost !== undefined ? (
-                  <span className="battle-poc__chip-cost battle-poc__chip-cost--hp">
-                    <span className="battle-poc__chip-cost-hp-lbl">HP</span>
-                    {String(card.hpPlayCost)}
-                  </span>
-                ) : (
-                  <span className="battle-poc__chip-cost">{card.cost}</span>
-                )}
-              </div>
-              {/* Detail body — slides open only when this chip is expanded.
-                  Kept in the DOM at all times (with max-height: 0) so the
-                  grow / shrink animation is smooth. */}
-              <div className="battle-poc__chip-detail">
-                <div className="battle-poc__chip-detail-tags">
-                  {card.statKind === 'shield' ? (
-                    <>
-                      <span className="battle-poc__chip-detail-tag">SHIELD</span>
-                      <span className="battle-poc__chip-detail-tag battle-poc__chip-detail-tag--def">
-                        DEF {card.def ?? card.atk}
-                      </span>
-                    </>
-                  ) : card.statKind === 'strike' ? (
-                    <>
-                      <span className="battle-poc__chip-detail-tag">STRIKE</span>
-                      <span className="battle-poc__chip-detail-tag battle-poc__chip-detail-tag--atk">
-                        ATK {card.atk}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="battle-poc__chip-detail-tag">CARD</span>
-                      <span className="battle-poc__chip-detail-tag battle-poc__chip-detail-tag--atk">
-                        ···
-                      </span>
-                    </>
-                  )}
-                </div>
-                <p className="battle-poc__chip-detail-text">
-                  {card.fog ? '— hidden —' : card.text}
-                </p>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-      {bottomChrome}
-    </aside>
+      role="img"
+      aria-label={alt}
+      data-aspect-fit={strip.frameAspect ? 'true' : undefined}
+      className={`battle-poc__mech-sprite-strip battle-poc__mech-sprite-strip--${stripModifier}`}
+      style={styleVars}
+    />
   );
 }
 

@@ -162,6 +162,8 @@ export function simulateForgeDeckMetrics(
   queueIds: Array<string | null>,
   playerDeckCardIds: string[],
   playerTraitIds: string[] = [],
+  /** Program width for the player (and dummy enemy) — must match combat’s active queue slots. */
+  activeQueueSlots: number = COMBAT_RULES.queueSize,
 ): ForgeDeckSimulationResult {
   const enemyDeck = Array.from({ length: COMBAT_RULES.queueSize }, () => 'neutral_basic_strike_t1');
   const setup = createCombatSetupFromDecklists({
@@ -170,6 +172,7 @@ export function simulateForgeDeckMetrics(
     enemyDeck,
     playerQueue: queueIds,
     enemyQueue: enemyDeck,
+    activeQueueSlots,
   });
   setup.player.traitIds = [...playerTraitIds];
   if (setup.player.traitIds.includes('rust_ranger_base')) {

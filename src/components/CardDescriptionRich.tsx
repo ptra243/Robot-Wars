@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from 'react';
 import type { CardTag, KeywordType } from '../core/types';
 import { CARD_TAG_HELP, KEYWORD_TYPE_HELP } from '../ui/keywordTagGlossary';
+import './card-description-rich.css';
 
 /** Multi-word phrases bolded in rules text (must stay in sync with `PHRASE_TERMS`). */
 const PHRASE_HELP: Record<string, string> = {
@@ -29,13 +30,31 @@ const KEYWORD_TYPES: KeywordType[] = [
   'Continuous',
   'TurboLink',
   'Overclock',
+  'Switch',
   'CoreParts',
+  'Stance',
+  'Shuriken',
+  'Evade',
+  'Virus',
   'Expose',
   'Pierce',
   'Bulk',
 ];
 
-const TAG_TYPES: CardTag[] = ['Strike', 'Shield', 'Direct', 'Junk', 'Bulk', 'Potency', 'Energy', 'Expose'];
+const TAG_TYPES: CardTag[] = [
+  'Strike',
+  'Shield',
+  'Direct',
+  'Junk',
+  'Bulk',
+  'Potency',
+  'Energy',
+  'Expose',
+  'Virus',
+  'Evade',
+  'Shuriken',
+  'Stance',
+];
 
 /** Multi-word game terms (matched before single tokens). */
 const PHRASE_TERMS: string[] = ['Factory Reset', 'Refined Scrap'];
@@ -73,6 +92,42 @@ function renderBoldLine(line: string, keyPrefix: string): ReactNode {
   );
 }
 
+function renderLineWithMarkdownBold(line: string, keyPrefix: string): ReactNode {
+  const mdParts = line.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {mdParts.map((part, i) => {
+        const m = part.match(/^\*\*([^*]+)\*\*$/);
+        if (m) {
+          const token = m[1]!;
+          return (
+            <strong
+              className="trading-card__keyword"
+              key={`${keyPrefix}-md-${i}`}
+              title={tooltipForHighlightedTerm(token)}
+            >
+              {token}
+            </strong>
+          );
+        }
+        return <Fragment key={`${keyPrefix}-txt-${i}`}>{renderBoldLine(part, `${keyPrefix}-${i}`)}</Fragment>;
+      })}
+    </>
+  );
+}
+
+function renderTraitBonusLine(line: string, keyPrefix: string): ReactNode | null {
+  const m = line.match(/^\[\[trait-bonus:(dragon|tiger|bird|tortoise)\]\](.*)\[\[\/trait-bonus\]\]$/);
+  if (!m) return null;
+  const stance = m[1];
+  const text = m[2]?.trim() ?? '';
+  return (
+    <span className={`card-description__trait-bonus card-description__trait-bonus--${stance}`} key={keyPrefix}>
+      {renderLineWithMarkdownBold(text, `${keyPrefix}-bonus`)}
+    </span>
+  );
+}
+
 /**
  * Renders card rules text with game keyword and tag names in **bold**.
  * Newlines render as line breaks.
@@ -87,7 +142,7 @@ export function CardDescriptionRich({ text }: { text: string }): ReactNode {
       {lines.map((line, li) => (
         <Fragment key={li}>
           {li > 0 ? <br /> : null}
-          {renderBoldLine(line, `L${String(li)}`)}
+          {renderTraitBonusLine(line, `L${String(li)}`) ?? renderLineWithMarkdownBold(line, `L${String(li)}`)}
         </Fragment>
       ))}
     </>

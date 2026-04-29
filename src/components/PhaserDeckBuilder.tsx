@@ -3,8 +3,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type Dispatch,
-  type SetStateAction,
 } from 'react';
 import * as Phaser from 'phaser';
 import { DeckBuilderSidebar } from './DeckBuilderSidebar';
@@ -22,17 +20,10 @@ import {
   type DeckBuilderHoverPayload,
 } from '../ui/deckBuilderScene';
 import type { CardContentService } from '../core/content';
-import {
-  cloneRun,
-  loadFatigueDeckFromHand,
-  setEnemyPlannedSlot,
-  setPlayerPlannedSlot,
-} from '../core/run';
 import type { RunState } from '../core/types';
-import { validateDeckComposition } from '../core/run';
-import { resolveMergeUpgradeFromIds } from './poc/forge/forgeCardModel';
+import { resolveMergeUpgradeFromIds } from '../features/forge/forgeCardModel';
 import { useGameStore } from '../stores/gameStore';
-import { cardArtUrlFromDef } from './poc/forge/forgeCardModel';
+import { cardArtUrlFromDef } from '../features/forge/forgeCardModel';
 
 function resolveDropOnQueueSlot(
   content: CardContentService,
@@ -50,7 +41,6 @@ function resolveDropOnQueueSlot(
 
 interface PhaserDeckBuilderProps {
   run: RunState;
-  setRun: Dispatch<SetStateAction<RunState>>;
   content: CardContentService;
   onFullReset: () => void;
   onStartBattle: () => void;
@@ -60,7 +50,6 @@ interface PhaserDeckBuilderProps {
 
 export function PhaserDeckBuilder({
   run,
-  setRun,
   content,
   onFullReset,
   onStartBattle,
@@ -74,6 +63,10 @@ export function PhaserDeckBuilder({
   const sceneRef = useRef<DeckBuilderScene | null>(null);
 
   const deckCycleReport = useGameStore((s) => s.deckCycleReport);
+  const handleAssignPlannedSlot = useGameStore((s) => s.handleAssignPlannedSlot);
+  const handleSwapPlannedSlots = useGameStore((s) => s.handleSwapPlannedSlots);
+  const handleMergeHandCards = useGameStore((s) => s.handleMergeHandCards);
+  const handleLoadFatigueDeckFromHand = useGameStore((s) => s.handleLoadFatigueDeckFromHand);
   const prevDeckCycleRef = useRef(deckCycleReport);
 
   const suppressDeckDragAfterOverlay = useCallback(() => {
@@ -135,42 +128,24 @@ export function PhaserDeckBuilder({
 
   const assignSlot = useCallback(
     (slotIndex: number, cardId: string) => {
-      setRun((prev) => {
-        const next = cloneRun(prev);
-        if (editTarget === 'player') {
-          const cur = next.plannedQueue[slotIndex];
-          const id = resolveDropOnQueueSlot(content, cur, cardId);
-          setPlayerPlannedSlot(next, slotIndex, id);
-        } else {
-          const cur = next.enemyPlannedQueue[slotIndex];
-          const id = resolveDropOnQueueSlot(content, cur, cardId);
-          setEnemyPlannedSlot(next, slotIndex, id);
-        }
-        return next;
-      });
+      if (editTarget === 'player') {
+        const cur = run.plannedQueue[slotIndex];
+        const id = resolveDropOnQueueSlot(content, cur, cardId);
+        handleAssignPlannedSlot('player', slotIndex, id);
+      } else {
+        const cur = run.enemyPlannedQueue[slotIndex];
+        const id = resolveDropOnQueueSlot(content, cur, cardId);
+        handleAssignPlannedSlot('enemy', slotIndex, id);
+      }
     },
-    [content, editTarget, setRun],
+    [content, editTarget, handleAssignPlannedSlot, run.enemyPlannedQueue, run.plannedQueue],
   );
 
   const swapSlots = useCallback(
     (a: number, b: number) => {
-      setRun((prev) => {
-        const next = cloneRun(prev);
-        if (editTarget === 'player') {
-          const q = next.plannedQueue;
-          const t = q[a];
-          q[a] = q[b];
-          q[b] = t;
-        } else {
-          const q = next.enemyPlannedQueue;
-          const t = q[a];
-          q[a] = q[b];
-          q[b] = t;
-        }
-        return next;
-      });
+      handleSwapPlannedSlots(editTarget, a, b);
     },
-    [editTarget, setRun],
+    [editTarget, handleSwapPlannedSlots],
   );
 
   const mergeCarouselSlots = useCallback(
@@ -193,31 +168,10 @@ export function PhaserDeckBuilder({
         pushToast('Those cards cannot be merged.');
         return;
       }
-      setRun((prev) => {
-        const next = cloneRun(prev);
-        const removeFirst = (arr: string[], id: string) => {
-          const ix = arr.indexOf(id);
-          if (ix >= 0) {
-            arr.splice(ix, 1);
-          }
-        };
-        removeFirst(next.deck, sourceId);
-        removeFirst(next.deck, targetId);
-        next.deck.push(mergedId);
-        const [lo, hiIdx] = hi < hj ? [hi, hj] : [hj, hi];
-        next.hand.splice(hiIdx, 1);
-        next.hand.splice(lo, 1);
-        next.hand.push(mergedId);
-        const deckErr = validateDeckComposition(next, content);
-        if (deckErr) {
-          pushToast(deckErr);
-          return prev;
-        }
-        pushToast('Cards merged.');
-        return next;
-      });
+      handleMergeHandCards(sourceId, targetId, hi, hj, mergedId);
+      pushToast('Cards merged.');
     },
-    [carouselMode, content, editTarget, pushToast, setRun, viewModel],
+    [carouselMode, content, editTarget, handleMergeHandCards, pushToast, viewModel],
   );
 
   const toggleCarouselMode = useCallback(() => {
@@ -234,14 +188,6 @@ export function PhaserDeckBuilder({
       return Math.max(0, Math.min(max, p + delta));
     });
   }, []);
-
-  const handleLoadFatigueDeckFromHand = useCallback(() => {
-    setRun((prev) => {
-      const next = cloneRun(prev);
-      loadFatigueDeckFromHand(next);
-      return next;
-    });
-  }, [setRun]);
 
   useEffect(() => {
     if (!hostRef.current || gameRef.current) {
@@ -407,7 +353,6 @@ export function PhaserDeckBuilder({
             <div className="deck-builder-host full-screen-phaser" ref={hostRef} />
             <DeckBuilderLibraryPanel
               run={run}
-              setRun={setRun}
               librarySearch={librarySearch}
               onLibrarySearchChange={setLibrarySearch}
               libraryFactionFilter={libraryFactionFilter}
@@ -427,13 +372,10 @@ export function PhaserDeckBuilder({
       </div>
       <DeckBuilderSidebar
         run={run}
-        setRun={setRun}
-        content={content}
         editTarget={editTarget}
         open={deckSidebarOpen}
         onOpenChange={setDeckSidebarOpen}
         onToast={pushToast}
-        cloneRun={cloneRun}
         onTransientUiClose={suppressDeckDragAfterOverlay}
       />
       <DeckBuilderToastStack toasts={toasts} />

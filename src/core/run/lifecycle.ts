@@ -2,9 +2,11 @@ import { CardContentService } from '../content';
 import { CombatSimulator } from '../combat';
 import { COMBAT_RULES } from '../rules';
 import { callTraitOnCombatStart } from '../traits';
-import type { CombatResult, RunState } from '../types';
+import type { CombatResult, CombatSetup, RunState } from '../types';
+import { validateDeckComposition } from '../deckRules';
 import { buildEnemyDeck, createPreviewFighter, deckWithBasicsIfEmpty } from './combatSetup';
-import { applyPostCombatRewards, initRunLoop } from './runLoop';
+import { ACT4_ENEMY_STARTING_HP_BONUS, applyPostCombatRewards, initRunLoop } from './runLoop';
+import { prepareEnemyForCombat } from './enemyRoll';
 import {
   applyQueuePersistenceToPlayerDeck,
   persistedQueueSlotIdAfterCombat,
@@ -50,6 +52,8 @@ export function cloneRun(run: RunState): RunState {
     sandboxActiveQueueSlots: run.sandboxActiveQueueSlots,
     sandboxPlayerCoreScrap: run.sandboxPlayerCoreScrap,
     sandboxEnemyCoreScrap: run.sandboxEnemyCoreScrap,
+    combatEnemyFatigueDeck:
+      run.combatEnemyFatigueDeck == null ? undefined : [...run.combatEnemyFatigueDeck],
     loop: {
       ...run.loop,
       travelDrawPile: [...run.loop.travelDrawPile],
@@ -57,7 +61,9 @@ export function cloneRun(run: RunState): RunState {
       travelOffers: [...run.loop.travelOffers],
       relicIds: [...run.loop.relicIds],
       playerTraitIds: [...run.loop.playerTraitIds],
+      playerHpBaseMax: run.loop.playerHpBaseMax,
     },
+    combatOpponentRelicId: run.combatOpponentRelicId,
   };
 }
 
@@ -86,6 +92,7 @@ export function createNewRun(seed: number): RunState {
       awakening: 0,
       playerHp: COMBAT_RULES.startingHp,
       playerHpMax: COMBAT_RULES.startingHp,
+      playerHpBaseMax: COMBAT_RULES.startingHp,
       hearts: 3,
       gold: 0,
       rerolls: 0,
@@ -100,7 +107,11 @@ export function createNewRun(seed: number): RunState {
       playerTraitIds: [],
       retryAvailable: false,
       battleReplaySpeed: 1,
+      earlyBattleBasicsRemaining: 2,
+      act4BattleIndex: 0,
+      infiniteMode: false,
     },
+    combatOpponentRelicId: null,
   };
 
   initRunLoop(run);
@@ -188,6 +199,11 @@ export function setEnemyPlannedSlot(run: RunState, slotIndex: number, cardId: st
   return true;
 }
 
+/** Same shaping as combat start inside {@link playEncounter} (sandbox / tooling). */
+export function buildCombatSetupFromRun(run: RunState, content: CardContentService): CombatSetup {
+  return createCombatSetup(run, content);
+}
+
 function createCombatSetup(run: RunState, content: CardContentService) {
   const enemyDeck = buildEnemyDeck(run, content);
 
@@ -209,6 +225,14 @@ function createCombatSetup(run: RunState, content: CardContentService) {
   player.hp = run.loop.playerHp;
   callTraitOnCombatStart(player, content);
 
+  const opponentRelic = run.combatOpponentRelicId;
+  const enemyTraitIds: string[] = [];
+  if (opponentRelic) {
+    const em = RELIC_TRAIT_MAP[opponentRelic];
+    if (em) {
+      enemyTraitIds.push(em);
+    }
+  }
   const enemy = createPreviewFighter(
     'Enemy',
     enemyDeck,
@@ -216,6 +240,7 @@ function createCombatSetup(run: RunState, content: CardContentService) {
     run.sandboxEnemyCoreScrap,
     run.sandboxActiveQueueSlots,
     true,
+    enemyTraitIds,
   );
   const potencyStacks = run.loop.relicIds.filter((id) => id === 'potency_start_plus_1').length;
   if (potencyStacks > 0) {
@@ -225,6 +250,12 @@ function createCombatSetup(run: RunState, content: CardContentService) {
   if (chargeStacks > 0) {
     player.charge += chargeStacks * 2;
   }
+  if (opponentRelic === 'potency_start_plus_1') {
+    enemy.potency += 1;
+  }
+  if (opponentRelic === 'charge_start_plus_2') {
+    enemy.charge += 2;
+  }
 
   // Baron von Boar — The Whole Hog (Aw1): +1 potency per 50 gold at combat start
   if (run.loop.playerTraitIds.includes('baron_aw1')) {
@@ -233,7 +264,15 @@ function createCombatSetup(run: RunState, content: CardContentService) {
   if (run.loop.playerTraitIds.includes('rust_ranger_base')) {
     player.junkCapacity = 5;
   }
-  enemy.hp = Math.max(1, Math.floor(enemy.hp * run.loop.enemyHpMultiplier));
+  callTraitOnCombatStart(enemy, content);
+  let enemyHp = Math.max(
+    1,
+    Math.floor(run.loop.playerHpBaseMax * run.loop.enemyHpMultiplier),
+  );
+  if (run.loop.act >= 4) {
+    enemyHp += run.loop.act4BattleIndex * ACT4_ENEMY_STARTING_HP_BONUS;
+  }
+  enemy.hp = enemyHp;
 
   return {
     seed: run.seed + run.encounterIndex,
@@ -243,14 +282,25 @@ function createCombatSetup(run: RunState, content: CardContentService) {
 }
 
 
+/** Throws if the current deck violates forge construction rules (single choke point before combat). */
+export function assertDeckLegalForCombat(run: RunState, content: CardContentService): void {
+  const err = validateDeckComposition(run, content);
+  if (err) {
+    throw new Error(err);
+  }
+}
+
 export function playEncounter(run: RunState, content: CardContentService): CombatResult {
+  assertDeckLegalForCombat(run, content);
   const initialPlanned = [...run.plannedQueue];
   const initialEnemyPlanned = [...run.enemyPlannedQueue];
   run.loop.playerHp = run.loop.playerHpMax;
   syncDeckFromHandIfEmpty(run);
   replaceEmptyDeckWithBasicStrikes(run);
   const deckBeforeCombat = [...run.deck];
+  prepareEnemyForCombat(run, content);
   const setup = createCombatSetup(run, content);
+  run.combatOpponentRelicId = null;
   const simulator = new CombatSimulator(content, setup.seed);
   const result = simulator.run(setup);
 

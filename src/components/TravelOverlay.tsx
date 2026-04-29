@@ -5,7 +5,7 @@ import { useRunCardContent } from '../hooks/useRunCardContent';
 import { buildCardDescription } from '../ui/cardText';
 import { useGameStore } from '../stores/gameStore';
 import { getRelicDef } from '../core/run';
-import { cardArtUrlFromDef } from './poc/forge/forgeCardModel';
+import { cardArtUrlFromDef } from '../features/forge/forgeCardModel';
 import './travel-overlay.css';
 
 const SHOP_CARD_PRICE = 40;

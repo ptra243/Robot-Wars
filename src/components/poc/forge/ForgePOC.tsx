@@ -82,6 +82,15 @@ interface ForgePOCProps {
   activeTraitIds?: string[];
   /** Run mode: scrap a hand card for gold + reroll (syncs deck in parent). */
   onScrapHandCard?: (cardId: string) => void;
+  /**
+   * How many program slots are active in combat (5–9). Omitted in standalone forge → full 9.
+   * Run mode should pass `run.sandboxActiveQueueSlots` (act 1 = 5, …, act 3+ = 9).
+   */
+  activeQueueSlots?: number;
+  /** Run mode pre-battle enemy program (queue slots). */
+  initialEnemyQueue?: (string | null)[];
+  /** Run mode pre-battle enemy deck list. */
+  initialEnemyDeck?: string[];
 }
 
 // ── Run-mode initialisation helpers ─────────────────────────────────────────
@@ -161,12 +170,15 @@ function formatSeedLabel(seed: number): string {
 function forgeShiftProgramRight(
   queue: (ForgeCard | null)[],
   pivot: number,
+  /** Contiguous program width (5–9). Shifts only consider slots `< activeWidth`. */
+  activeWidth: number,
 ): { next: (ForgeCard | null)[]; toHand: ForgeCard | null } {
+  const w = Math.max(1, Math.min(QUEUE_SIZE, activeWidth));
   const next = [...queue];
-  const p = Math.max(0, Math.min(QUEUE_SIZE - 1, pivot));
+  const p = Math.max(0, Math.min(w - 1, pivot));
 
   let firstEmptyRight = -1;
-  for (let i = p + 1; i < QUEUE_SIZE; i += 1) {
+  for (let i = p + 1; i < w; i += 1) {
     if (next[i] === null) {
       firstEmptyRight = i;
       break;
@@ -181,8 +193,8 @@ function forgeShiftProgramRight(
     return { next, toHand: null };
   }
 
-  const pushed = next[QUEUE_SIZE - 1];
-  for (let i = QUEUE_SIZE - 1; i > p; i -= 1) {
+  const pushed = next[w - 1];
+  for (let i = w - 1; i > p; i -= 1) {
     next[i] = next[i - 1] ?? null;
   }
   next[p] = null;
@@ -192,9 +204,11 @@ function forgeShiftProgramRight(
 function forgeShiftProgramLeft(
   queue: (ForgeCard | null)[],
   pivot: number,
+  activeWidth: number,
 ): { next: (ForgeCard | null)[]; toHand: ForgeCard | null } {
+  const w = Math.max(1, Math.min(QUEUE_SIZE, activeWidth));
   const next = [...queue];
-  const p = Math.max(0, Math.min(QUEUE_SIZE - 1, pivot));
+  const p = Math.max(0, Math.min(w - 1, pivot));
 
   let firstEmptyLeft = -1;
   for (let i = 0; i < p; i += 1) {
@@ -237,8 +251,19 @@ export function ForgePOC({
   playerHpMax = COMBAT_RULES.startingHp,
   activeTraitIds = [],
   onScrapHandCard,
+  activeQueueSlots: activeQueueSlotsProp,
+  initialEnemyQueue,
+  initialEnemyDeck,
 }: ForgePOCProps) {
   const isRunMode = initialHand !== undefined && onRunDeploy !== undefined;
+  const [viewMode, setViewMode] = useState<'player' | 'enemy'>('player');
+
+  const programSlots = useMemo((): number => {
+    if (activeQueueSlotsProp === undefined) {
+      return COMBAT_RULES.queueSize;
+    }
+    return Math.max(5, Math.min(COMBAT_RULES.queueSize, Math.floor(activeQueueSlotsProp)));
+  }, [activeQueueSlotsProp]);
   const runBackdropStyle: CSSProperties | undefined = isRunMode
     ? ({
         '--forge-pilot-bg': `url(${getPilotSelectBackgroundUrl(pilotId ?? 'glint')})`,
@@ -290,6 +315,30 @@ export function ForgePOC({
   }, [rerollsProp]);
 
   useEffect(() => {
+    setQueue((prev) => {
+      const extras: ForgeCard[] = [];
+      const next = [...prev];
+      let changed = false;
+      for (let i = programSlots; i < QUEUE_SIZE; i += 1) {
+        if (next[i]) {
+          extras.push(next[i]!);
+          next[i] = null;
+          changed = true;
+        }
+      }
+      if (!changed) {
+        return prev;
+      }
+      if (extras.length > 0) {
+        queueMicrotask(() => {
+          setHand((h) => [...h, ...extras]);
+        });
+      }
+      return next;
+    });
+  }, [programSlots]);
+
+  useEffect(() => {
     if (!menu) return;
     const onDocClick = () => {
       setMenu(null);
@@ -305,6 +354,30 @@ export function ForgePOC({
     };
   }, [menu]);
 
+  const enemyDeckCards = useMemo<ForgeCard[]>(
+    () =>
+      (initialEnemyDeck ?? []).flatMap((id) => {
+        try {
+          return [forgeCardFromDef(content.get(id))];
+        } catch {
+          return [];
+        }
+      }),
+    [initialEnemyDeck, content],
+  );
+  const enemyProgramCards = useMemo<(ForgeCard | null)[]>(
+    () => buildRunModeQueue(initialEnemyQueue ?? [], content),
+    [initialEnemyQueue, content],
+  );
+  const showingEnemy = viewMode === 'enemy' && isRunMode;
+  const displayQueue = showingEnemy
+    ? enemyDeckCards.length > 0
+      ? [...enemyDeckCards, ...Array.from({ length: Math.max(0, QUEUE_SIZE - enemyDeckCards.length) }, () => null)]
+      : enemyProgramCards
+    : queue;
+  const displayProgramSlots = showingEnemy ? Math.max(1, displayQueue.length) : programSlots;
+  const displayHand = showingEnemy ? enemyDeckCards : hand;
+
   const setHoverCardAt = (card: ForgeCard | null, ev?: { clientX: number; clientY: number }) => {
     if (!card) {
       setHover(null);
@@ -317,7 +390,7 @@ export function ForgePOC({
   const assignNextEmpty = (handIndex: number) => {
     const card = hand[handIndex];
     if (!card) return;
-    const empty = queue.findIndex((c) => c === null);
+    const empty = queue.findIndex((c, i) => c === null && i < programSlots);
     if (empty === -1) return;
     setQueue((prev) => {
       const next = [...prev];
@@ -328,6 +401,9 @@ export function ForgePOC({
   };
 
   const clearSlot = (idx: number) => {
+    if (idx >= programSlots) {
+      return;
+    }
     const card = queue[idx];
     setQueue((prev) => {
       const next = [...prev];
@@ -338,6 +414,9 @@ export function ForgePOC({
   };
 
   const handleDropOnSlot = (slotIndex: number, payload: DragPayload) => {
+    if (slotIndex >= programSlots) {
+      return;
+    }
     if (payload.source === 'hand') {
       const card = hand[payload.index];
       if (!card) return;
@@ -380,10 +459,10 @@ export function ForgePOC({
 
   /** Context menu pivot: slot index, or `null` = whole strip (shift left from slot 8, shift right from slot 0). */
   const shiftQueueLeft = (pivot: number | null) => {
-    const p = pivot ?? QUEUE_SIZE - 1;
+    const p = pivot === null ? programSlots - 1 : pivot;
     let toHand: ForgeCard | null = null;
     setQueue((prev) => {
-      const r = forgeShiftProgramLeft(prev, p);
+      const r = forgeShiftProgramLeft(prev, p, programSlots);
       toHand = r.toHand;
       return r.next;
     });
@@ -397,7 +476,7 @@ export function ForgePOC({
     const p = pivot ?? 0;
     let toHand: ForgeCard | null = null;
     setQueue((prev) => {
-      const r = forgeShiftProgramRight(prev, p);
+      const r = forgeShiftProgramRight(prev, p, programSlots);
       toHand = r.toHand;
       return r.next;
     });
@@ -457,6 +536,9 @@ export function ForgePOC({
   };
 
   const handleMergeCards = (fromPayload: DragPayload, toHandIdx: number) => {
+    if (fromPayload.source === 'queue' && fromPayload.index >= programSlots) {
+      return;
+    }
     const targetCard = hand[toHandIdx];
     const sourceCard =
       fromPayload.source === 'hand' ? hand[fromPayload.index] : queue[fromPayload.index];
@@ -497,7 +579,17 @@ export function ForgePOC({
     onRerollsChange?.(+1);
   };
 
-  const filledCount = queue.filter((c) => c !== null).length;
+  const filledCount = displayQueue.slice(0, displayProgramSlots).filter((c) => c !== null).length;
+  const factionClass =
+    faction === 'scavengers'
+      ? 'forge-poc--scavengers'
+      : faction === 'cyberpunk'
+        ? 'forge-poc--cyberpunk'
+      : faction === 'overclock'
+        ? 'forge-poc--overclock'
+        : faction === 'aegis'
+          ? 'forge-poc--aegis'
+          : 'forge-poc--neutral';
 
   const forgeDeckSimulation = useMemo((): ForgeDeckSimulationResult | null => {
     if (!simModalOpen) {
@@ -507,8 +599,15 @@ export function ForgePOC({
     const playerDeck = [...queue.filter((card): card is ForgeCard => card !== null), ...hand].map(
       (card) => card.id,
     );
-    return simulateForgeDeckMetrics(content, forgeSeed, queueIds, playerDeck, activeTraitIds);
-  }, [simModalOpen, content, forgeSeed, queue, hand, activeTraitIds]);
+    return simulateForgeDeckMetrics(
+      content,
+      forgeSeed,
+      queueIds,
+      playerDeck,
+      activeTraitIds,
+      programSlots,
+    );
+  }, [simModalOpen, content, forgeSeed, queue, hand, activeTraitIds, programSlots]);
 
   const handleSimulationRoundHover = useCallback(
     (round: number | null, pointer: { clientX: number; clientY: number } | null) => {
@@ -566,6 +665,7 @@ export function ForgePOC({
       enemyDeck,
       playerQueue: queueIds,
       enemyQueue: enemyDeck,
+      activeQueueSlots: programSlots,
     });
     const simulator = new CombatSimulator(content, forgeSeed);
     const result = simulator.run(setup);
@@ -574,7 +674,7 @@ export function ForgePOC({
 
   return (
     <div
-      className={`forge-poc forge-poc--scavengers${isRunMode ? ' forge-poc--run' : ''}`}
+      className={`forge-poc ${factionClass}${isRunMode ? ' forge-poc--run' : ''} forge-poc--view-${showingEnemy ? 'enemy' : 'player'}`}
       style={runBackdropStyle}
     >
       <PocKnockoutCardFilter />
@@ -586,6 +686,9 @@ export function ForgePOC({
         awakeningInternal={awakening}
         seedLabel={seedLabel}
         filledCount={filledCount}
+        programSlotCap={displayProgramSlots}
+        viewMode={showingEnemy ? 'enemy' : 'player'}
+        onViewModeChange={isRunMode ? setViewMode : undefined}
         onSimulate={() => {
           setHover(null);
           setSimModalOpen(true);
@@ -595,7 +698,8 @@ export function ForgePOC({
       />
 
       <BattleProgramSection
-        queue={queue}
+        queue={displayQueue}
+        activeProgramSlots={displayProgramSlots}
         dragOverSlot={dragOverSlot}
         dragging={dragging}
         dragPayloadRef={dragPayloadRef}
@@ -606,6 +710,13 @@ export function ForgePOC({
         clearSlot={clearSlot}
         onQueueContextMenu={onQueueContextMenu}
         handleDropOnSlot={handleDropOnSlot}
+        sectionTitle={showingEnemy ? 'ENEMY PROGRAM' : 'BATTLE PROGRAM'}
+        sectionSubtitle={
+          showingEnemy
+            ? 'Full enemy deck preview for this encounter'
+            : 'Instruction sequence · executes left to right each round'
+        }
+        readOnly={showingEnemy}
       />
 
       <div className="forge-poc__grid">
@@ -615,11 +726,12 @@ export function ForgePOC({
           playerHp={playerHp}
           playerHpMax={playerHpMax}
           activeTraitIds={activeTraitIds}
+          viewMode={showingEnemy ? 'enemy' : 'player'}
         />
 
         <HandSection
-          hand={hand}
-          queue={queue}
+          hand={displayHand}
+          queue={displayQueue}
           dragging={dragging}
           dragPayloadRef={dragPayloadRef}
           setDragging={setDragging}
@@ -631,6 +743,13 @@ export function ForgePOC({
           onHandContextMenu={onHandContextMenu}
           onMergeCards={handleMergeCards}
           canMergeCards={(a, b) => resolveForgeMergeUpgradeId(content, a, b) !== null}
+          sectionTitle={showingEnemy ? 'ENEMY DECK' : 'HAND'}
+          sectionSubtitle={
+            showingEnemy
+              ? 'Deck list generated at encounter select'
+              : 'Hover to inspect · double-click to add · right-click to reroll · drag same card to tier-up'
+          }
+          readOnly={showingEnemy}
         />
       </div>
 
@@ -664,13 +783,15 @@ export function ForgePOC({
           }}
           canShiftLeft={
             menu.slotIndex === null
-              ? queue.some((c) => c !== null)
-              : queue.slice(0, menu.slotIndex + 1).some((c) => c !== null)
+              ? queue.slice(0, programSlots).some((c) => c !== null)
+              : menu.slotIndex < programSlots &&
+                queue.slice(0, menu.slotIndex + 1).some((c) => c !== null)
           }
           canShiftRight={
             menu.slotIndex === null
-              ? queue.some((c) => c !== null)
-              : queue.slice(menu.slotIndex).some((c) => c !== null)
+              ? queue.slice(0, programSlots).some((c) => c !== null)
+              : menu.slotIndex < programSlots &&
+                queue.slice(menu.slotIndex, programSlots).some((c) => c !== null)
           }
           onReroll={
             menu.handIndex !== undefined

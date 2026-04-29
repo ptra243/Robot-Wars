@@ -35,6 +35,7 @@ interface PilotPanelProps {
   playerHp: number;
   playerHpMax: number;
   activeTraitIds?: string[];
+  viewMode?: 'player' | 'enemy';
 }
 
 export function PilotPanel({
@@ -43,25 +44,26 @@ export function PilotPanel({
   playerHp,
   playerHpMax,
   activeTraitIds = [],
+  viewMode = 'player',
 }: PilotPanelProps) {
-  const displayAwakening = awakeningInternal + 1;
+  const displayAwakening = Math.max(0, awakeningInternal);
   const pilot = getPilotById(pilotId);
   const portraitUrl = getPilotPortraitUrl(pilotId);
-  const name = pilot?.name ?? 'Pilot';
-  const role = pilot?.flavor ?? '';
+  const name = viewMode === 'enemy' ? 'ARES-01' : (pilot?.name ?? 'Pilot');
+  const role = viewMode === 'enemy' ? 'Corporate Combat Unit' : (pilot?.flavor ?? '');
   const traits = traitsForPilot(pilotId);
   const hpMax = Math.max(1, playerHpMax, playerHp);
   const hp = Math.max(0, playerHp);
 
   return (
-    <aside className="forge-poc__pilot">
+    <aside className={`forge-poc__pilot forge-poc__pilot--${viewMode}`}>
       <div className="forge-poc__pilot-portrait">
         <div className="forge-poc__corner forge-poc__corner--tl" />
         <div className="forge-poc__corner forge-poc__corner--tr" />
         <div className="forge-poc__corner forge-poc__corner--bl" />
         <div className="forge-poc__corner forge-poc__corner--br" />
         <img
-          src={portraitUrl}
+          src={viewMode === 'enemy' ? '/poc/poc-pilot-enemy.png' : portraitUrl}
           alt={name}
           className="forge-poc__pilot-img"
         />
@@ -100,7 +102,7 @@ export function PilotPanel({
         <div className="forge-poc__traits-head">
           <span className="forge-poc__section-eyebrow">{'//'} TRAITS</span>
         </div>
-        {traits.map((trait) => (
+        {(viewMode === 'enemy' ? [] : traits).map((trait) => (
           <TraitRow
             key={trait.id}
             trait={trait}
@@ -108,6 +110,18 @@ export function PilotPanel({
             forcedUnlocked={activeTraitIds.includes(trait.id)}
           />
         ))}
+        {viewMode === 'enemy' ? (
+          <div className="forge-poc__trait forge-poc__trait--active">
+            <div className="forge-poc__trait-head">
+              <span className="forge-poc__trait-slot">ENEMY</span>
+              <span className="forge-poc__trait-status">ACTIVE</span>
+            </div>
+            <div className="forge-poc__trait-name">ENCOUNTER LOADOUT</div>
+            <div className="forge-poc__trait-blurb">
+              Previewing enemy program and deck for this encounter.
+            </div>
+          </div>
+        ) : null}
       </div>
     </aside>
   );

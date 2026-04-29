@@ -9,14 +9,21 @@ import { COMBAT_RULES } from '../core/rules';
 import type { CardDef } from '../core/types';
 import { resolveCardDescription } from '../ui/cardDescriptions';
 import { cardPopoverAnchorTransform, computeCardPopoverAnchor } from './cardPopoverAnchor';
+import { useGameStore } from '../stores/gameStore';
 
-export type CardPreviewPayload = Omit<DeckBuilderHoverPayload, 'clientX' | 'clientY'>;
+/** `locked` (battle arena): slot is past `activeQueueSlots`, not an empty basic-strike cell. */
+export type CardPreviewPayload =
+  | Omit<Extract<DeckBuilderHoverPayload, { kind: 'carousel' }>, 'clientX' | 'clientY'>
+  | (Omit<Extract<DeckBuilderHoverPayload, { kind: 'queue' }>, 'clientX' | 'clientY'> & { locked?: boolean });
 
 function resolvePreviewCard(
   content: CardContentService,
   preview: CardPreviewPayload,
 ): CardDef | undefined {
   if (preview.kind === 'carousel' && !preview.cardId) {
+    return undefined;
+  }
+  if (preview.kind === 'queue' && preview.locked) {
     return undefined;
   }
   if (preview.kind === 'queue' && !preview.cardId) {
@@ -83,6 +90,7 @@ export function CardQueuePreview({
   preview: CardPreviewPayload;
   omitTagsAndKeywords?: boolean;
 }) {
+  const activeTraitIds = useGameStore((s) => s.run.loop.playerTraitIds);
   if (preview.kind === 'carousel' && !preview.cardId) {
     return (
       <TradingCard
@@ -93,6 +101,14 @@ export function CardQueuePreview({
       >
         <p className="card-preview-hint">Empty library slot.</p>
       </TradingCard>
+    );
+  }
+
+  if (preview.kind === 'queue' && preview.locked) {
+    return (
+      <QueueCardFrame title="—" showCost={false} costContent="">
+        <p className="card-preview-hint">Inactive program slot (not used this act).</p>
+      </QueueCardFrame>
     );
   }
 
@@ -133,7 +149,9 @@ export function CardQueuePreview({
       showCost={showCost}
       costContent={showCost ? `EN ${String(card.charge_cost)}` : ''}
     >
-      <CardDescriptionRich text={resolveCardDescription(card, { omitTagsAndKeywords })} />
+      <CardDescriptionRich
+        text={resolveCardDescription(card, { omitTagsAndKeywords, activeTraitIds })}
+      />
     </QueueCardFrame>
   );
 }
@@ -173,7 +191,12 @@ export function CardHoverPopover({
   const preview: CardPreviewPayload =
     'kind' in hover
       ? { kind: hover.kind, cardId: hover.cardId, slotIndex: hover.slotIndex }
-      : { kind: 'queue', cardId: hover.cardId, slotIndex: hover.index };
+      : {
+          kind: 'queue',
+          cardId: hover.cardId,
+          slotIndex: hover.index,
+          locked: hover.locked,
+        };
 
   const resolved = resolvePreviewCard(content, preview);
   const showGlossary =

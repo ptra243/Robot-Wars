@@ -1,24 +1,20 @@
 import '../App.css';
 import { useEffect } from 'react';
 import { PhaserDeckBuilder } from './PhaserDeckBuilder';
-import { BattlePOC } from './poc/BattlePOC';
+import { BattlePOC } from '../features/battle/BattlePOC';
 import { DeckCycleReportModal } from './DeckCycleReportModal';
 import { useRunCardContent } from '../hooks/useRunCardContent';
 import { useBattlePlayback } from '../hooks/useBattlePlayback';
-import { cloneRun } from '../core/run';
 import { useGameStore } from '../stores/gameStore';
 
 export function BattleSimulationApp() {
-  // Still needed: moves playback → lastResult in the store once events exhaust.
-  useBattlePlayback();
-
   const run = useGameStore((s) => s.run);
   const appPhase = useGameStore((s) => s.appPhase);
   const statusMessage = useGameStore((s) => s.statusMessage);
   const deckCycleReport = useGameStore((s) => s.deckCycleReport);
   const playback = useGameStore((s) => s.playback);
   const lastResult = useGameStore((s) => s.lastResult);
-  const setRun = useGameStore((s) => s.setRun);
+  const handleSetBattleReplaySpeed = useGameStore((s) => s.handleSetBattleReplaySpeed);
   const handleReset = useGameStore((s) => s.handleReset);
   const handleStartBattleFromDeck = useGameStore((s) => s.handleStartBattleFromDeck);
   const handleSimulateEncounter = useGameStore((s) => s.handleSimulateEncounter);
@@ -33,6 +29,7 @@ export function BattleSimulationApp() {
   }, [handleOpenDeckBuilder]);
 
   const isBattle = appPhase === 'battle';
+  useBattlePlayback();
   const combatResult = playback ?? lastResult ?? null;
 
   // Key resets BattlePOC (remounts) whenever a new encounter result arrives.
@@ -52,11 +49,7 @@ export function BattleSimulationApp() {
               pilotId={run.spirit.id}
               replaySpeed={run.loop.battleReplaySpeed}
               onReplaySpeedChange={(s) => {
-                setRun((prev) => {
-                  const next = cloneRun(prev);
-                  next.loop.battleReplaySpeed = s;
-                  return next;
-                });
+                handleSetBattleReplaySpeed(s);
               }}
               onExit={handleOpenDeckBuilder}
               onRunEncounter={handleSimulateEncounter}
@@ -64,7 +57,6 @@ export function BattleSimulationApp() {
           ) : (
             <PhaserDeckBuilder
               run={run}
-              setRun={setRun}
               content={content}
               onFullReset={() => handleReset()}
               onStartBattle={handleStartBattleFromDeck}

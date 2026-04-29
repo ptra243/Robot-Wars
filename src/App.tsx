@@ -3,10 +3,11 @@ import { GameApp } from './components/GameApp';
 import { BattleSimulationApp } from './components/BattleSimulationApp';
 import { CompendiumView } from './components/CompendiumView';
 import { BattlePOC } from './components/poc/BattlePOC';
+import { OpponentLoadoutLab } from './components/poc/OpponentLoadoutLab';
 import { useGameStore } from './stores/gameStore';
 import './components/landing.css';
 
-type AppView = 'landing' | 'run' | 'simulation' | 'compendium' | 'battlePoc';
+type AppView = 'landing' | 'run' | 'simulation' | 'compendium' | 'battlePoc' | 'opponentLab';
 
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
@@ -16,8 +17,15 @@ function BackButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+function initialViewFromQuery(): AppView {
+  if (typeof window === 'undefined') {
+    return 'landing';
+  }
+  return new URLSearchParams(window.location.search).get('opponentLab') === '1' ? 'opponentLab' : 'landing';
+}
+
 export default function App() {
-  const [view, setView] = useState<AppView>('landing');
+  const [view, setView] = useState<AppView>(initialViewFromQuery);
   const handleResetRun = useGameStore((s) => s.handleReset);
   const run = useGameStore((s) => s.run);
 
@@ -47,6 +55,15 @@ export default function App() {
 
   if (view === 'battlePoc') {
     return <BattlePOC onExit={goHome} />;
+  }
+
+  if (view === 'opponentLab') {
+    return (
+      <>
+        <OpponentLoadoutLab onExit={goHome} />
+        <BackButton onClick={goHome} />
+      </>
+    );
   }
 
   const seedHex = (run.seed >>> 0).toString(16).toUpperCase().padStart(8, '0');
@@ -114,6 +131,15 @@ export default function App() {
           >
             POC Battle
             <span className="landing__btn-hint">temporary</span>
+          </button>
+
+          <button
+            type="button"
+            className="landing__btn landing__btn--ghost"
+            onClick={() => setView('opponentLab')}
+          >
+            Opponent lab
+            <span className="landing__btn-hint">dev</span>
           </button>
         </nav>
 

@@ -1,4 +1,4 @@
-# Silver Swarm: Queen, Doppelganger, and a third archetype (design plan)
+# Silver Swarm: Queen, Doppelganger, and Hound Master (design plan)
 
 **Status:** design exploration — not implemented in combat / `RunState` yet.
 
@@ -84,38 +84,43 @@ flowchart LR
 
 ---
 
-## Pilot C — **Warden** (ablative / bodyguard)
+## Pilot C — **Hound Master** (sadistic hunter / boss-first)
 
-**Fantasy:** The swarm is **armor**, not only DPS. Drones **soak** or **deflect** incoming pressure so you can **stall to potency**, then **convert** spent drones into damage (synergy with **Self-Destruct**-style payoffs).
+**Fantasy:** A cruel hunter who deploys disposable machine hounds, marks prey, and wins through controlled sacrifice. This lane is less "build passive value" and more "debuff, isolate, execute."
 
 **How it differs:**
 
 
-|                  | Queen              | Doppelganger           | Warden                              |
-| ---------------- | ------------------ | ---------------------- | ----------------------------------- |
-| **Drone job**    | End-of-turn value  | Fuel for copies        | **Intercept** / mitigation          |
-| **Tempo**        | Snowball board     | Spike on correct lines | **Trade** drones for HP / stability |
-| **Player skill** | Sequencing summons | Card-type tracking     | **When to break** drones            |
+|                  | Queen              | Doppelganger           | Hound Master                       |
+| ---------------- | ------------------ | ---------------------- | ---------------------------------- |
+| **Drone job**    | End-of-turn value  | Fuel for copies        | **Intercept** / mitigation         |
+| **Tempo**        | Snowball board     | Spike on correct lines | **Debuff then execute**            |
+| **Player skill** | Sequencing summons | Card-type tracking     | **Mark timing + sacrifice timing** |
 
 
 **Suggested base trait (always on):**
 
 - **Focus 3** at combat start (same chassis).
-- While you have a **Shield drone**, the **first** incoming strike damage to HP each **enemy activation** is reduced by **N** (or **one** drone **shatters** to negate **X** damage — pick a clear rule: *shatter* counts as **destroyed** for Self-Destruct).
-- **Strike / Energy drones** on Warden might do **little or no EOT**; instead they grant **smaller** intercept pools or **retaliation** when they shatter (so Warden is not a third copy of Queen).
+- Treat "drones" as **hounds** in this pilot's trait and card text.
+- **Strike hound:** applies **Expose** when triggered.
+- **Shield hound:** applies **Weakness** when triggered.
+- **Energy hound:** intercepts one instance of incoming damage for the Hound Master (consumed on use).
+- Hounds can still be rotated out and destroyed; those events feed destruction payoffs like **Self-Destruct Protocol**.
 
-**Why it fits the faction:** Silver Swarm already leans on **rotation** and **destruction** triggers — Warden makes **losing** drones a **game plan**, not a mistake, without using Doppelganger’s imprint rules.
+**Why it fits the faction:** Silver Swarm already leans on **rotation** and **destruction** triggers — Hound Master makes losing units the plan while staying mechanically distinct from Doppelganger.
 
-**Suggested awakenings:**
+**Suggested awakenings (boss-first framing):**
 
-- **Aw0:** The **first** drone that shatters each combat deals **direct** damage to the enemy (“spike strip” fantasy).
-- **Aw1:** **+1 max Focus** for this combat **or** **restore 1 Focus slot** when you end a round at full HP — rewards successful mitigation.
+- **Aw0:** First hound consumed each combat applies extra **Expose** or upgrades existing debuffs.
+- **Aw1:** When a hound intercepts damage, gain an execution bonus (direct damage, charge refund, or finisher potency).
 
-**“Activate all” for Warden:** **Fortify** — each drone **immediately** contributes its **defensive** package (emergency block, shatter-threshold refill, or **one** shared barrier based on drone count). If that overlaps Queen’s “front-load EOT,” differentiate by **numbers keyed to mitigation** (block / bulk / strip mine) rather than raw strike damage.
+**“Activate all” for Hound Master:** **Release the Pack** — each hound immediately applies its own package (Strike => Expose, Shield => Weakness, Energy => intercept arm). This keeps the action distinct from Queen's raw value burst.
+
+**Boss now, playable later:** ship Hound Master first as a boss ruleset and promote to a playable pilot after debuff + intercept UX is proven fun and readable.
 
 ---
 
-### Other archetype directions (if Warden is not the pick)
+### Other archetype directions (if Hound Master is not the pick)
 
 - **Relay / Spotter (offensive setup):** Drones **tag** the enemy; your next **Strike** or **Expose** application gets **+X per drone** (or **Pierce** charges). Plays like **setting up one big turn** instead of Queen’s steady EOT or Doppelganger’s copy chains.
 - **Harmonics / Monotype Splicer:** Strong bonus when **all Focus slots hold the same drone type**; **weak** when mixed — rewards **specialized** decks and makes faction cards that **convert** drone types matter.
@@ -132,7 +137,7 @@ You asked what this does for Doppelganger. **Recommended split** so the same car
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Queen**        | Each drone’s **EOT effect fires once immediately** (then optionally still fires at real EOT if you want double-dip — usually **no**: treat “Activate All” as **front-load** only to avoid confusion).                                                                                                                                                                                                                                     |
 | **Doppelganger** | **Imprint now:** For each drone type present, **consume one drone** of that type and **immediately perform one imprint** using the **last** Strike / Shield / Energy card that qualifies since combat start (or since last “clear imprints”). If **no prior imprint exists** for a type, fall back to a **token payout** (e.g. Strike drone → deal **2 direct**; Shield → **+3 block**; Energy → **+1 charge**) so the card never whiffs. |
-| **Warden**       | **Fortify:** Resolve **defensive** drone value now (barrier / shatter prep / intercept charges). Avoid duplicating Queen’s strike spike unless numbers are **mitigation-first** (see Pilot C).                                                                                                                                                                                                                                            |
+| **Hound Master** | **Release the Pack:** Resolve debuff/intercept hound value now. Strike hounds add Expose, Shield hounds add Weakness, and Energy hounds arm one damage intercept.                                                                                                                                                                                                                                                                         |
 
 
 This keeps the card **readable** (“Resolve all drones now”) without giving Doppelganger a dead mode.
@@ -163,7 +168,8 @@ Organized by job; **costs are placeholders** until you run `[simulateForgeDeckMe
 **Finishers / tempo:**
 
 - **Synchronize Swarm** — **Activate All** (use the unified table above).
-- **Overload Burst** — deal damage equal to **sum of Strike drone potency contributions** *once* — Queen skew; Doppelganger might convert imprints instead (optional second card).
+- **Overload Burst** — deal damage equal to **sum of Strike drone potency contributions** *once* — Queen skew.
+- **Execution Window** — bonus damage to enemies carrying Expose/Weakness (Hound Master skew).
 
 ---
 
@@ -185,7 +191,7 @@ Organized by job; **costs are placeholders** until you run `[simulateForgeDeckMe
 **Data / state**
 
 - Extend `[FighterState](../src/core/types.ts)` with something like: `focusMax`, `drones: Array<'strike'|'shield'|'energy'|null>` (or parallel stacks), `dronesSummonedThisCombat`, optional `lastImprintCardIds` for Doppelganger.
-- Add **trait IDs** in `[pilots.ts](../src/core/pilots.ts)` + entries in `[TRAIT_REGISTRY](../src/core/traits.ts)`; pilot-specific logic branches on `queen_base` vs `doppelganger_base` vs `warden_base` (or chosen third id).
+- Add **trait IDs** in `[pilots.ts](../src/core/pilots.ts)` + entries in `[TRAIT_REGISTRY](../src/core/traits.ts)`; pilot-specific logic branches on `queen_base` vs `doppelganger_base` vs `hound_master_base`.
 
 **Engine**
 
@@ -202,7 +208,7 @@ Organized by job; **costs are placeholders** until you run `[simulateForgeDeckMe
 
 ## Open design choices (resolve before implementation)
 
-1. **Rotate behavior:** When Focus is full and a new drone arrives, does the **pushed-out** drone count as “destroyed” for Self-Destruct? (Likely **yes** for fun; mark **yes/no** on card text.)
-2. **Doppelganger energy imprint:** Trigger on **next card that adds charge** vs **next played card after an Energy drone exists** — pick one.
-3. **Queen vs neutral potency:** Queen’s “extra on summon” should **not** obsolete **Servo Tune-Up** — keep **+3/+3 split** cards for raw efficiency; Queen wins on **drone count** and **EOT payoffs**, not flat potency rate.
+1. **Rotate behavior:** When Focus is full and a new unit arrives, does the **pushed-out** drone/hound count as “destroyed” for Self-Destruct? (Recommend **yes**.)
+2. **Weakness mapping:** Should "Weakness" be a new debuff, or mapped onto an existing mitigation stat/rule in the current engine?
+3. **Boss-first boundary:** Keep Hound Master boss-only in phase 1, then convert to playable pilot after readability and tuning pass.
 

@@ -12,6 +12,7 @@ import type {
   EffectStep,
   FighterState,
   KeywordSpec,
+  StanceType,
 } from '../types';
 
 function clearContinuousForSlot(actor: FighterState, queueIndex: number): void {
@@ -121,10 +122,20 @@ function applyEmergencyJunkShieldPreMitigation(
   return incomingDamage - absorbed;
 }
 
+function markActivatedStance(actor: FighterState, stance: StanceType): void {
+  if (stance === 'dragon') actor.activatedDragonThisCombat = true;
+  else if (stance === 'tiger') actor.activatedTigerThisCombat = true;
+  else if (stance === 'bird') actor.activatedBirdThisCombat = true;
+  else if (stance === 'tortoise') actor.activatedTortoiseThisCombat = true;
+}
+
 const SNAPSHOT_STEP_TYPES = new Set<EffectType>([
   'StrikeDamage',
   'DirectHpDamage',
   'DirectHpDamageFromActorBlock',
+  'DirectHpDamagePerShurikenSpent',
+  'DirectHpDamagePerActivatedStance',
+  'ConsumeShieldForDirectDamage',
   'ShieldBlock',
   'ShieldBlockEqualToActorBulkStacks',
   'ShieldBlockFromJunkSnapshot',
@@ -291,6 +302,11 @@ const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
     if (useStrikePotency) {
       damage += actor.potency;
     }
+    const evade = target.evadeStacks ?? 0;
+    if (evade > 0 && damage > 0) {
+      target.evadeStacks = evade - 1;
+      return;
+    }
     const mit = target.mitigateNextIncomingStrike ?? 0;
     if (mit > 0 && damage > 0) {
       const useMit = Math.min(mit, damage);
@@ -401,7 +417,7 @@ const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
     const baseSeed = (ctx.effectRngSeed ^ ((queueSlotIndex ?? 0) * 2654435761)) >>> 0;
 
     const basicSlotsInQueueOrder: number[] = [];
-    const activeSlots = Math.max(3, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
+    const activeSlots = Math.max(5, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
     for (let i = 0; i < activeSlots; i += 1) {
       if (queueSlotIndex !== undefined && i === queueSlotIndex) {
         continue; // Keep the resolving card's transformed basic slot untouched.
@@ -466,6 +482,10 @@ const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
     void frame;
   },
   BranchIfJunkGte: (step, frame) => {
+    void step;
+    void frame;
+  },
+  BranchIfChargeGte: (step, frame) => {
     void step;
     void frame;
   },
@@ -559,6 +579,102 @@ const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
     if (r > 0 && r <= 1) {
       actor.shieldRoundRetainMultiplier = r;
     }
+  },
+  SetStance: (step, { actor }) => {
+    actor.stance = step.stance;
+    markActivatedStance(actor, step.stance);
+  },
+  BranchIfActorStance: (_step, _frame) => {
+    // Expanded in expandEffectSteps.
+  },
+  BranchIfActorActivatedStance: (_step, _frame) => {
+    // Expanded in expandEffectSteps.
+  },
+  GainShuriken: (step, { actor }) => {
+    if (step.amount > 0) {
+      actor.shuriken = (actor.shuriken ?? 0) + step.amount;
+    }
+  },
+  SpendAllShuriken: (_step, { actor }) => {
+    actor.shuriken = 0;
+  },
+  DirectHpDamagePerShurikenSpent: (step, frame) => {
+    const shuriken = frame.actor.shuriken ?? 0;
+    if (shuriken <= 0 || step.damagePerShuriken <= 0) return;
+    frame.actor.shuriken = 0;
+    const imbue = frame.actor.nextShurikenUnloadImbueVirusPerHit ?? 0;
+    if (imbue > 0) {
+      frame.target.virusStacks = (frame.target.virusStacks ?? 0) + shuriken * imbue;
+      frame.actor.nextShurikenUnloadImbueVirusPerHit = 0;
+    }
+    dealDirectHpDamage(shuriken * step.damagePerShuriken, step.pierce === true, frame, true);
+  },
+  DirectHpDamagePerActivatedStance: (step, frame) => {
+    const count =
+      Number(frame.actor.activatedDragonThisCombat === true) +
+      Number(frame.actor.activatedTigerThisCombat === true) +
+      Number(frame.actor.activatedBirdThisCombat === true) +
+      Number(frame.actor.activatedTortoiseThisCombat === true);
+    if (count <= 0 || step.damagePerStance <= 0) return;
+    dealDirectHpDamage(count * step.damagePerStance, step.pierce === true, frame, true);
+  },
+  GainEvade: (step, { actor }) => {
+    if (step.amount > 0) {
+      actor.evadeStacks = (actor.evadeStacks ?? 0) + step.amount;
+    }
+  },
+  ApplyVirus: (step, { target }) => {
+    if (step.stacks > 0) {
+      target.virusStacks = (target.virusStacks ?? 0) + step.stacks;
+    }
+  },
+  SetNextTigerCardOverclock: (step, { actor }) => {
+    actor.nextTigerCardOverclock = step.active;
+  },
+  SetNextTigerCardPiercePotency: (step, { actor }) => {
+    actor.nextTigerCardPierce = step.pierce;
+    actor.nextTigerCardPotencyGain = (actor.nextTigerCardPotencyGain ?? 0) + step.potencyGain;
+    actor.nextTigerCardPotencyAfterCardLoss =
+      (actor.nextTigerCardPotencyAfterCardLoss ?? 0) + step.potencyAfterCardLoss;
+  },
+  SetNextTigerCardExposePerEnergy: (step, { actor }) => {
+    actor.nextTigerCardExposePerEnergy = { amountPerEnergy: step.amountPerEnergy, cap: step.cap };
+  },
+  SetNextTigerCardExtraStrikeFromTargetVirus: (step, { actor }) => {
+    actor.nextTigerCardExtraStrikeFromTargetVirusCap = step.cap;
+  },
+  SetNextShurikenUnloadImbueVirusPerHit: (step, { actor }) => {
+    actor.nextShurikenUnloadImbueVirusPerHit = step.stacksPerHit;
+  },
+  ConsumeShieldForDirectDamage: (step, frame) => {
+    const shield = frame.actor.block;
+    if (shield <= 0 || step.shieldPerDamage <= 0) return;
+    const spend = step.maxShieldSpend !== undefined ? Math.min(shield, step.maxShieldSpend) : shield;
+    frame.actor.block -= spend;
+    const damage = Math.floor(spend / step.shieldPerDamage);
+    if (damage > 0) {
+      dealDirectHpDamage(damage, false, frame, true);
+    }
+  },
+  GainVirulentRetribution: (step, { actor }) => {
+    if (step.amount > 0) {
+      actor.virulentRetributionStacks = (actor.virulentRetributionStacks ?? 0) + step.amount;
+    }
+  },
+  ConsumeAllShurikenGainShield: (step, { actor }) => {
+    const shuriken = actor.shuriken ?? 0;
+    actor.shuriken = 0;
+    if (shuriken <= 0) return;
+    if (step.shieldPerShuriken > 0) {
+      actor.block += shuriken * step.shieldPerShuriken;
+    }
+    if ((step.gainVirulentRetributionIfAny ?? 0) > 0) {
+      actor.virulentRetributionStacks =
+        (actor.virulentRetributionStacks ?? 0) + (step.gainVirulentRetributionIfAny ?? 0);
+    }
+  },
+  ShieldBlockAfterRounds: (_step, _frame) => {
+    // Expanded to ScheduleEffectAfterRounds in expandEffectSteps.
   },
   Keyword: (step, { ctx }) => {
     const strikesBefore = ctx.strikeDamageStepsThisPipeline ?? 0;

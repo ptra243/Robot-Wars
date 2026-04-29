@@ -3,10 +3,9 @@ import { useGameStore } from '../stores/gameStore';
 import { useRunCardContent } from '../hooks/useRunCardContent';
 import { getPilotById } from '../core/pilots';
 import { NEUTRAL_STARTER_DECK, DRAFT_ROUNDS, DRAFT_OFFERS_PER_ROUND } from '../core/draft';
-import { CardHoverPopover } from './poc/forge/CardHoverPopover';
-import { forgeCardFromDef } from './poc/forge/forgeCardModel';
-import { LibraryCard } from './poc/forge/LibraryCard';
-import type { ForgeCard, HoverState } from './poc/forge/types';
+import { forgeCardFromDef } from '../features/forge/forgeCardModel';
+import { CardHoverPopover, LibraryCard } from '../features/forge/ui';
+import type { ForgeCard, HoverState } from '../features/forge/ui';
 import './poc/forge-poc.css';
 import './run-loop-theme.css';
 

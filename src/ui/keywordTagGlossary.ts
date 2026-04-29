@@ -18,6 +18,14 @@ export const CARD_TAG_HELP: Record<CardTag, string> = {
     'This card is tagged Energy: it adds energy when played (or on each tick from Continuous, if applicable).',
   Expose:
     'This card is tagged Expose: supports or cares about the Expose rules space (filter chip; see card text for what it actually does).',
+  Virus:
+    'This card is tagged Virus: applies or scales virus stacks (damage-over-time / debuff lane).',
+  Evade:
+    'This card is tagged Evade: grants evade stacks that negate incoming Strike packets.',
+  Shuriken:
+    'This card is tagged Shuriken: gains or spends shuriken stacks for projectile unload cards.',
+  Stance:
+    'This card is tagged Stance: stance-gated effects only activate when you are in the required stance.',
 };
 
 /** Rules text for keyword types (value is shown separately on the card). */
@@ -32,6 +40,8 @@ export const KEYWORD_TYPE_HELP: Record<KeywordType, string> = {
     'Applies Expose to the target equal to the keyword value. The next Strike that hits that target gains that much damage, then Expose clears.',
   Overclock:
     'When the value is positive, bonus-resolves the next card in your queue at most once per your turn; the first successful Overclock that turn “uses” the bonus. Overclock carriers are usually 0 energy cost.',
+  Switch:
+    'Sets your current stance. Stance-conditional effects only activate if you are currently in that required stance.',
   TurboLink:
     'Spends bulk stacks (at least 1, up to the keyword value, capped by your bulk) as junk, then bonus-resolves the next card in your queue when allowed.',
   Continuous:
@@ -42,4 +52,12 @@ export const KEYWORD_TYPE_HELP: Record<KeywordType, string> = {
     'Deckbuilding only: at most one copy of any UniqueDeck card across your hand and fatigue deck (e.g. Gathering Strike).',
   Persistent:
     'Marks rest-of-battle effects when the card’s rules say so. Counts toward the max Continuous/Persistent cards per deck.',
+  Virus:
+    'Applies virus stacks to the target. Virus is a non-Strike debuff lane used by cyberpunk cards.',
+  Evade:
+    'Grants evade stacks. Each stack negates one incoming Strike packet before mitigation.',
+  Shuriken:
+    'Grants shuriken stacks. Unload cards can spend all shuriken for repeated direct hits.',
+  Stance:
+    'Marks stance-related card text and filtering for Four Symbols cards.',
 };

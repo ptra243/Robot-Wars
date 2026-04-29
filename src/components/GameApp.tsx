@@ -1,10 +1,10 @@
 import '../App.css';
 import { PhaserDeckBuilder } from './PhaserDeckBuilder';
-import { BattlePOC } from './poc/BattlePOC';
+import { BattlePOC } from '../features/battle/BattlePOC';
 import { TravelView } from './TravelView';
 import { RetryAssistView } from './RetryAssistView';
 import { RewardView } from './RewardView';
-import { ForgePOC } from './poc/ForgePOC';
+import { ForgePOC } from '../features/forge/ForgePOC';
 import { DeckCycleReportModal } from './DeckCycleReportModal';
 import { PilotSelectView } from './PilotSelectView';
 import { DraftView } from './DraftView';
@@ -12,19 +12,17 @@ import { TravelOverlay } from './TravelOverlay';
 import { RunHudBar } from './RunHudBar';
 import { useRunCardContent } from '../hooks/useRunCardContent';
 import { useBattlePlayback } from '../hooks/useBattlePlayback';
-import { cloneRun } from '../core/run';
 import { useGameStore } from '../stores/gameStore';
 
 export function GameApp() {
+  const appPhase = useGameStore((s) => s.appPhase);
   useBattlePlayback();
 
   const run = useGameStore((s) => s.run);
-  const appPhase = useGameStore((s) => s.appPhase);
   const statusMessage = useGameStore((s) => s.statusMessage);
   const deckCycleReport = useGameStore((s) => s.deckCycleReport);
   const playback = useGameStore((s) => s.playback);
   const lastResult = useGameStore((s) => s.lastResult);
-  const setRun = useGameStore((s) => s.setRun);
   const handleReset = useGameStore((s) => s.handleReset);
   const handleSimulateDeckCycle = useGameStore((s) => s.handleSimulateDeckCycle);
   const handleSeedStep = useGameStore((s) => s.handleSeedStep);
@@ -33,6 +31,9 @@ export function GameApp() {
   const handleDeployFromForge = useGameStore((s) => s.handleDeployFromForge);
   const handleGoToReward = useGameStore((s) => s.handleGoToReward);
   const handleChooseRetryAssist = useGameStore((s) => s.handleChooseRetryAssist);
+  const handleAdjustRerolls = useGameStore((s) => s.handleAdjustRerolls);
+  const handleScrapHandCard = useGameStore((s) => s.handleScrapHandCard);
+  const handleSetBattleReplaySpeed = useGameStore((s) => s.handleSetBattleReplaySpeed);
   const travelModal = useGameStore((s) => s.travelModal);
 
   const content = useRunCardContent(run.seed);
@@ -64,38 +65,28 @@ export function GameApp() {
               awakening={run.loop.awakening}
               rerolls={run.loop.rerolls}
               pilotId={run.spirit.id}
-              playerHp={run.loop.playerHp}
+              playerHp={run.loop.playerHpMax}
               playerHpMax={run.loop.playerHpMax}
               activeTraitIds={run.loop.playerTraitIds}
+              activeQueueSlots={run.sandboxActiveQueueSlots}
               initialHand={run.hand}
               initialQueue={run.plannedQueue}
+              initialEnemyQueue={run.enemyPlannedQueue}
+              initialEnemyDeck={run.combatEnemyFatigueDeck ?? undefined}
               onRunDeploy={(queueIds, handCardIds) => {
                 handleDeployFromForge(queueIds, handCardIds);
               }}
               onRerollsChange={(delta) => {
-                setRun((prev) => ({
-                  ...prev,
-                  loop: { ...prev.loop, rerolls: Math.max(0, prev.loop.rerolls + delta) },
-                }));
+                handleAdjustRerolls(delta);
               }}
               onScrapHandCard={(cardId) => {
-                setRun((prev) => {
-                  const next = cloneRun(prev);
-                  const hi = next.hand.indexOf(cardId);
-                  if (hi >= 0) next.hand.splice(hi, 1);
-                  const di = next.deck.indexOf(cardId);
-                  if (di >= 0) next.deck.splice(di, 1);
-                  next.loop.gold += 50;
-                  next.loop.rerolls += 1;
-                  return next;
-                });
+                handleScrapHandCard(cardId);
               }}
               onExit={handleBackToTravel}
             />
           ) : appPhase === 'deck' ? (
             <PhaserDeckBuilder
               run={run}
-              setRun={setRun}
               content={content}
               onFullReset={() => handleReset()}
               onStartBattle={handleBackToTravel}
@@ -110,11 +101,7 @@ export function GameApp() {
               pilotId={run.spirit.id}
               replaySpeed={run.loop.battleReplaySpeed}
               onReplaySpeedChange={(s) => {
-                setRun((prev) => {
-                  const next = cloneRun(prev);
-                  next.loop.battleReplaySpeed = s;
-                  return next;
-                });
+                handleSetBattleReplaySpeed(s);
               }}
               onExit={handleBackToTravel}
               onContinue={combatResult?.playerWon ? handleGoToReward : undefined}

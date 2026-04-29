@@ -3,19 +3,16 @@ import {
   useEffect,
   useId,
   useState,
-  type Dispatch,
   type MouseEvent,
   type ReactElement,
-  type SetStateAction,
 } from 'react';
 import { createPortal } from 'react-dom';
-import type { CardContentService } from '../core/content';
-import { decodeDeckString, encodeDeckPayload, encodeDeckString, validateDeckComposition } from '../core/run';
+import { decodeDeckString, encodeDeckPayload, encodeDeckString } from '../core/run';
 import type { RunState } from '../core/types';
+import { useGameStore } from '../stores/gameStore';
 import {
   createSavedDeckRecord,
   loadSavedDecksFromStorage,
-  mergePayloadIntoRunForEditTarget,
   persistSavedDecks,
   reorderSavedDecks,
   snapshotRunForSave,
@@ -168,29 +165,24 @@ function IconGrip(props: { className?: string }): ReactElement {
 
 interface DeckBuilderSidebarProps {
   run: RunState;
-  setRun: Dispatch<SetStateAction<RunState>>;
-  content: CardContentService;
   /** Matches Phaser deck builder focus: load/paste apply to player snapshot or enemy plan only. */
   editTarget: 'player' | 'enemy';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onToast: (message: string) => void;
-  cloneRun: (run: RunState) => RunState;
   /** Fires after modal / prompt / confirm dismisses so Phaser can ignore stray pointer events. */
   onTransientUiClose?: () => void;
 }
 
 export function DeckBuilderSidebar({
   run,
-  setRun,
-  content,
   editTarget,
   open,
   onOpenChange,
   onToast,
-  cloneRun,
   onTransientUiClose,
 }: DeckBuilderSidebarProps): ReactElement {
+  const handleApplySavedDeckPayload = useGameStore((s) => s.handleApplySavedDeckPayload);
   const [decks, setDecks] = useState<SavedDeckRecord[]>(() => loadSavedDecksFromStorage());
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newDeckModalOpen, setNewDeckModalOpen] = useState(false);
@@ -260,18 +252,9 @@ export function DeckBuilderSidebar({
       onToast('Invalid or outdated deck code.');
       return;
     }
-    const merged = cloneRun(run);
-    mergePayloadIntoRunForEditTarget(merged, payload, editTarget);
-    const deckErr = validateDeckComposition(merged, content);
-    setRun(merged);
-    onToast(
-      deckErr
-        ? `${editTarget === 'enemy' ? 'Loaded enemy plan from code' : 'Loaded deck from code'}. Does not meet deck rules: ${deckErr}`
-        : editTarget === 'enemy'
-          ? 'Loaded enemy plan from code.'
-          : 'Loaded deck from code.',
-    );
-  }, [cloneRun, content, editTarget, onToast, onTransientUiClose, run, setRun]);
+    handleApplySavedDeckPayload(payload, editTarget);
+    onToast(editTarget === 'enemy' ? 'Loaded enemy plan from code.' : 'Loaded deck from code.');
+  }, [editTarget, handleApplySavedDeckPayload, onToast, onTransientUiClose]);
 
   const handleSaveNewOpen = useCallback(() => {
     setNewDeckName('');
@@ -315,20 +298,15 @@ export function DeckBuilderSidebar({
   const handleLoad = useCallback(
     (deck: SavedDeckRecord, e: React.MouseEvent) => {
       e.stopPropagation();
-      const merged = cloneRun(run);
-      mergePayloadIntoRunForEditTarget(merged, deck.payload, editTarget);
-      const deckErr = validateDeckComposition(merged, content);
-      setRun(merged);
+      handleApplySavedDeckPayload(deck.payload, editTarget);
       setSelectedId(deck.id);
       onToast(
-        deckErr
-          ? `${editTarget === 'enemy' ? `Loaded enemy plan from “${deck.name}”` : `Loaded “${deck.name}”`}. Does not meet deck rules: ${deckErr}`
-          : editTarget === 'enemy'
-            ? `Loaded enemy plan from “${deck.name}”.`
-            : `Loaded “${deck.name}”.`,
+        editTarget === 'enemy'
+          ? `Loaded enemy plan from “${deck.name}”.`
+          : `Loaded “${deck.name}”.`,
       );
     },
-    [cloneRun, content, editTarget, onToast, run, setRun],
+    [editTarget, handleApplySavedDeckPayload, onToast],
   );
 
   const handleDelete = useCallback(

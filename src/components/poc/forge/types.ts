@@ -2,7 +2,7 @@ import type { DragEvent as ReactDragEvent, MouseEvent as ReactMouseEvent } from 
 import type { CardTag, KeywordType } from '../../../core/types';
 
 /** Faction token used for CSS modifiers (`.forge-poc__slot--${faction}`). */
-export type ForgeFaction = 'scavengers' | 'neutral' | 'overclock' | 'aegis';
+export type ForgeFaction = 'scavengers' | 'neutral' | 'overclock' | 'aegis' | 'cyberpunk';
 
 export interface ForgeKeyword {
   type: KeywordType;

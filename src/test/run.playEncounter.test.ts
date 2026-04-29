@@ -13,6 +13,13 @@ describe('playEncounter', () => {
     expect(run.deck).toEqual(['salvage_strike_t1', 'junk_loader_t1']);
   });
 
+  it('throws when deck violates UniqueDeck before combat', () => {
+    const run = createNewRun(1);
+    run.deck = ['neutral_gathering_strike_t1', 'neutral_gathering_strike_t1'];
+    run.hand = ['neutral_gathering_strike_t1', 'neutral_gathering_strike_t1'];
+    expect(() => playEncounter(run, content)).toThrow(/UniqueDeck/);
+  });
+
   it('on victory, in-combat Factory Reset does not remove Core Tap from the run (post-combat revert)', () => {
     const run = createNewRun(42);
     run.deck = ['core_tap_t1', 'neutral_basic_strike_t1'];

@@ -45,6 +45,17 @@ export const RELIC_DEFS: RelicDef[] = [
     stackable: true,
   },
   {
+    id: 'relic_max_hp_plus_3',
+    name: 'Reinforced Plating',
+    rarity: 'common',
+    sources: ['event', 'shop'],
+    stackable: true,
+    onAcquire: (run) => {
+      run.loop.playerHpMax += 3;
+      run.loop.playerHp = Math.min(run.loop.playerHp + 3, run.loop.playerHpMax);
+    },
+  },
+  {
     id: 'neutral_non_basic_gain_junk_2',
     name: 'Scrap Condenser',
     rarity: 'common',
@@ -189,4 +200,33 @@ export function grantRelic(run: RunState, relicId: string): boolean {
   run.loop.relicIds.push(relic.id);
   relic.onAcquire?.(run);
   return true;
+}
+
+export function getRelicDescription(id: string): string {
+  if (id === 'potency_start_plus_1') return 'Begin each battle with +1 potency.';
+  if (id === 'charge_start_plus_2') return 'Begin each battle with +2 energy.';
+  if (id === 'if_no_shield_gain_shield_2') return 'Turn start: if you have no shield, gain 2 shield.';
+  if (id === 'regen_start_turn_1') return 'Turn start: recover 1 HP.';
+  if (id === 'neutral_non_basic_gain_junk_2')
+    return 'When you play a neutral non-basic strike card, gain 2 junk.';
+  if (id === 'hp_pay_damage_equal') return 'When you pay HP for a card, deal that much damage.';
+  if (id === 'transform_strike_2') return 'Whenever you transform a card, Strike 2.';
+  if (id === 'trash_dynamo') return 'If you gained energy from a card, gain 2 junk.';
+  if (id === 'scrap_recycling') return 'When you gain junk, recover HP (capped per card).';
+  if (id === 'junk_shrapnel') return 'When you spend junk, deal that much damage.';
+  if (id === 'stall_shield_weaken') return 'When you stall, gain 2 shield and apply 2 weaken.';
+  if (id === 'delay_double_cast') return 'Delay cards also trigger an immediate bonus effect.';
+  if (id === 'epic_lucky_circuit') return 'Gain Glint Aw1 trait behavior for the run.';
+  if (id === 'epic_whole_hog_treasury') return 'Gain Baron Aw1 trait behavior for the run.';
+  if (id === 'epic_gunslingers_flourish')
+    return "Gain Rust Ranger Aw0 + Aw1 trait behavior for the run.";
+  if (id === 'epic_prime_directive')
+    return 'On deck cycle, gain potency from HP+junk and enter Emergency Protocol mode this turn.';
+  if (id === 'epic_overclock_mandate')
+    return 'Cards with junk-threshold lines also gain >40 junk: Overclock.';
+  if (id === 'epic_basic_instincts')
+    return 'If your deck is all neutral, basic strikes gain Overclock.';
+  if (id === 'epic_emergency_junk_shield')
+    return 'Incoming damage is absorbed by junk first; non-strike damage is extra effective.';
+  return id;
 }

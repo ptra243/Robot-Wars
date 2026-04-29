@@ -109,6 +109,57 @@ describe('CombatSimulator', () => {
     expect(gatheringResolve?.text).toMatch(/dealt=3/);
   });
 
+  it('ninja base neutral bonuses count as stance activations for activated-stance payoffs', () => {
+    const base = content.get('neutral_basic_strike_t1');
+    const makePayoff = (
+      id: string,
+      stance: 'dragon' | 'tiger' | 'bird' | 'tortoise',
+    ): CardDef =>
+      normalizeCard({
+        ...base,
+        id,
+        name: `Test ${stance} payoff`,
+        faction: 'cyberpunk',
+        neutral: false,
+        charge_cost: 0,
+        base_damage: 0,
+        effects: [
+          {
+            type: 'BranchIfActorActivatedStance',
+            stance,
+            thenSteps: [{ type: 'GainCharge', amount: 5 }],
+            elseSteps: [],
+          },
+        ],
+      });
+    const cases = [
+      { traitId: 'seiryu_base', stance: 'dragon' as const, expectedChargeAfterPayoff: 6 },
+      { traitId: 'suzaku_base', stance: 'bird' as const, expectedChargeAfterPayoff: 5 },
+      { traitId: 'byakko_base', stance: 'tiger' as const, expectedChargeAfterPayoff: 5 },
+      { traitId: 'genbu_base', stance: 'tortoise' as const, expectedChargeAfterPayoff: 5 },
+    ];
+
+    for (const c of cases) {
+      const payoff = makePayoff(`test_${c.stance}_activated_payoff`, c.stance);
+      const map = new Map(content.getAll().map((card) => [card.id, card]));
+      map.set(payoff.id, payoff);
+      const testContent = new CardContentService(map, 1);
+      const player = makeTestFighter(
+        'Player',
+        ['neutral_basic_strike_t1', payoff.id],
+        ['neutral_basic_strike_t1', payoff.id],
+      );
+      player.charge = 0;
+      player.traitIds = [c.traitId];
+      const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+      const sim = new CombatSimulator(testContent, 1);
+      const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 2 });
+      const playerResolves = result.events.filter((e) => e.type === 'resolve' && e.actor === 'Player');
+      expect(playerResolves).toHaveLength(2);
+      expect(playerResolves[1]?.snapshot?.player.charge).toBe(c.expectedChargeAfterPayoff);
+    }
+  });
+
   it('Needle Driver deals base hit without junk, then bonus hit when junk is spent', () => {
     const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['needle_driver_t1']);
     player.charge = 99;
@@ -411,6 +462,19 @@ describe('CombatSimulator', () => {
     expect(stunnedStall).toBeDefined();
   });
 
+  it('Virus ticks at start of infected fighter turn and appears in snapshots', () => {
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['ninja_tortoise_virus_pulse_t1']);
+    player.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    enemy.charge = 99;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 1 });
+    const virusTick = result.events.find((e) => e.type === 'virus_tick' && e.actor === 'Enemy');
+    expect(virusTick).toBeDefined();
+    expect(virusTick?.snapshot?.enemy.virusStacks).toBeGreaterThanOrEqual(1);
+    expect(virusTick?.snapshot?.enemy.hp).toBe(COMBAT_RULES.startingHp - 3);
+  });
+
   it('forge sim applies Rust Ranger base junk cap', () => {
     const queue = Array.from({ length: COMBAT_RULES.queueSize }, () => 'junk_loader_t3');
     const report = simulateForgeDeckMetrics(
@@ -422,6 +486,39 @@ describe('CombatSimulator', () => {
     );
     const maxJunkAtRoundStart = Math.max(...report.rounds.map((r) => r.junk));
     expect(maxJunkAtRoundStart).toBeLessThanOrEqual(5);
+  });
+
+  it('Celestial Formation deals 5 damage per activated stance this battle', () => {
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], [
+      'ninja_dragon_charge_t1',
+      'ninja_tiger_mark_t1',
+      'ninja_celestial_formation_t1',
+    ]);
+    player.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    enemy.charge = 0;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 3 });
+    const ev = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Celestial Formation'),
+    );
+    expect(ev?.text).toMatch(/dealt=10/);
+  });
+
+  it('Taiji Formation only fires lines for stances activated this battle', () => {
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['ninja_taiji_formation_t1']);
+    player.charge = 99;
+    player.activatedDragonThisCombat = true;
+    player.activatedTortoiseThisCombat = true;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    enemy.charge = 0;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 1 });
+    const ev = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Taiji Formation'),
+    );
+    expect(ev?.text).toMatch(/dealt=6/);
+    expect(ev?.snapshot?.player.block).toBe(6);
   });
 });
 

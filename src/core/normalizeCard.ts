@@ -14,7 +14,12 @@ function effectsIncludeChargeGain(effects: EffectStep[] | undefined): boolean {
     if (step.type === 'GrantPerpetualRoundCharge' && step.chargePerRound > 0) {
       return true;
     }
-    if (step.type === 'BranchIfCoreGte' || step.type === 'BranchIfJunkGte') {
+    if (
+      step.type === 'BranchIfCoreGte' ||
+      step.type === 'BranchIfJunkGte' ||
+      step.type === 'BranchIfChargeGte' ||
+      step.type === 'BranchIfActorStance'
+    ) {
       if (
         effectsIncludeChargeGain(step.thenSteps) ||
         effectsIncludeChargeGain(step.elseSteps)

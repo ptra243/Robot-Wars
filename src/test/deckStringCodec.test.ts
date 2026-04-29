@@ -23,6 +23,7 @@ function minimalRun(overrides: Partial<RunState> = {}): RunState {
       awakening: 0,
       playerHp: 40,
       playerHpMax: 40,
+      playerHpBaseMax: 40,
       hearts: 3,
       gold: 50,
       rerolls: 3,
@@ -37,6 +38,9 @@ function minimalRun(overrides: Partial<RunState> = {}): RunState {
       playerTraitIds: [],
       retryAvailable: false,
       battleReplaySpeed: 1,
+      earlyBattleBasicsRemaining: 2,
+      act4BattleIndex: 0,
+      infiniteMode: false,
     },
     ...overrides,
   };

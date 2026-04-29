@@ -4,24 +4,51 @@ import {
   applyLossRetryChoice,
   cloneRun,
   createNewRun,
+  loadFatigueDeckFromHand,
   playEncounter,
   resolveRandomEvent,
   rerollTravelOffers,
   resolveTravelPick,
   simulateDeckCycleReport,
   setupEncounterForNode,
-  validateDeckComposition,
   drawStartingHand,
   buildDeployDeckFromQueueAndHand,
   grantRelic,
   rollRelicForSource,
+  setEnemyPlannedSlot,
+  setPlayerPlannedSlot,
   type DeckCycleReport,
 } from '../core/run';
-import type { CombatResult, RunState, TravelModalState } from '../core/types';
+import type { CombatResult, RunState, SavedDeckPayload, TravelModalState } from '../core/types';
 import { NEUTRAL_STARTER_DECK, generateDraftOffers, generateRewardOffers, DRAFT_ROUNDS } from '../core/draft';
 import { getPilotById } from '../core/pilots';
 
 const DEFAULT_SEED = 905344;
+type DeckEditTarget = 'player' | 'enemy';
+
+function fitQueueLength(from: Array<string | null>, len: number): Array<string | null> {
+  const next = from.slice(0, len);
+  while (next.length < len) next.push(null);
+  return next;
+}
+
+function mergeSavedDeckPayloadIntoRun(run: RunState, payload: SavedDeckPayload, editTarget: DeckEditTarget): void {
+  if (editTarget === 'player') {
+    run.deck = [...payload.deck];
+    run.hand = [...payload.hand];
+    run.plannedQueue = [...payload.plannedQueue];
+    run.enemyPlannedQueue = [...payload.enemyPlannedQueue];
+    run.sandboxActiveQueueSlots = payload.sandboxActiveQueueSlots;
+    run.sandboxPlayerCoreScrap = payload.sandboxPlayerCoreScrap;
+    run.sandboxEnemyCoreScrap = payload.sandboxEnemyCoreScrap;
+    return;
+  }
+  const sourceEnemyQueue = payload.enemyPlannedQueue.some((slot) => slot != null)
+    ? payload.enemyPlannedQueue
+    : payload.plannedQueue;
+  run.enemyPlannedQueue = fitQueueLength(sourceEnemyQueue, run.enemyPlannedQueue.length);
+  run.sandboxEnemyCoreScrap = payload.sandboxEnemyCoreScrap;
+}
 
 export type AppPhase = 'pilot_select' | 'draft' | 'travel' | 'forge' | 'deck' | 'battle' | 'retry' | 'reward';
 
@@ -47,10 +74,6 @@ interface GameStore {
   rewardRelic: string | null;
   /** Travel shop / event / draft overlay; null when closed. */
   travelModal: TravelModalState | null;
-
-  setRun: (value: RunState | ((prev: RunState) => RunState)) => void;
-  setEventStep: (value: number | ((prev: number) => number)) => void;
-  setPlaybackPaused: (value: boolean | ((prev: boolean) => boolean)) => void;
 
   handleReset: (nextSeed?: number) => void;
   handleSelectPilot: (pilotId: string, options?: { unlockAllAwakenings?: boolean }) => void;
@@ -79,6 +102,23 @@ interface GameStore {
   handleSkipReward: () => void;
   handleRerollTravelOffers: () => void;
   handleChooseRetryAssist: (choice: 'enemy_hp_down' | 'free_rerolls') => void;
+  handleAdjustRerolls: (delta: number) => void;
+  handleScrapHandCard: (cardId: string) => void;
+  handleSetBattleReplaySpeed: (speed: RunState['loop']['battleReplaySpeed']) => void;
+  handleAssignPlannedSlot: (editTarget: DeckEditTarget, slotIndex: number, cardId: string) => void;
+  handleSwapPlannedSlots: (editTarget: DeckEditTarget, a: number, b: number) => void;
+  handleMergeHandCards: (
+    sourceId: string,
+    targetId: string,
+    sourceHandIndex: number,
+    targetHandIndex: number,
+    mergedId: string,
+  ) => void;
+  handleLoadFatigueDeckFromHand: () => void;
+  handleApplySavedDeckPayload: (payload: SavedDeckPayload, editTarget: DeckEditTarget) => void;
+  handleSetSandboxActiveQueueSlots: (value: number) => void;
+  handleSetSandboxPlayerCoreScrap: (value: number) => void;
+  handleSetSandboxEnemyCoreScrap: (value: number) => void;
   handleRerollHandCard: (cardId: string) => void;
   handleExitBattleToDeck: () => void;
   handleSimulateDeckCycle: () => void;
@@ -109,22 +149,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   rewardRelic: null,
   travelModal: null,
 
-  setRun: (value) =>
-    set((s) => ({
-      run: typeof value === 'function' ? (value as (prev: RunState) => RunState)(s.run) : value,
-    })),
-
-  setEventStep: (value) =>
-    set((s) => ({
-      eventStep: typeof value === 'function' ? (value as (p: number) => number)(s.eventStep) : value,
-    })),
-
-  setPlaybackPaused: (value) =>
-    set((s) => ({
-      playbackPaused:
-        typeof value === 'function' ? (value as (p: boolean) => boolean)(s.playbackPaused) : value,
-    })),
-
   handleReset: (nextSeed) => {
     const seed = nextSeed === undefined ? Number(get().seedInput) || DEFAULT_SEED : nextSeed;
     set({
@@ -150,6 +174,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const pilot = getPilotById(pilotId);
     const unlockAllAwakenings = options?.unlockAllAwakenings === true;
     if (pilot) {
+      nextRun.faction = pilot.faction;
       nextRun.loop.playerTraitIds = unlockAllAwakenings
         ? [pilot.traitIds.base, pilot.traitIds.aw0, pilot.traitIds.aw1]
         : [pilot.traitIds.base];
@@ -162,7 +187,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     const content = CardContentService.loadDefault(nextRun.seed);
     const richGetRicher = pilot?.traitIds.base === 'baron_base';
-    const offers = generateDraftOffers(nextRun.seed, nextRun.faction, content.getAll(), richGetRicher);
+    const offers = generateDraftOffers(
+      nextRun.seed,
+      nextRun.faction,
+      nextRun.loop.awakening,
+      content.getAll(),
+      pilotId,
+      richGetRicher,
+    );
     set({
       run: nextRun,
       draftOffers: offers,
@@ -200,20 +232,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
   handleSimulateEncounter: () => {
     const nextRun = cloneRun(get().run);
     const content = CardContentService.loadDefault(nextRun.seed);
-    const deckErr = validateDeckComposition(nextRun, content);
-    if (deckErr) {
-      set({ statusMessage: deckErr });
-      return;
+    try {
+      const result = playEncounter(nextRun, content);
+      set({
+        run: nextRun,
+        lastResult: undefined,
+        playback: result,
+        eventStep: -1,
+        playbackPaused: false,
+        statusMessage: `Playing encounter (${result.events.length} steps)…`,
+      });
+    } catch (e) {
+      set({
+        statusMessage: e instanceof Error ? e.message : 'Deck invalid for combat.',
+      });
     }
-    const result = playEncounter(nextRun, content);
-    set({
-      run: nextRun,
-      lastResult: undefined,
-      playback: result,
-      eventStep: -1,
-      playbackPaused: false,
-      statusMessage: `Playing encounter (${result.events.length} steps)…`,
-    });
   },
 
   handleEventScrub: (nextStep) => {
@@ -226,21 +259,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   handleStartBattleFromDeck: () => {
     const nextRun = cloneRun(get().run);
     const content = CardContentService.loadDefault(nextRun.seed);
-    const deckErr = validateDeckComposition(nextRun, content);
-    if (deckErr) {
-      set({ statusMessage: deckErr });
-      return;
+    try {
+      const result = playEncounter(nextRun, content);
+      set({
+        run: nextRun,
+        lastResult: undefined,
+        playback: result,
+        eventStep: -1,
+        playbackPaused: false,
+        appPhase: 'battle',
+        statusMessage: `Battle (${result.events.length} events)…`,
+      });
+    } catch (e) {
+      set({
+        statusMessage: e instanceof Error ? e.message : 'Deck invalid for combat.',
+      });
     }
-    const result = playEncounter(nextRun, content);
-    set({
-      run: nextRun,
-      lastResult: undefined,
-      playback: result,
-      eventStep: -1,
-      playbackPaused: false,
-      appPhase: 'battle',
-      statusMessage: `Battle (${result.events.length} events)…`,
-    });
   },
 
   handlePickTravelOffer: (slotIndex) => {
@@ -287,7 +321,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
       return;
     }
-    setupEncounterForNode(nextRun, picked.type);
+    setupEncounterForNode(nextRun, picked.type, content);
     // Open the forge so the player can prepare their battle program before
     // the encounter resolves. The forge calls handleDeployFromForge when the
     // player is ready; that action runs the actual encounter and applies rewards.
@@ -326,11 +360,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Sync merged / edited deck from the forge — previously only the queue was written,
     // so `run.deck` stayed stale and post-combat sync reverted merges.
     nextRun.deck = buildDeployDeckFromQueueAndHand(queueIds, handCardIds);
-    const deployDeckErr = validateDeckComposition(nextRun, content);
-    if (deployDeckErr) {
-      set({ statusMessage: deployDeckErr });
-      return;
-    }
 
     // Snapshot pre-combat gold and relics so we can show deltas in the reward screen.
     const goldBefore = nextRun.loop.gold;
@@ -338,7 +367,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Full encounter lifecycle: deck fill, combat sim, encounter index, deck sync,
     // post-combat rewards (gold/hearts/awakening), and fresh hand draw.
-    const result = playEncounter(nextRun, content);
+    let result: CombatResult;
+    try {
+      result = playEncounter(nextRun, content);
+    } catch (e) {
+      set({
+        statusMessage: e instanceof Error ? e.message : 'Deck invalid for combat.',
+      });
+      return;
+    }
 
     const goldGained = nextRun.loop.gold - goldBefore;
     const newRelic = nextRun.loop.relicIds.find((r) => !relicsBefore.has(r)) ?? null;
@@ -421,6 +458,102 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
+  handleAdjustRerolls: (delta) => {
+    if (!Number.isFinite(delta) || delta === 0) return;
+    const nextRun = cloneRun(get().run);
+    nextRun.loop.rerolls = Math.max(0, nextRun.loop.rerolls + Math.trunc(delta));
+    set({ run: nextRun });
+  },
+
+  handleScrapHandCard: (cardId) => {
+    const nextRun = cloneRun(get().run);
+    const handIndex = nextRun.hand.indexOf(cardId);
+    if (handIndex < 0) {
+      set({ statusMessage: 'Card is not in hand.' });
+      return;
+    }
+    nextRun.hand.splice(handIndex, 1);
+    const deckIndex = nextRun.deck.indexOf(cardId);
+    if (deckIndex >= 0) nextRun.deck.splice(deckIndex, 1);
+    nextRun.loop.gold += 50;
+    nextRun.loop.rerolls += 1;
+    set({ run: nextRun, statusMessage: 'Card scrapped for 50 gold and +1 reroll.' });
+  },
+
+  handleSetBattleReplaySpeed: (speed) => {
+    const nextRun = cloneRun(get().run);
+    nextRun.loop.battleReplaySpeed = speed;
+    set({ run: nextRun });
+  },
+
+  handleAssignPlannedSlot: (editTarget, slotIndex, cardId) => {
+    const nextRun = cloneRun(get().run);
+    if (editTarget === 'player') setPlayerPlannedSlot(nextRun, slotIndex, cardId);
+    else setEnemyPlannedSlot(nextRun, slotIndex, cardId);
+    set({ run: nextRun });
+  },
+
+  handleSwapPlannedSlots: (editTarget, a, b) => {
+    if (a === b) return;
+    const nextRun = cloneRun(get().run);
+    const queue = editTarget === 'player' ? nextRun.plannedQueue : nextRun.enemyPlannedQueue;
+    if (a < 0 || b < 0 || a >= queue.length || b >= queue.length) return;
+    const t = queue[a];
+    queue[a] = queue[b];
+    queue[b] = t;
+    set({ run: nextRun });
+  },
+
+  handleMergeHandCards: (sourceId, targetId, sourceHandIndex, targetHandIndex, mergedId) => {
+    const nextRun = cloneRun(get().run);
+    const removeFirst = (arr: string[], id: string) => {
+      const ix = arr.indexOf(id);
+      if (ix >= 0) arr.splice(ix, 1);
+    };
+    removeFirst(nextRun.deck, sourceId);
+    removeFirst(nextRun.deck, targetId);
+    nextRun.deck.push(mergedId);
+    const [lo, hi] =
+      sourceHandIndex < targetHandIndex
+        ? [sourceHandIndex, targetHandIndex]
+        : [targetHandIndex, sourceHandIndex];
+    if (lo < 0 || hi < 0 || hi >= nextRun.hand.length) return;
+    nextRun.hand.splice(hi, 1);
+    nextRun.hand.splice(lo, 1);
+    nextRun.hand.push(mergedId);
+    set({ run: nextRun });
+  },
+
+  handleLoadFatigueDeckFromHand: () => {
+    const nextRun = cloneRun(get().run);
+    loadFatigueDeckFromHand(nextRun);
+    set({ run: nextRun });
+  },
+
+  handleApplySavedDeckPayload: (payload, editTarget) => {
+    const nextRun = cloneRun(get().run);
+    mergeSavedDeckPayloadIntoRun(nextRun, payload, editTarget);
+    set({ run: nextRun });
+  },
+
+  handleSetSandboxActiveQueueSlots: (value) => {
+    const nextRun = cloneRun(get().run);
+    nextRun.sandboxActiveQueueSlots = value;
+    set({ run: nextRun });
+  },
+
+  handleSetSandboxPlayerCoreScrap: (value) => {
+    const nextRun = cloneRun(get().run);
+    nextRun.sandboxPlayerCoreScrap = value;
+    set({ run: nextRun });
+  },
+
+  handleSetSandboxEnemyCoreScrap: (value) => {
+    const nextRun = cloneRun(get().run);
+    nextRun.sandboxEnemyCoreScrap = value;
+    set({ run: nextRun });
+  },
+
   handleRerollHandCard: (cardId) => {
     const nextRun = cloneRun(get().run);
     const index = nextRun.hand.indexOf(cardId);
@@ -448,11 +581,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   handleSimulateDeckCycle: () => {
     const { run } = get();
     const content = CardContentService.loadDefault(run.seed);
-    const deckErr = validateDeckComposition(run, content);
-    if (deckErr) {
-      set({ statusMessage: deckErr });
-      return;
-    }
     set({
       deckCycleReport: simulateDeckCycleReport(run, content),
     });
@@ -567,14 +695,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const modal = get().travelModal;
     if (!modal || modal.kind !== 'draft') return;
     const nextRun = cloneRun(get().run);
-    const content = CardContentService.loadDefault(nextRun.seed);
     nextRun.deck = [...nextRun.deck, cardId];
     drawStartingHand(nextRun);
-    const deckErr = validateDeckComposition(nextRun, content);
-    if (deckErr) {
-      set({ statusMessage: `Cannot add that card: ${deckErr}` });
-      return;
-    }
     set({
       run: nextRun,
       travelModal: null,

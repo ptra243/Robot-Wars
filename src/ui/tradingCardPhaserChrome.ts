@@ -6,7 +6,7 @@ import { shadeFill, type MiniMtgQueueCard } from './arenaQueueUi';
  * Keeps the same face/title/art/rules banding as the DOM card shell.
  */
 export type TradingChromeTone = 'player' | 'enemy';
-export type TradingChromeVariant = 'idle' | 'active' | 'dropHighlight';
+export type TradingChromeVariant = 'idle' | 'active' | 'dropHighlight' | 'locked';
 
 /** Core face (≈ #141210). */
 const CHROME_FACE = 0x141210;
@@ -36,13 +36,18 @@ export function paintMiniMtgTradingChrome(
   } else {
     strokeColor = isPlayer ? STROKE_PLAYER_IDLE : STROKE_ENEMY_IDLE;
   }
-  const strokeW = variant === 'dropHighlight' ? 3 : 2;
+  if (variant === 'locked') {
+    strokeColor = 0x475569;
+  }
+  const strokeW = variant === 'dropHighlight' ? 3 : variant === 'locked' ? 1 : 2;
 
   let face = CHROME_FACE;
   if (variant === 'active') {
     face = isPlayer ? 0x1c2838 : 0x2c181c;
   } else if (variant === 'dropHighlight') {
     face = isPlayer ? 0x1e3a5f : 0x3d1f24;
+  } else if (variant === 'locked') {
+    face = 0x0f1419;
   }
 
   const titleTint = isPlayer ? shadeFill(CHROME_TITLE, 0.92) : 0x3d2828;

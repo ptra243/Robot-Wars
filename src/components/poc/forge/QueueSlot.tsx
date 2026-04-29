@@ -4,6 +4,8 @@ import type { ForgeCard } from './types';
 interface QueueSlotProps {
   index: number;
   card: ForgeCard | null;
+  /** Inactive program slot (e.g. act 1 = first 5 active, rest locked). */
+  locked?: boolean;
   isDragOver: boolean;
   onHover: (c: ForgeCard | null, ev?: { clientX: number; clientY: number }) => void;
   onClear: () => void;
@@ -18,6 +20,7 @@ interface QueueSlotProps {
 export function QueueSlot({
   index,
   card,
+  locked = false,
   isDragOver,
   onHover,
   onClear,
@@ -29,30 +32,45 @@ export function QueueSlot({
   onDrop,
 }: QueueSlotProps) {
   const dropClass = isDragOver ? ' forge-poc__slot--drop-target' : '';
+  const lockedClass = locked ? ' forge-poc__slot--locked' : '';
 
   if (!card) {
     return (
       <div
-        className={`forge-poc__slot forge-poc__slot--empty${dropClass}`}
+        className={`forge-poc__slot forge-poc__slot--empty${dropClass}${lockedClass}`}
         onContextMenu={onContextMenu}
-        onDragOver={onDragOver}
+        onDragOver={locked ? undefined : onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
       >
         <div className="forge-poc__slot-index">{String(index + 1).padStart(2, '0')}</div>
-        <div className="forge-poc__slot-hex">+</div>
-        <div className="forge-poc__slot-empty-label">EMPTY</div>
+        {locked ? (
+          <>
+            <div className="forge-poc__slot-hex" aria-hidden>
+              ·
+            </div>
+            <div className="forge-poc__slot-empty-label">LOCKED</div>
+            <div className="forge-poc__slot-locked-hint">Unlocked in later acts</div>
+          </>
+        ) : (
+          <>
+            <div className="forge-poc__slot-hex">+</div>
+            <div className="forge-poc__slot-empty-label">EMPTY</div>
+          </>
+        )}
       </div>
     );
   }
 
   return (
     <div
-      className={`forge-poc__slot forge-poc__slot--${card.faction}${dropClass}`}
-      draggable
-      onMouseEnter={(e) => onHover(card, e)}
-      onMouseMove={(e) => onHover(card, e)}
-      onMouseLeave={() => onHover(null)}
+      className={`forge-poc__slot forge-poc__slot--${card.faction}${dropClass}${lockedClass}${
+        locked ? ' forge-poc__slot--read-only' : ''
+      }`}
+      draggable={!locked}
+      onMouseEnter={locked ? undefined : (e) => onHover(card, e)}
+      onMouseMove={locked ? undefined : (e) => onHover(card, e)}
+      onMouseLeave={locked ? undefined : () => onHover(null)}
       onContextMenu={onContextMenu}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
@@ -105,14 +123,16 @@ export function QueueSlot({
       <div className="forge-poc__slot-footer">
         <span className="forge-poc__slot-name">{card.name}</span>
       </div>
-      <button
-        type="button"
-        className="forge-poc__slot-remove"
-        onClick={onClear}
-        aria-label={`Remove from slot ${String(index + 1)}`}
-      >
-        ✕
-      </button>
+      {locked ? null : (
+        <button
+          type="button"
+          className="forge-poc__slot-remove"
+          onClick={onClear}
+          aria-label={`Remove from slot ${String(index + 1)}`}
+        >
+          ✕
+        </button>
+      )}
     </div>
   );
 }

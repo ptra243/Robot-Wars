@@ -31,6 +31,7 @@ const EMPTY_SNAPSHOT: ArenaSnapshot = {
     coreScrap: 0,
     potency: 0,
     exposeDamage: 0,
+    weakenStacks: 0,
     deckCursor: 0,
     deckWraps: 0,
     queueCursor: 0,
@@ -44,6 +45,10 @@ const EMPTY_SNAPSHOT: ArenaSnapshot = {
     strikeResolutionsThisCombat: 0,
     traitIds: [],
     tempUpgrade: null,
+    emergencyProtocolStacks: 0,
+    mirrorCoreSelfDamage: false,
+    overclockBonusUsedThisTurn: false,
+    scheduledEffects: [],
   },
   enemy: {
     name: 'Enemy',
@@ -58,6 +63,7 @@ const EMPTY_SNAPSHOT: ArenaSnapshot = {
     coreScrap: 0,
     potency: 0,
     exposeDamage: 0,
+    weakenStacks: 0,
     deckCursor: 0,
     deckWraps: 0,
     queueCursor: 0,
@@ -71,6 +77,10 @@ const EMPTY_SNAPSHOT: ArenaSnapshot = {
     strikeResolutionsThisCombat: 0,
     traitIds: [],
     tempUpgrade: null,
+    emergencyProtocolStacks: 0,
+    mirrorCoreSelfDamage: false,
+    overclockBonusUsedThisTurn: false,
+    scheduledEffects: [],
   },
   recentEvents: [],
 };
@@ -96,12 +106,18 @@ export interface PhaserSlotHoverPayload {
   index: number;
   /** Resolved card id in queue, or null for default/basic strike slot. */
   cardId: string | null;
+  /** `index` is not part of the live program (beyond `activeQueueSlots`). */
+  locked: boolean;
   clientX: number;
   clientY: number;
 }
 
+function clampActiveQueueSlots(n: number): number {
+  return Math.max(5, Math.min(COMBAT_RULES.queueSize, Math.floor(n)));
+}
+
 export function arenaHoverIdentityKey(h: PhaserSlotHoverPayload): string {
-  return `${h.side}:${String(h.index)}:${h.cardId ?? 'basic'}`;
+  return `${h.side}:${String(h.index)}:${h.locked ? 'x' : h.cardId ?? 'basic'}`;
 }
 
 export class ArenaScene extends Phaser.Scene {
@@ -239,7 +255,9 @@ export class ArenaScene extends Phaser.Scene {
     pointer?: Phaser.Input.Pointer,
   ): void {
     const fighter = side === 'player' ? this.snapshot.player : this.snapshot.enemy;
-    const cardId = fighter.queue[index] ?? null;
+    const w = clampActiveQueueSlots(fighter.activeQueueSlots);
+    const locked = index >= w;
+    const cardId = locked ? null : (fighter.queue[index] ?? null);
     if (pointer) {
       const c = this.pointerToClient(pointer);
       this.lastHoverClient = c;
@@ -248,6 +266,7 @@ export class ArenaScene extends Phaser.Scene {
       side,
       index,
       cardId,
+      locked,
       clientX: this.lastHoverClient.x,
       clientY: this.lastHoverClient.y,
     });
@@ -282,19 +301,29 @@ export class ArenaScene extends Phaser.Scene {
     this.texts[1]?.setText('');
 
     for (let index = 0; index < QUEUE_UI.SLOTS; index += 1) {
-      const cardId = enemy.queue[index];
-      const enemyActive = enemy.queueCursor === index && Boolean(this.snapshot.result);
+      const ew = clampActiveQueueSlots(enemy.activeQueueSlots);
+      const enemyLocked = index >= ew;
+      const cardId = enemyLocked ? null : enemy.queue[index];
+      const enemyActive = !enemyLocked && enemy.queueCursor === index && Boolean(this.snapshot.result);
       const card = this.enemyQueueCards[index];
       paintMiniMtgTradingChrome(
         card,
         'enemy',
-        enemyActive ? 'active' : 'idle',
+        enemyActive ? 'active' : enemyLocked ? 'locked' : 'idle',
       );
-      card.titleText.setText(miniMtgQueueTitle(cardId, index));
-      card.rulesText.setText(miniMtgQueueRules(cardId, this.blankSlotStrikeDamage));
+      card.titleText.setText(
+        enemyLocked ? '—' : miniMtgQueueTitle(cardId, index),
+      );
+      card.rulesText.setText(
+        enemyLocked ? 'Inactive' : miniMtgQueueRules(cardId, this.blankSlotStrikeDamage),
+      );
       if (this.artResolver) {
-        const idForArt = cardId ?? COMBAT_RULES.blankQueueSlotCardId;
-        syncMiniCardArt(this, card, idForArt, this.artResolver);
+        if (enemyLocked) {
+          card.artImage.setAlpha(0);
+        } else {
+          const idForArt = cardId ?? COMBAT_RULES.blankQueueSlotCardId;
+          syncMiniCardArt(this, card, idForArt, this.artResolver);
+        }
       }
       card.root.setY(
         QUEUE_ROW_Y.enemy +
@@ -304,19 +333,29 @@ export class ArenaScene extends Phaser.Scene {
     }
 
     for (let index = 0; index < QUEUE_UI.SLOTS; index += 1) {
-      const cardId = player.queue[index];
-      const isActive = player.queueCursor === index && Boolean(this.snapshot.result);
+      const pw = clampActiveQueueSlots(player.activeQueueSlots);
+      const playerLocked = index >= pw;
+      const cardId = playerLocked ? null : player.queue[index];
+      const isActive = !playerLocked && player.queueCursor === index && Boolean(this.snapshot.result);
       const card = this.playerQueueCards[index];
       paintMiniMtgTradingChrome(
         card,
         'player',
-        isActive ? 'active' : 'idle',
+        isActive ? 'active' : playerLocked ? 'locked' : 'idle',
       );
-      card.titleText.setText(miniMtgQueueTitle(cardId, index));
-      card.rulesText.setText(miniMtgQueueRules(cardId, this.blankSlotStrikeDamage));
+      card.titleText.setText(
+        playerLocked ? '—' : miniMtgQueueTitle(cardId, index),
+      );
+      card.rulesText.setText(
+        playerLocked ? 'Inactive' : miniMtgQueueRules(cardId, this.blankSlotStrikeDamage),
+      );
       if (this.artResolver) {
-        const idForArt = cardId ?? COMBAT_RULES.blankQueueSlotCardId;
-        syncMiniCardArt(this, card, idForArt, this.artResolver);
+        if (playerLocked) {
+          card.artImage.setAlpha(0);
+        } else {
+          const idForArt = cardId ?? COMBAT_RULES.blankQueueSlotCardId;
+          syncMiniCardArt(this, card, idForArt, this.artResolver);
+        }
       }
       card.root.setY(
         QUEUE_ROW_Y.player +

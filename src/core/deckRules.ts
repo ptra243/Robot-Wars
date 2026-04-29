@@ -48,6 +48,9 @@ export function validateDeckComposition(
 
   for (const id of ids) {
     const c = content.get(id);
+    if (!c.neutral && c.faction !== run.faction) {
+      return `Deck cannot include off-faction card “${c.name}” (${c.faction}).`;
+    }
     if (cardHasUniqueDeck(c)) {
       uniqueDeckInstances += 1;
     }

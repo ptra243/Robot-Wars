@@ -50,7 +50,7 @@ export function resolveFighter(
   events: CombatEvent[],
   combatSeed: number,
 ): void {
-  const activeSlots = Math.max(3, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
+  const activeSlots = Math.max(5, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
   const queueIndex = actor.queueCursor % activeSlots;
   let queuedId = actor.queue[queueIndex];
 
@@ -113,6 +113,7 @@ function resolveCard(
   const junkSnapshotAtResolveStart = actor.junk;
   const chargeBefore = actor.charge;
   const junkBefore = actor.junk;
+  const potencyBefore = actor.potency;
   const rawSteps = getResolvedEffectPipeline(card);
   const expanded = expandEffectSteps(rawSteps, actor, junkSnapshotAtResolveStart);
   const firstStrikeIndex = expanded.findIndex((step) => step.type === 'StrikeDamage');
@@ -125,6 +126,37 @@ function resolveCard(
         )
       : expanded;
   const steps = finalizeEffectPipeline(aw0Adjusted);
+  const isTigerCard = card.faction === 'cyberpunk' && /tiger/i.test(card.id);
+  const isTigerStrikeCard = isTigerCard && card.tags.includes('Strike');
+  let consumeTigerAfterCardLoss = 0;
+  if (isTigerCard) {
+    if (actor.nextTigerCardPotencyGain && actor.nextTigerCardPotencyGain > 0) {
+      actor.potency += actor.nextTigerCardPotencyGain;
+    }
+    consumeTigerAfterCardLoss = actor.nextTigerCardPotencyAfterCardLoss ?? 0;
+    if (actor.nextTigerCardPierce) {
+      steps.unshift({ type: 'GrantNextStrikePierce', count: 1 });
+    }
+    if (isTigerStrikeCard && actor.nextTigerCardExposePerEnergy) {
+      const bonusExpose = Math.min(
+        actor.nextTigerCardExposePerEnergy.cap,
+        actor.charge * actor.nextTigerCardExposePerEnergy.amountPerEnergy,
+      );
+      if (bonusExpose > 0) {
+        steps.unshift({ type: 'Keyword', spec: { type: 'Expose', value: bonusExpose } });
+      }
+    }
+    if (isTigerStrikeCard && (actor.nextTigerCardExtraStrikeFromTargetVirusCap ?? 0) > 0) {
+      const cap = actor.nextTigerCardExtraStrikeFromTargetVirusCap ?? 0;
+      const extraStrikes = Math.min(cap, target.virusStacks ?? 0);
+      for (let i = 0; i < extraStrikes; i += 1) {
+        steps.push({ type: 'StrikeDamage', baseDamage: 1, pierce: false, useStrikePotency: true });
+      }
+    }
+    if (actor.nextTigerCardOverclock) {
+      steps.push({ type: 'Keyword', spec: { type: 'Overclock', value: 1 } });
+    }
+  }
   const cardHadDelayScheduling = steps.some((step) => step.type === 'ScheduleEffectAfterRounds');
   if (actor.traitIds.includes('relic_overclock_mandate') && actor.junk > 40 && cardHasJunkThreshold(card)) {
     steps.push({ type: 'Keyword', spec: { type: 'Overclock', value: 1 } });
@@ -213,16 +245,6 @@ function resolveCard(
   syncExposeAuraFromField(actor);
   syncExposeAuraFromField(target);
 
-  pushEv(state, events, {
-    type: 'resolve',
-    round: state.roundIndex,
-    actor: actor.name,
-    text:
-      `${actor.name} resolves ${card.name} | dealt=${dealt} blocked=${blocked} selfDmg=${selfDamage} | ` +
-      `${actor.name} HP=${actor.hp} EN=${actor.charge} J=${actor.junk} B=${actor.bulkStacks} | ` +
-      `${target.name} HP=${target.hp} BL=${target.block}`,
-  });
-
   if (rustRangerAw0SpentJunk > 0) {
     addStunnedTurns(actor, 1);
     pushEv(state, events, {
@@ -245,6 +267,32 @@ function resolveCard(
     junkSpent: Math.max(0, junkBefore - actor.junk),
     cardHadDelayScheduling,
   });
+
+  pushEv(state, events, {
+    type: 'resolve',
+    round: state.roundIndex,
+    actor: actor.name,
+    text:
+      `${actor.name} resolves ${card.name} | dealt=${dealt} blocked=${blocked} selfDmg=${selfDamage} | ` +
+      `${actor.name} HP=${actor.hp} EN=${actor.charge} J=${actor.junk} B=${actor.bulkStacks} | ` +
+      `${target.name} HP=${target.hp} BL=${target.block}`,
+  });
+
+  if (isTigerCard) {
+    if (consumeTigerAfterCardLoss > 0) {
+      actor.potency = Math.max(0, actor.potency - consumeTigerAfterCardLoss);
+    }
+    actor.nextTigerCardOverclock = false;
+    actor.nextTigerCardPierce = false;
+    actor.nextTigerCardPotencyGain = 0;
+    actor.nextTigerCardPotencyAfterCardLoss = 0;
+    actor.nextTigerCardExposePerEnergy = null;
+    actor.nextTigerCardExtraStrikeFromTargetVirusCap = null;
+  }
+  actor.lastResolvedCardFaction = card.faction;
+  if (potencyBefore !== actor.potency) {
+    actor.potency = Math.max(0, actor.potency);
+  }
 }
 
 function applyKeyword(
@@ -286,6 +334,8 @@ function applyKeyword(
         }
       }
       return;
+    case 'Switch':
+      return;
     case 'TurboLink':
       if (allowBonusNext) {
         const spent = Math.max(1, Math.min(actor.bulkStacks, keyword.value));
@@ -318,6 +368,10 @@ function applyKeyword(
     case 'CoreParts':
     case 'UniqueDeck':
     case 'Persistent':
+    case 'Virus':
+    case 'Evade':
+    case 'Shuriken':
+    case 'Stance':
       return;
     case 'FactoryReset': {
       const tier = Math.min(3, Math.max(1, keyword.value));
@@ -358,7 +412,7 @@ function resolveBonusNext(
   events: CombatEvent[],
   combatSeed: number,
 ): boolean {
-  const activeSlots = Math.max(3, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
+  const activeSlots = Math.max(5, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
   const next = (actor.queueCursor + 1) % activeSlots;
   const queuedId = actor.queue[next];
 

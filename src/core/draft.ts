@@ -41,13 +41,64 @@ export function generateRewardOffers(
 export const NEUTRAL_STARTER_DECK: string[] = [
   'neutral_barrier_t1',
   'neutral_feint_t1',
-  'salvage_strike_t1',
+  'neutral_capacitor_feed_t1',
   'neutral_servo_t1',
   'neutral_multi_strike_t1',
 ];
 
 export const DRAFT_ROUNDS = 4;
 export const DRAFT_OFFERS_PER_ROUND = 3;
+
+type NativeStance = 'dragon' | 'tiger' | 'bird' | 'tortoise';
+
+function nativeStanceForPilot(pilotId: string): NativeStance | undefined {
+  switch (pilotId) {
+    case 'seiryu':
+      return 'dragon';
+    case 'byakko':
+      return 'tiger';
+    case 'suzaku':
+      return 'bird';
+    case 'genbu':
+      return 'tortoise';
+    default:
+      return undefined;
+  }
+}
+
+function pickForcedNativeStanceCard(
+  pilotId: string | undefined,
+  awakening: number,
+  pool: CardDef[],
+  rng: SeededRandom,
+): CardDef | undefined {
+  const native = pilotId ? nativeStanceForPilot(pilotId) : undefined;
+  if (!native) {
+    return undefined;
+  }
+  const nativeCards = pool.filter((card) => card.id.includes(`_${native}_`));
+  if (nativeCards.length === 0) {
+    return undefined;
+  }
+
+  if (awakening < 1) {
+    const nonDuo = nativeCards.filter((card) => !card.id.includes('ninja_duo_'));
+    if (nonDuo.length === 0) {
+      return undefined;
+    }
+    return nonDuo[rng.nextInt(nonDuo.length)];
+  }
+
+  const duo = nativeCards.filter((card) => card.id.includes('ninja_duo_'));
+  const nonDuo = nativeCards.filter((card) => !card.id.includes('ninja_duo_'));
+  if (duo.length > 0 && nonDuo.length > 0) {
+    const chooseDuo = rng.nextInt(2) === 0;
+    const set = chooseDuo ? duo : nonDuo;
+    return set[rng.nextInt(set.length)];
+  }
+  const fallback = duo.length > 0 ? duo : nonDuo;
+  return fallback.length > 0 ? fallback[rng.nextInt(fallback.length)] : undefined;
+}
 
 /**
  * Generate DRAFT_ROUNDS rounds of card offers from the neutral + faction
@@ -57,15 +108,19 @@ export const DRAFT_OFFERS_PER_ROUND = 3;
 export function generateDraftOffers(
   seed: number,
   faction: string,
+  awakening: number,
   allCards: CardDef[],
+  pilotId?: string,
   extraOfferPerRound = false,
 ): string[][] {
   const starterSet = new Set(NEUTRAL_STARTER_DECK);
 
+  const maxTier = awakening + 1;
   const pool = allCards.filter(
     (card) =>
-      card.card_tier === 1 &&
-      card.awakening_min === 0 &&
+      card.card_tier <= maxTier &&
+      card.card_tier >= 1 &&
+      card.awakening_min <= awakening &&
       !starterSet.has(card.id) &&
       (card.neutral || card.faction === faction),
   );
@@ -83,10 +138,21 @@ export function generateDraftOffers(
   const offersPerRound = DRAFT_OFFERS_PER_ROUND + (extraOfferPerRound ? 1 : 0);
   const rounds: string[][] = [];
   let cursor = 0;
+  const forcedFirst = pickForcedNativeStanceCard(pilotId, awakening, pool, rng);
+  if (forcedFirst) {
+    const idx = shuffled.findIndex((card) => card.id === forcedFirst.id);
+    if (idx >= 0) {
+      shuffled.splice(idx, 1);
+    }
+  }
 
   for (let r = 0; r < DRAFT_ROUNDS; r += 1) {
     const round: string[] = [];
+    if (r === 0 && forcedFirst) {
+      round.push(forcedFirst.id);
+    }
     for (let o = 0; o < offersPerRound && cursor < shuffled.length; o += 1) {
+      if (round.length >= offersPerRound) break;
       round.push(shuffled[cursor]!.id);
       cursor += 1;
     }
