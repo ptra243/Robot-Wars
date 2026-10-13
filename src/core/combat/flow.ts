@@ -2,6 +2,7 @@ import type { CardContentService } from '../content';
 import { finalizeEffectPipeline } from '../effects/compileLegacy';
 import { expandEffectSteps } from '../effects/expandEffects';
 import { getSpendPrerequisites, runEffectPipeline } from '../effects/runner';
+import { blankCardIdForTraits } from '../run/combatSetup';
 import { COMBAT_RULES } from '../rules';
 import { callTraitOnStall, callTraitOnTurnStart } from '../traits';
 import type { CardDef, CombatEvent, CombatState, FighterState } from '../types';
@@ -112,7 +113,7 @@ export function performStallOnCurrentQueuedCard(
 ): void {
   const activeSlots = Math.max(5, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
   const queueIndex = actor.queueCursor % activeSlots;
-  const queuedId = actor.queue[queueIndex] ?? 'neutral_basic_strike_t1';
+  const queuedId = actor.queue[queueIndex] ?? blankCardIdForTraits(actor.traitIds ?? []);
   const card = content.get(queuedId);
 
   actor.charge += 1;
@@ -322,6 +323,20 @@ export function isContinuousSkipped(actor: FighterState, queueIndex: number, car
     (a) => a.type === 'Continuous' && a.sourceQueueIndex === queueIndex,
   );
   return auraLinked || actor.continuousTicksByQueueIndex[queueIndex] !== undefined;
+}
+
+export function isPersistentSkipped(actor: FighterState, queueIndex: number, card: CardDef): boolean {
+  if (!card.keywords.some((keyword) => keyword.type === 'Persistent')) {
+    return false;
+  }
+  return actor.persistentResolvedByQueueIndex[queueIndex] === true;
+}
+
+export function markPersistentResolved(actor: FighterState, queueIndex: number, card: CardDef): void {
+  if (!card.keywords.some((keyword) => keyword.type === 'Persistent')) {
+    return;
+  }
+  actor.persistentResolvedByQueueIndex[queueIndex] = true;
 }
 
 export function applyContinuousTicks(

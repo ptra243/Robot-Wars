@@ -32,7 +32,10 @@ export type KeywordType =
   /** Deckbuilding only: at most one copy of any UniqueDeck card across hand+deck (see deck rules). */
   | 'UniqueDeck'
   /** Marker for rest-of-battle hooks; deckbuilding: counts toward Continuous/Persistent cap. */
-  | 'Persistent';
+  | 'Persistent'
+  | 'Prime'
+  | 'Sequence'
+  | 'Faith';
 
 export interface KeywordSpec {
   type: KeywordType;
@@ -50,6 +53,9 @@ export type EffectStep =
   /** Spend all refined scrap; gain +1 bulk per scrap spent (respecting global bulk stack cap). */
   | { type: 'SpendAllCoreGainBulk' }
   | { type: 'GainCharge'; amount: number }
+  | { type: 'GainFaith'; amount: number }
+  | { type: 'AddPrimeSlotStrikePotencyBonus'; amount: number }
+  | { type: 'GrantTemporaryPrimeSlots'; count: number }
   | { type: 'AddStrikePotency'; amount: number }
   | { type: 'AddShieldPotency'; amount: number }
   | { type: 'HealSelf'; amount: number }
@@ -88,7 +94,10 @@ export type EffectStep =
       type: 'TransformCurrentQueueSlot';
       /** Use with static transforms (e.g. Core Tap branch). Omit when using `matchNeutralBasicTierToResolvingCard`. */
       newCardId?: string;
-      /** Set this queue slot to `neutral_basic_strike_t{1–3}` matching the resolving card’s `card_tier` (factory reset; clears Continuous on that slot). */
+      /**
+       * Factory Reset: destroy this queue slot and rematerialize it as an empty/blank slot
+       * (`blankCardIdForTraits` — Tempered Blanks / Multistrike Protocol apply). Clears Continuous.
+       */
       matchNeutralBasicTierToResolvingCard?: boolean;
     }
   /** Replaces the next N Neutral Basic Strike slots in queue order (N = resolving card `card_tier`, 1–3) with random scavenger **CoreParts** cards (same tier per slot). */
@@ -107,6 +116,9 @@ export type EffectStep =
       elseSteps: EffectStep[];
     }
   | { type: 'BranchIfChargeGte'; minCharge: number; thenSteps: EffectStep[]; elseSteps: EffectStep[] }
+  | { type: 'BranchIfFaithGte'; minFaith: number; thenSteps: EffectStep[]; elseSteps: EffectStep[] }
+  | { type: 'BranchIfOnPrimeSlot'; thenSteps: EffectStep[]; elseSteps: EffectStep[] }
+  | { type: 'BranchIfClockworkSequence'; step: number; thenSteps: EffectStep[]; elseSteps: EffectStep[] }
   /**
    * HP damage to the opponent that does not count as a Strike resolution (no Gathering tally).
    * Uses the same block/bulk mitigation path as strikes unless Pierce is true.
@@ -273,6 +285,8 @@ export type FighterAura =
 export interface FighterState {
   name: string;
   hp: number;
+  /** Combat HP ceiling for heals (run playerHpMax / encounter enemy max). */
+  maxHp: number;
   block: number;
   charge: number;
   junk: number;
@@ -302,6 +316,8 @@ export interface FighterState {
   /** Legacy fields kept for compatibility while aura migration lands. */
   continuousTicksByQueueIndex: Record<number, number>;
   continuousNextTickRoundByQueueIndex: Record<number, number>;
+  /** Queue slots where a Persistent card has already resolved once this combat. */
+  persistentResolvedByQueueIndex: Record<number, boolean>;
   /** Feint: next N own Strike resolutions force Pierce on the strike packet. */
   nextStrikePierceCharges?: number;
   /** Strip Mine: mitigates this much damage from the opponent’s next Strike (player/enemy). */
@@ -330,6 +346,16 @@ export interface FighterState {
   mirrorCoreSelfDamage: boolean;
   /** Overclock: at most one bonus resolution per your turn (separate from per-card overclockConsumed). */
   overclockBonusUsedThisTurn: boolean;
+  /** Clockwork: additive bonus potency applied to StrikeDamage while resolving from prime slots. */
+  primeSlotStrikePotencyBonus: number;
+  /** Clockwork: per-stack bonus damage while resolving from prime slots. */
+  faithStacks: number;
+  /** Clockwork: sequence state from immediately previous clockwork resolution. */
+  clockworkSequencePrev: number | null;
+  /** Clockwork: queue slots treated as prime for one future visit each. */
+  temporaryPrimeSlots: number[];
+  /** Additional permanent prime slots granted by pilot/relic state. */
+  primeSlotOverrides: number[];
   /** One-shot delayed pipelines keyed to combat round when they should fire. */
   scheduledEffects: Array<{ fireAtRound: number; steps: EffectStep[] }>;
   /** Relic state: last observed deck wraps for once-per-cycle triggers. */
@@ -369,6 +395,8 @@ export interface CombatState {
 
 export interface CombatFighterSnapshot {
   hp: number;
+  /** Present when combat setup recorded a max; UI falls back to initial hp when absent. */
+  maxHp?: number;
   block: number;
   charge: number;
   shuriken?: number;
@@ -408,6 +436,10 @@ export interface CombatEvent {
   text: string;
   round: number;
   actor?: string;
+  /** Trait / relic id for `trait_effect` (and similar) attribution in fight stats. */
+  sourceId?: string;
+  /** Explicit card id for resolve/stall events (preferred over inferring from queue cursor). */
+  cardId?: string;
   snapshot?: CombatEventSnapshot;
 }
 
@@ -458,10 +490,18 @@ export interface TravelOffer {
  * (upgrade arrows, gold deltas, draft picks, etc.).
  */
 export type TravelEventOutcome =
-  | { kind: 'upgrade'; beforeId: string; afterId: string }
+  | { kind: 'upgrade'; beforeId: string; afterId: string; context?: 'deck' | 'queue_slot' }
   | { kind: 'gold_gain'; amount: number; totalGold: number }
   | { kind: 'gold_loss'; amount: number; totalGold: number }
   | { kind: 'paid_card'; goldSpent: number; cardId: string }
+  | { kind: 'card_offer'; cardId: string; acceptCost: number; refuseGold: number }
+  | {
+      kind: 'upgrade_offer';
+      beforeId: string;
+      afterId: string;
+      acceptCost: number;
+      refuseGold: number;
+    }
   | { kind: 'heart_restore'; amount: number; hearts: number }
   | { kind: 'hearts_full_gold'; goldGained: number; totalGold: number }
   | /** Player picks one card in UI; deck updates when they confirm. */
@@ -475,7 +515,16 @@ export type TravelEventOutcome =
 export type TravelModalState =
   | { kind: 'shop'; offers: string[]; nonCardPurchases: number }
   | { kind: 'event'; message: string; outcome: TravelEventOutcome }
-  | { kind: 'draft'; offers: string[] };
+  | { kind: 'draft'; offers: string[] }
+  | { kind: 'event_card_offer'; message: string; cardId: string; acceptCost: number; refuseGold: number }
+  | {
+      kind: 'event_upgrade_offer';
+      message: string;
+      beforeId: string;
+      afterId: string;
+      acceptCost: number;
+      refuseGold: number;
+    };
 
 export interface RunLoopState {
   act: number;
@@ -498,9 +547,18 @@ export interface RunLoopState {
   travelDiscard: TravelNodeType[];
   travelOffers: Array<TravelOffer | null>;
   pendingEncounterType: Extract<TravelNodeType, 'battle' | 'elite' | 'boss'> | null;
+  /**
+   * After a win, elite/boss set this so the reward screen can offer a 3-relic choice
+   * (relic is not auto-granted). Cleared when the reward is claimed or skipped.
+   */
+  pendingRelicRewardSource: 'elite' | 'boss' | null;
   enemyHpMultiplier: number;
   freeCardRerollsThisFight: number;
   relicIds: string[];
+  /**
+   * Shop common-relic buys this run. Price = 100 × 2^count (persists across shop visits).
+   */
+  shopRelicPurchaseCount: number;
   playerTraitIds: string[];
   retryAvailable: boolean;
   /** Battle / replay UI speed (1× / 2× / 4×); persisted for this run. */

@@ -202,6 +202,10 @@ export function TravelOverlay() {
   const handleShopBuyRerollToken = useGameStore((s) => s.handleShopBuyRerollToken);
   const handleShopBuyCommonRelic = useGameStore((s) => s.handleShopBuyCommonRelic);
   const handleTravelDraftPick = useGameStore((s) => s.handleTravelDraftPick);
+  const handleAcceptEventCardOffer = useGameStore((s) => s.handleAcceptEventCardOffer);
+  const handleRefuseEventCardOffer = useGameStore((s) => s.handleRefuseEventCardOffer);
+  const handleAcceptEventUpgradeOffer = useGameStore((s) => s.handleAcceptEventUpgradeOffer);
+  const handleRefuseEventUpgradeOffer = useGameStore((s) => s.handleRefuseEventUpgradeOffer);
   const [soldShopSlots, setSoldShopSlots] = useState<number[]>([]);
   const [shopToast, setShopToast] = useState<string | null>(null);
   const currentShopOffersKey = useMemo(
@@ -238,6 +242,7 @@ export function TravelOverlay() {
     const extraPrice = 50 * nonCard;
     const rerollShopPrice = 50 + extraPrice;
     const rerollTokenPrice = 50 + extraPrice;
+    const shopRelicPrice = 100 * 2 ** run.loop.shopRelicPurchaseCount;
     return (
       <div
         className="travel-overlay"
@@ -252,7 +257,7 @@ export function TravelOverlay() {
           </h2>
           <p className="travel-overlay__sub">
             Buy a card · Reroll offers · Buy reroll tokens — non-card buys raise repeat prices by 50g
-            this visit.
+            this visit. Relics start at 100g and double each buy for the whole run.
           </p>
           <div className="travel-overlay__shop-actions">
             <button
@@ -274,10 +279,10 @@ export function TravelOverlay() {
             <button
               type="button"
               className="travel-overlay__btn travel-overlay__btn--ghost"
-              disabled={run.loop.gold < rerollTokenPrice}
+              disabled={run.loop.gold < shopRelicPrice}
               onClick={handleShopBuyCommonRelic}
             >
-              Buy common relic ({rerollTokenPrice}g)
+              Buy common relic ({shopRelicPrice}g)
             </button>
           </div>
           <div className="travel-overlay__cards-heading">
@@ -336,6 +341,87 @@ export function TravelOverlay() {
                 onClick={() => handleTravelDraftPick(cardId)}
               />
             ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (travelModal.kind === 'event_card_offer') {
+    return (
+      <div
+        className="travel-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="travel-event-offer-title"
+      >
+        <div className="travel-overlay__panel">
+          <h2 id="travel-event-offer-title" className="travel-overlay__title">
+            EVENT — CARD OFFER
+          </h2>
+          <p className="travel-overlay__sub">{travelModal.message}</p>
+          <div className="travel-overlay__cards">
+            <FullCardOffer cardId={travelModal.cardId} seed={run.seed} />
+          </div>
+          <div className="travel-overlay__shop-actions">
+            <button
+              type="button"
+              className="travel-overlay__btn travel-overlay__btn--ghost"
+              disabled={run.loop.gold < travelModal.acceptCost}
+              onClick={handleAcceptEventCardOffer}
+            >
+              Accept ({travelModal.acceptCost}g)
+            </button>
+            <button
+              type="button"
+              className="travel-overlay__btn travel-overlay__btn--ghost"
+              onClick={handleRefuseEventCardOffer}
+            >
+              Refuse (+{travelModal.refuseGold}g)
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (travelModal.kind === 'event_upgrade_offer') {
+    return (
+      <div
+        className="travel-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="travel-event-upgrade-title"
+      >
+        <div className="travel-overlay__panel">
+          <h2 id="travel-event-upgrade-title" className="travel-overlay__title">
+            EVENT — UPGRADE OFFER
+          </h2>
+          <p className="travel-overlay__sub">{travelModal.message}</p>
+          <EventOutcomeBody
+            outcome={{
+              kind: 'upgrade',
+              beforeId: travelModal.beforeId,
+              afterId: travelModal.afterId,
+            }}
+            seed={run.seed}
+          />
+          <div className="travel-overlay__shop-actions">
+            <button
+              type="button"
+              className="travel-overlay__btn travel-overlay__btn--ghost"
+              disabled={run.loop.gold < travelModal.acceptCost}
+              onClick={handleAcceptEventUpgradeOffer}
+            >
+              Upgrade ({travelModal.acceptCost}g)
+            </button>
+            <button
+              type="button"
+              className="travel-overlay__btn travel-overlay__btn--ghost"
+              onClick={handleRefuseEventUpgradeOffer}
+            >
+              Refuse (+{travelModal.refuseGold}g)
+            </button>
           </div>
         </div>
       </div>

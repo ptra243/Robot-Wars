@@ -69,12 +69,36 @@ export class CardContentService {
   }
 
   drawWeighted(faction: string, awakening: number): CardDef {
-    const neutral = this.getAll().filter((card) => card.neutral);
+    return this.drawWeightedFiltered(faction, awakening);
+  }
+
+  /**
+   * Weighted draw that keeps the same upgrade tier as `tierCard` (no t1↔t2 swaps on reroll).
+   */
+  drawWeightedSameTier(
+    faction: string,
+    awakening: number,
+    tierCard: CardDef,
+    excludeId?: string,
+  ): CardDef {
+    return this.drawWeightedFiltered(faction, awakening, (card) => {
+      if (excludeId && card.id === excludeId) return false;
+      return card.card_tier === tierCard.card_tier;
+    });
+  }
+
+  private drawWeightedFiltered(
+    faction: string,
+    awakening: number,
+    predicate?: (card: CardDef) => boolean,
+  ): CardDef {
+    const keep = predicate ?? (() => true);
+    const neutral = this.getAll().filter((card) => card.neutral && keep(card));
     const a0 = this.getAll().filter(
-      (card) => !card.neutral && card.faction === faction && card.awakening_min === 0,
+      (card) => !card.neutral && card.faction === faction && card.awakening_min === 0 && keep(card),
     );
     const a1 = this.getAll().filter(
-      (card) => !card.neutral && card.faction === faction && card.awakening_min === 1,
+      (card) => !card.neutral && card.faction === faction && card.awakening_min === 1 && keep(card),
     );
 
     const pools =
@@ -91,6 +115,10 @@ export class CardContentService {
 
     const filtered = pools.filter((pool) => pool.cards.length > 0);
     if (filtered.length === 0) {
+      /* Tier filter too strict — fall back to any legal card. */
+      if (predicate) {
+        return this.drawWeightedFiltered(faction, awakening);
+      }
       throw new Error('No legal cards available for weighted draw.');
     }
 
@@ -105,8 +133,8 @@ export class CardContentService {
       }
     }
 
-    const fallback = filtered[filtered.length - 1];
-    return fallback.cards[this.rng.nextInt(fallback.cards.length)];
+    const fallback = filtered[filtered.length - 1]!;
+    return fallback.cards[this.rng.nextInt(fallback.cards.length)]!;
   }
 }
 

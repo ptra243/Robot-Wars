@@ -12,6 +12,8 @@ interface CardHoverPopoverProps {
   canNextTier?: boolean;
   /** e.g. 1500 when the popover must sit above the deck simulation modal (z-index 1400). */
   zIndex?: number;
+  onPointerEnterPopover?: () => void;
+  onPointerLeavePopover?: () => void;
 }
 
 /**
@@ -27,8 +29,11 @@ export function CardHoverPopover({
   canPrevTier = false,
   canNextTier = false,
   zIndex,
+  onPointerEnterPopover,
+  onPointerLeavePopover,
 }: CardHoverPopoverProps) {
   const { card, x, y } = hover;
+  const secondaryCard = hover.secondaryCard;
 
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
@@ -41,7 +46,8 @@ export function CardHoverPopover({
   const hasTags = card.tags.length > 0;
   const hasKw = card.keywords.length > 0;
   const showGlossary = hasTags || hasKw;
-  const totalW = CARD_W + (showGlossary ? GLOSS_W + 12 : 0);
+  const extraCardW = secondaryCard ? CARD_W + 12 : 0;
+  const totalW = CARD_W + extraCardW + (showGlossary ? GLOSS_W + 12 : 0);
   const totalH = 380;
 
   const spaceRight = vw - x;
@@ -65,14 +71,19 @@ export function CardHoverPopover({
   const top = (anchorVertical === 'top' ? y + PAD : y - totalH - PAD) + OFFSET_Y;
   const glossaryOnRight = anchorHorizontal === 'left';
 
+  const interactive =
+    Boolean(onClose || onPrevTier || onNextTier || onPointerEnterPopover || onPointerLeavePopover);
+
   return (
     <div
-      className={`forge-poc__popover${onClose || onPrevTier || onNextTier ? ' forge-poc__popover--interactive' : ''}`}
+      className={`forge-poc__popover${interactive ? ' forge-poc__popover--interactive' : ''}`}
       style={{
         left: Math.max(8, Math.min(left, vw - totalW - 8)),
         top: Math.max(8, Math.min(top, vh - 380)),
         ...(zIndex !== undefined ? { zIndex } : {}),
       }}
+      onMouseEnter={onPointerEnterPopover}
+      onMouseLeave={onPointerLeavePopover}
     >
       <div
         className={`forge-poc__popover-row${
@@ -90,6 +101,7 @@ export function CardHoverPopover({
           canPrevTier={canPrevTier}
           canNextTier={canNextTier}
         />
+        {secondaryCard ? <PopoverCard card={secondaryCard} canPrevTier={false} canNextTier={false} /> : null}
         {showGlossary && glossaryOnRight ? <PopoverGlossary card={card} /> : null}
       </div>
     </div>

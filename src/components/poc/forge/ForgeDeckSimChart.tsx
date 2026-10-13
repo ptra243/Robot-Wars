@@ -1,6 +1,6 @@
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import type { ForgeDeckRoundMetrics, ForgeDeckSimulationResult } from '../../../core/run/forgeDeckSimulation';
+import type { ForgeDeckSimulationResult } from '../../../core/run/forgeDeckSimulation';
 import { FORGE_DECK_SIM_ROUNDS } from '../../../core/run/forgeDeckSimulation';
 
 export type ForgeSimSeriesKey =
@@ -13,19 +13,26 @@ export type ForgeSimSeriesKey =
   | 'continuousSkips';
 
 export type ForgeDeckSimLayout = 'compact' | 'large';
-
-const SERIES: {
-  key: ForgeSimSeriesKey;
+export type ForgeDeckSimCumulativeMode = 'sum' | 'delta';
+export interface ForgeDeckSimSeriesDef {
+  key: string;
   label: string;
   color: string;
-}[] = [
-  { key: 'energy', label: 'Energy', color: '#58aec7' },
-  { key: 'damage', label: 'Damage', color: '#e07a52' },
-  { key: 'shields', label: 'Shields', color: '#6fa8bd' },
-  { key: 'stalls', label: 'Stalls', color: '#c084fc' },
-  { key: 'junk', label: 'Junk', color: '#a3e635' },
-  { key: 'continuousTicks', label: 'Cont. Ticks', color: '#22d3ee' },
-  { key: 'continuousSkips', label: 'Cont. Skips', color: '#f472b6' },
+  cumulative: ForgeDeckSimCumulativeMode;
+}
+export type ForgeDeckSimRow = {
+  round: number;
+  programCardId: string | null;
+} & Record<string, number | string | null>;
+
+const DEFAULT_SERIES_DEFS: ForgeDeckSimSeriesDef[] = [
+  { key: 'energy', label: 'Energy', color: '#58aec7', cumulative: 'delta' },
+  { key: 'damage', label: 'Damage', color: '#e07a52', cumulative: 'sum' },
+  { key: 'shields', label: 'Shields', color: '#6fa8bd', cumulative: 'delta' },
+  { key: 'stalls', label: 'Stalls', color: '#c084fc', cumulative: 'sum' },
+  { key: 'junk', label: 'Junk', color: '#a3e635', cumulative: 'delta' },
+  { key: 'continuousTicks', label: 'Cont. Ticks', color: '#22d3ee', cumulative: 'sum' },
+  { key: 'continuousSkips', label: 'Cont. Skips', color: '#f472b6', cumulative: 'sum' },
 ];
 
 const LAYOUT_DIMS: Record<
@@ -63,39 +70,49 @@ const LAYOUT_DIMS: Record<
   },
 };
 
+function metric(row: ForgeDeckSimRow, key: string): number {
+  const v = row[key];
+  return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+}
+
 function buildPlotSeries(
-  rounds: ForgeDeckRoundMetrics[],
-  initialPlayer: ForgeDeckSimulationResult['initialPlayer'],
+  rounds: ForgeDeckSimRow[],
+  initial: Record<string, number>,
   cumulative: boolean,
-): ForgeDeckRoundMetrics[] {
-  if (!cumulative) {
-    return rounds;
+  seriesDefs: ForgeDeckSimSeriesDef[],
+): ForgeDeckSimRow[] {
+  if (!cumulative) return rounds;
+  const running: Record<string, number> = {};
+  for (const s of seriesDefs) {
+    running[s.key] = 0;
   }
-  let cumDamage = 0;
-  let cumStalls = 0;
-  let cumContinuousTicks = 0;
-  let cumContinuousSkips = 0;
   return rounds.map((row) => {
-    cumDamage += row.damage;
-    cumStalls += row.stalls;
-    cumContinuousTicks += row.continuousTicks;
-    cumContinuousSkips += row.continuousSkips;
-    return {
+    const out: ForgeDeckSimRow = {
+      ...row,
       round: row.round,
-      damage: cumDamage,
-      stalls: cumStalls,
-      continuousTicks: cumContinuousTicks,
-      continuousSkips: cumContinuousSkips,
-      energy: row.energy - initialPlayer.energy,
-      shields: row.shields - initialPlayer.shields,
-      junk: row.junk - initialPlayer.junk,
-      programCardId: row.programCardId,
+      programCardId: row.programCardId ?? null,
     };
+    for (const s of seriesDefs) {
+      const v = metric(row, s.key);
+      if (s.cumulative === 'sum') {
+        running[s.key] += v;
+        out[s.key] = running[s.key];
+      } else {
+        out[s.key] = v - (initial[s.key] ?? 0);
+      }
+    }
+    return out;
   });
 }
 
 interface ForgeDeckSimChartProps {
-  simulation: ForgeDeckSimulationResult;
+  simulation?: ForgeDeckSimulationResult;
+  data?: {
+    rounds: ForgeDeckSimRow[];
+    initial: Record<string, number>;
+  };
+  seriesDefs?: ForgeDeckSimSeriesDef[];
+  autoHideZeroSeries?: boolean;
   /** 1-based round index, or null when pointer leaves the chart. */
   onRoundPointer?: (
     round: number | null,
@@ -104,26 +121,64 @@ interface ForgeDeckSimChartProps {
   layout?: ForgeDeckSimLayout;
 }
 
-export function ForgeDeckSimChart({ simulation, onRoundPointer, layout = 'compact' }: ForgeDeckSimChartProps) {
+function roundTicks(n: number): number[] {
+  if (n <= 1) return [1];
+  const picks = [1, Math.ceil(n * 0.25), Math.ceil(n * 0.5), Math.ceil(n * 0.75), n];
+  return [...new Set(picks)].sort((a, b) => a - b);
+}
+
+export function ForgeDeckSimChart({
+  simulation,
+  data,
+  seriesDefs,
+  autoHideZeroSeries = false,
+  onRoundPointer,
+  layout = 'compact',
+}: ForgeDeckSimChartProps) {
+  const source = useMemo(() => {
+    if (data) return data;
+    const sim = simulation;
+    if (!sim) {
+      return { rounds: [] as ForgeDeckSimRow[], initial: {} as Record<string, number> };
+    }
+    return {
+      rounds: sim.rounds as ForgeDeckSimRow[],
+      initial: {
+        energy: sim.initialPlayer.energy,
+        shields: sim.initialPlayer.shields,
+        junk: sim.initialPlayer.junk,
+      },
+    };
+  }, [data, simulation]);
+  const defs = useMemo(
+    () =>
+      seriesDefs ??
+      DEFAULT_SERIES_DEFS.map((s) => ({ ...s })),
+    [seriesDefs],
+  );
   const [valueMode, setValueMode] = useState<'discrete' | 'cumulative'>('discrete');
   const [hoverCol, setHoverCol] = useState<number | null>(null);
-  const [visible, setVisible] = useState<Record<ForgeSimSeriesKey, boolean>>({
-    energy: true,
-    damage: true,
-    shields: true,
-    stalls: true,
-    junk: true,
-    continuousTicks: true,
-    continuousSkips: true,
-  });
+  const [visible, setVisible] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(defs.map((s) => [s.key, true])),
+  );
+  useEffect(() => {
+    setVisible((prev) => {
+      const next: Record<string, boolean> = {};
+      for (const s of defs) {
+        const hasNonZero = source.rounds.some((r) => metric(r, s.key) > 0);
+        next[s.key] = autoHideZeroSeries ? hasNonZero : (prev[s.key] ?? true);
+      }
+      return next;
+    });
+  }, [defs, source.rounds, autoHideZeroSeries]);
 
   const plotMetrics = useMemo(
-    () => buildPlotSeries(simulation.rounds, simulation.initialPlayer, valueMode === 'cumulative'),
-    [simulation, valueMode],
+    () => buildPlotSeries(source.rounds, source.initial, valueMode === 'cumulative', defs),
+    [source.rounds, source.initial, valueMode, defs],
   );
 
   const chart = useMemo(() => {
-    const keys = SERIES.filter((s) => visible[s.key]).map((s) => s.key);
+    const keys = defs.filter((s) => visible[s.key]).map((s) => s.key);
     let minData = 0;
     let maxData = 0;
     if (keys.length > 0) {
@@ -131,7 +186,7 @@ export function ForgeDeckSimChart({ simulation, onRoundPointer, layout = 'compac
       maxData = Number.NEGATIVE_INFINITY;
       for (const row of plotMetrics) {
         for (const k of keys) {
-          const v = row[k];
+          const v = metric(row, k);
           if (v < minData) minData = v;
           if (v > maxData) maxData = v;
         }
@@ -154,10 +209,10 @@ export function ForgeDeckSimChart({ simulation, onRoundPointer, layout = 'compac
     const scaleY = (v: number) =>
       padT + innerH - ((v - yBottom) / span) * innerH;
 
-    const polylines = SERIES.filter((s) => visible[s.key]).map((s) => {
+    const polylines = defs.filter((s) => visible[s.key]).map((s) => {
       const pts = plotMetrics.map((row, i) => {
         const x = xAt(i);
-        const y = scaleY(row[s.key]);
+        const y = scaleY(metric(row, s.key));
         return `${String(x)},${String(y)}`;
       });
       return { key: s.key, color: s.color, points: pts.join(' ') };
@@ -170,7 +225,7 @@ export function ForgeDeckSimChart({ simulation, onRoundPointer, layout = 'compac
       return { t, y, val: Math.round(val) };
     });
 
-    const roundTicks = [1, 5, 10, 15, 20];
+    const xTicks = roundTicks(n);
     const roundNumbersY = h - 24;
     const roundAxisTitleY = h - 8;
 
@@ -195,20 +250,20 @@ export function ForgeDeckSimChart({ simulation, onRoundPointer, layout = 'compac
       gridFont,
       lineStroke,
       gridLines,
-      roundTicks,
+      roundTicks: xTicks,
       roundNumbersY,
       roundAxisTitleY,
       axisLabelX: padL + innerW / 2,
       columnBands,
       n,
     };
-  }, [plotMetrics, visible, layout]);
+  }, [plotMetrics, visible, layout, defs]);
 
-  const toggle = (key: ForgeSimSeriesKey) => {
+  const toggle = (key: string) => {
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const anyVisible = SERIES.some((s) => visible[s.key]);
+  const anyVisible = defs.some((s) => visible[s.key]);
 
   useEffect(() => {
     if (!anyVisible) {
@@ -248,10 +303,10 @@ export function ForgeDeckSimChart({ simulation, onRoundPointer, layout = 'compac
       <div className="forge-poc__sim-head">
         <span className="forge-poc__sim-title">{'//'} DECK SIM</span>
         <span className="forge-poc__sim-sub">
-          {String(FORGE_DECK_SIM_ROUNDS)} rounds vs dummy ·{' '}
+          {source.rounds.length > 0 ? String(source.rounds.length) : String(FORGE_DECK_SIM_ROUNDS)} rounds ·{' '}
           {valueMode === 'discrete'
             ? 'Discrete: per-round damage/stalls/continuous; energy / shields / junk at round start'
-            : 'Cumulative: total damage & stalls through each round; energy / shields / junk = Δ vs combat start'}
+            : 'Cumulative: sum-series accumulate; delta-series show Δ vs combat start'}
         </span>
       </div>
       <div className="forge-poc__sim-mode" role="group" aria-label="Value mode">
@@ -272,7 +327,7 @@ export function ForgeDeckSimChart({ simulation, onRoundPointer, layout = 'compac
         </button>
       </div>
       <div className="forge-poc__sim-toggles" role="group" aria-label="Series visibility">
-        {SERIES.map((s) => (
+        {defs.map((s) => (
           <label key={s.key} className="forge-poc__sim-toggle">
             <input
               type="checkbox"
@@ -282,7 +337,7 @@ export function ForgeDeckSimChart({ simulation, onRoundPointer, layout = 'compac
               }}
             />
             <span className="forge-poc__sim-toggle-swatch" style={{ background: s.color }} />
-            <span>{s.label}</span>
+                <span>{s.label}</span>
           </label>
         ))}
       </div>
@@ -340,7 +395,7 @@ export function ForgeDeckSimChart({ simulation, onRoundPointer, layout = 'compac
             ))}
             {chart.roundTicks.map((r) => {
               const i = r - 1;
-              const x = chart.padL + (i / 19) * chart.innerW;
+              const x = chart.padL + (i / Math.max(1, source.rounds.length - 1)) * chart.innerW;
               return (
                 <text
                   key={r}

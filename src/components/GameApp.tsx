@@ -13,6 +13,7 @@ import { RunHudBar } from './RunHudBar';
 import { useRunCardContent } from '../hooks/useRunCardContent';
 import { useBattlePlayback } from '../hooks/useBattlePlayback';
 import { useGameStore } from '../stores/gameStore';
+import { resolvePlayerCombatTraitIds } from '../core/run';
 
 export function GameApp() {
   const appPhase = useGameStore((s) => s.appPhase);
@@ -34,6 +35,7 @@ export function GameApp() {
   const handleAdjustRerolls = useGameStore((s) => s.handleAdjustRerolls);
   const handleScrapHandCard = useGameStore((s) => s.handleScrapHandCard);
   const handleSetBattleReplaySpeed = useGameStore((s) => s.handleSetBattleReplaySpeed);
+  const handleSkipBattleReplay = useGameStore((s) => s.handleSkipBattleReplay);
   const travelModal = useGameStore((s) => s.travelModal);
 
   const content = useRunCardContent(run.seed);
@@ -67,7 +69,7 @@ export function GameApp() {
               pilotId={run.spirit.id}
               playerHp={run.loop.playerHpMax}
               playerHpMax={run.loop.playerHpMax}
-              activeTraitIds={run.loop.playerTraitIds}
+              activeTraitIds={resolvePlayerCombatTraitIds(run)}
               activeQueueSlots={run.sandboxActiveQueueSlots}
               initialHand={run.hand}
               initialQueue={run.plannedQueue}
@@ -103,6 +105,9 @@ export function GameApp() {
               onReplaySpeedChange={(s) => {
                 handleSetBattleReplaySpeed(s);
               }}
+              onSkipBattle={handleSkipBattleReplay}
+              playerTraitIds={resolvePlayerCombatTraitIds(run)}
+              faction={run.faction}
               onExit={handleBackToTravel}
               onContinue={combatResult?.playerWon ? handleGoToReward : undefined}
               onRetryHpDown={
@@ -115,6 +120,7 @@ export function GameApp() {
                   ? () => handleChooseRetryAssist('free_rerolls')
                   : undefined
               }
+              onStartNewRun={combatResult && !combatResult.playerWon && run.loop.hearts <= 0 ? handleReset : undefined}
             />
           )}
         </div>

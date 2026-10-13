@@ -12,7 +12,7 @@ import {
   persistedQueueSlotIdAfterCombat,
 } from './queuePostCombat';
 
-const RELIC_TRAIT_MAP: Record<string, string> = {
+export const RELIC_TRAIT_MAP: Record<string, string> = {
   if_no_shield_gain_shield_2: 'relic_reactive_plating',
   regen_start_turn_1: 'relic_repair_nanites',
   neutral_non_basic_gain_junk_2: 'relic_scrap_condenser',
@@ -23,10 +23,15 @@ const RELIC_TRAIT_MAP: Record<string, string> = {
   junk_shrapnel: 'relic_junk_shrapnel',
   stall_shield_weaken: 'relic_stall_shield_weaken',
   delay_double_cast: 'relic_delay_double_cast',
+  clockwork_astrolabe_chip: 'relic_clockwork_astrolabe_chip',
+  clockwork_second_pendulum: 'relic_clockwork_second_pendulum',
   epic_prime_directive: 'relic_prime_directive',
   epic_overclock_mandate: 'relic_overclock_mandate',
   epic_basic_instincts: 'relic_basic_instincts',
+  tempered_blanks: 'relic_tempered_blanks',
+  epic_multistrike_protocol: 'relic_multistrike_protocol',
   epic_emergency_junk_shield: 'relic_emergency_junk_shield',
+  clockwork_septenary_crown: 'relic_clockwork_septenary_crown',
 };
 
 /** Default sandbox hand (cards are not in `run.deck` until {@link loadFatigueDeckFromHand}). */
@@ -101,9 +106,11 @@ export function createNewRun(seed: number): RunState {
       travelDiscard: [],
       travelOffers: [null, null, null],
       pendingEncounterType: null,
+      pendingRelicRewardSource: null,
       enemyHpMultiplier: 1,
       freeCardRerollsThisFight: 0,
       relicIds: [],
+      shopRelicPurchaseCount: 0,
       playerTraitIds: [],
       retryAvailable: false,
       battleReplaySpeed: 1,
@@ -204,9 +211,22 @@ export function buildCombatSetupFromRun(run: RunState, content: CardContentServi
   return createCombatSetup(run, content);
 }
 
+/** Pilot traits + mapped relic traits (forge/battle UI and combat setup). */
+export function resolvePlayerCombatTraitIds(run: RunState): string[] {
+  const playerTraitIds = [...run.loop.playerTraitIds];
+  for (const relicId of run.loop.relicIds) {
+    const mapped = RELIC_TRAIT_MAP[relicId];
+    if (mapped && !playerTraitIds.includes(mapped)) {
+      playerTraitIds.push(mapped);
+    }
+  }
+  return playerTraitIds;
+}
+
 function createCombatSetup(run: RunState, content: CardContentService) {
   const enemyDeck = buildEnemyDeck(run, content);
 
+  const playerTraitIds = resolvePlayerCombatTraitIds(run);
   const player = createPreviewFighter(
     'Player',
     run.deck,
@@ -214,15 +234,10 @@ function createCombatSetup(run: RunState, content: CardContentService) {
     run.sandboxPlayerCoreScrap,
     run.sandboxActiveQueueSlots,
     true,
-    run.loop.playerTraitIds,
+    playerTraitIds,
   );
-  for (const relicId of run.loop.relicIds) {
-    const mapped = RELIC_TRAIT_MAP[relicId];
-    if (mapped) {
-      player.traitIds.push(mapped);
-    }
-  }
   player.hp = run.loop.playerHp;
+  player.maxHp = Math.max(run.loop.playerHpMax, run.loop.playerHp, 1);
   callTraitOnCombatStart(player, content);
 
   const opponentRelic = run.combatOpponentRelicId;
@@ -257,6 +272,9 @@ function createCombatSetup(run: RunState, content: CardContentService) {
     enemy.charge += 2;
   }
 
+  // Act pressure: +1 starting potency per act past 1 (all encounters).
+  enemy.potency += Math.max(0, run.loop.act - 1);
+
   // Baron von Boar — The Whole Hog (Aw1): +1 potency per 50 gold at combat start
   if (run.loop.playerTraitIds.includes('baron_aw1')) {
     player.potency += Math.floor(run.loop.gold / 50);
@@ -265,14 +283,17 @@ function createCombatSetup(run: RunState, content: CardContentService) {
     player.junkCapacity = 5;
   }
   callTraitOnCombatStart(enemy, content);
+  // Act HP scale stacks on playerHpBaseMax mirror: act1=1×, act2=1.2×, act3=1.4×, act4+=1.6×.
+  const actHpScale = 1 + 0.2 * Math.max(0, run.loop.act - 1);
   let enemyHp = Math.max(
     1,
-    Math.floor(run.loop.playerHpBaseMax * run.loop.enemyHpMultiplier),
+    Math.floor(run.loop.playerHpBaseMax * run.loop.enemyHpMultiplier * actHpScale),
   );
   if (run.loop.act >= 4) {
     enemyHp += run.loop.act4BattleIndex * ACT4_ENEMY_STARTING_HP_BONUS;
   }
   enemy.hp = enemyHp;
+  enemy.maxHp = enemyHp;
 
   return {
     seed: run.seed + run.encounterIndex,

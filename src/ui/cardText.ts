@@ -1,5 +1,5 @@
 import { COMBAT_RULES } from '../core/rules';
-import type { CardDef, KeywordSpec } from '../core/types';
+import type { CardDef, EffectStep, KeywordSpec, KeywordType } from '../core/types';
 import { stripSelfHpPlayCostFromDescriptionText } from './hpPlayCost';
 
 export interface BuildCardDescriptionOptions {
@@ -55,16 +55,22 @@ export function keywordEffectLine(spec: KeywordSpec): string {
       return `Continuous ${v}: while this slot keeps resolving, every ${v} rounds you gain +1 Junk and +1 Energy from it.`;
     case 'Pierce':
       return `Pierce${v !== 1 ? ` ${v}` : ''}: damage from this card ignores block.`;
-    case 'FactoryReset': {
-      const tier = v >= 1 && v <= 3 ? v : 1;
-      return `Factory Reset ${tier}: this deck entry becomes Neutral Basic Strike (tier ${tier}).`;
-    }
+    case 'FactoryReset':
+      return 'Factory Reset: destroy this card; the slot rematerializes as an empty/blank (Basic Strike, or relic-upgraded blanks).';
     case 'CoreParts':
       return `Core parts: marks a core-parts card (filter; Core Rebirth upgrades the next Neutral Basic Strike(s) in queue order into one of these at the same tier).`;
     case 'UniqueDeck':
       return `UniqueDeck: your deck may include at most one copy of any card with this keyword (hand + fatigue deck combined).`;
     case 'Persistent':
       return `Persistent: marks a rest-of-battle effect on this card (see printed rules). Counts toward the Continuous/Persistent deck limit.`;
+    case 'Prime':
+      return '**Prime**: bonus lines on this card fire when it resolves from a **Prime** program slot (natural slots 3, 5, and 7; pilots/relics can add more).';
+    case 'Sequence':
+      return `**Sequence** ${v}: this bonus line triggers only when your previous Clockwork resolution completed Sequence ${String(
+        Math.max(1, v - 1),
+      )} (Sequence 1 / Start is an opener).`;
+    case 'Faith':
+      return `**Faith** ${v}: each Faith stack adds +1 damage to **Strike** and **Direct** packets resolved from a **Prime** slot.`;
     case 'Virus':
       return `Virus ${v}: apply ${v} virus stack(s).`;
     case 'Evade':
@@ -77,8 +83,135 @@ export function keywordEffectLine(spec: KeywordSpec): string {
 }
 
 function compactKeywordHeadline(spec: KeywordSpec): string {
-  return `${spec.type} ${spec.value}.`;
+  if (spec.type === 'Prime') return '**Prime**.';
+  if (spec.type === 'Faith') return `**Faith** ${spec.value}.`;
+  if (spec.type === 'Sequence') {
+    return spec.value === 1 ? '**Sequence** Start.' : `**Sequence** ${spec.value}.`;
+  }
+  if (spec.type === 'Persistent') return '**Persistent**.';
+  return `**${spec.type}** ${spec.value}.`;
 }
+
+/** Compact printed line for one effect step (used by Prime / Sequence / Faith riders). */
+function summarizeEffectStep(step: EffectStep): string | null {
+  switch (step.type) {
+    case 'DirectHpDamage':
+      return `Deal ${String(step.baseDamage)} **direct** damage`;
+    case 'StrikeDamage':
+      return `**Strike** ${String(step.baseDamage)}`;
+    case 'ShieldBlock':
+      return `**Shield** ${String(step.baseBlock)}`;
+    case 'HealSelf':
+      return `Heal ${String(step.amount)}`;
+    case 'GainFaith':
+      return `**Faith** ${String(step.amount)}`;
+    case 'GainCharge':
+      return `**Energy** ${String(step.amount)}`;
+    case 'AddStrikePotency':
+      return `+${String(step.amount)} **Potency**`;
+    case 'AddShieldPotency':
+      return `+${String(step.amount)} **Shield** potency`;
+    case 'AddPrimeSlotStrikePotencyBonus':
+      return `cards on **Prime** slots gain +${String(step.amount)} **Potency**`;
+    case 'GrantTemporaryPrimeSlots':
+      return `Temporary **Prime** ×${String(step.count)}`;
+    case 'ApplyWeaken':
+      return `Weaken ${String(step.stacks)}`;
+    case 'ApplyVirus':
+      return `**Virus** ${String(step.stacks)}`;
+    case 'GainEvade':
+      return `**Evade** ${String(step.amount)}`;
+    case 'GainShuriken':
+      return `**Shuriken** ${String(step.amount)}`;
+    case 'SelfDamageRespectFloor1':
+      return `Lose ${String(step.amount)} HP (min 1)`;
+    case 'SelfDamage':
+      return `Lose ${String(step.amount)} HP`;
+    case 'GainJunk':
+      return `+${String(step.amount)} **Junk**`;
+    case 'GainCore':
+      return `+${String(step.amount)} **Refined Scrap**`;
+    case 'ScheduleEffectAfterRounds': {
+      const inner = summarizeEffectSteps(step.steps);
+      return inner ? `Delayed ${String(step.delayRounds)} → ${inner}` : `Delayed ${String(step.delayRounds)}`;
+    }
+    case 'Keyword':
+      if (step.spec.type === 'Overclock') return '**Overclock**';
+      if (step.spec.type === 'Pierce') return '**Pierce**';
+      return `**${step.spec.type}** ${String(step.spec.value)}`;
+    default:
+      return null;
+  }
+}
+
+function summarizeEffectSteps(steps: readonly EffectStep[]): string {
+  return steps
+    .map((s) => summarizeEffectStep(s))
+    .filter((s): s is string => Boolean(s))
+    .join(', ');
+}
+
+function sequenceLabel(step: number): string {
+  return step <= 1 ? '**Sequence** Start' : `**Sequence** ${String(step)}`;
+}
+
+/**
+ * Prefer printed effect lines (including Prime / Sequence / Faith riders) over generic keyword blurbs.
+ * Returns null when the card has no branch riders to describe this way.
+ */
+function buildEffectDrivenClockworkLines(card: CardDef): string[] | null {
+  const effects = card.effects ?? [];
+  const hasRider = effects.some(
+    (e) =>
+      e.type === 'BranchIfOnPrimeSlot' ||
+      e.type === 'BranchIfClockworkSequence' ||
+      e.type === 'BranchIfFaithGte',
+  );
+  if (!hasRider) {
+    return null;
+  }
+
+  const lines: string[] = [];
+  for (const step of effects) {
+    if (step.type === 'BranchIfOnPrimeSlot') {
+      const thenText = summarizeEffectSteps(step.thenSteps);
+      const elseText = summarizeEffectSteps(step.elseSteps);
+      if (thenText && elseText && thenText === elseText) {
+        /* Same on and off Prime (e.g. Consecration) — print once as baseline. */
+        lines.push(`${thenText}.`);
+      } else if (thenText) {
+        lines.push(`**Prime**: ${thenText}.`);
+      }
+      continue;
+    }
+    if (step.type === 'BranchIfClockworkSequence') {
+      const thenText = summarizeEffectSteps(step.thenSteps);
+      if (thenText) {
+        lines.push(`${sequenceLabel(step.step)}: ${thenText}.`);
+      }
+      continue;
+    }
+    if (step.type === 'BranchIfFaithGte') {
+      const thenText = summarizeEffectSteps(step.thenSteps);
+      if (thenText) {
+        lines.push(`**Faith** ${String(step.minFaith)}: ${thenText}.`);
+      }
+      continue;
+    }
+    const baseline = summarizeEffectStep(step);
+    if (baseline) {
+      lines.push(`${baseline}.`);
+    }
+  }
+  return lines.length > 0 ? lines : null;
+}
+
+const KEYWORDS_COVERED_BY_EFFECT_RIDERS = new Set<KeywordType>([
+  'Prime',
+  'Sequence',
+  'Faith',
+  'Persistent',
+]);
 
 function tieredNumber(tier: number, t1: number, t2: number, t3: number): number {
   if (tier >= 3) {
@@ -231,8 +364,10 @@ const CYBERPUNK_CARD_TEXT: Record<string, { full: string; compact: string }> = {
     compact: 'Evade 1.',
   },
   ninja_switch_harmony_kernel_t1: {
-    full: 'Gain 1 Energy.\nHeal 2.\nPersistent payoff shell for stance-switch decks.\nTags: Energy, Stance.',
-    compact: 'Energy 1.\nHeal 2.\nPersistent switch payoff.',
+    full:
+      '**Persistent**\nPersistent marker card for stance-switch decks.\nGain 1 Energy.\nHeal 2.\nTags: Energy, Stance.',
+    compact:
+      '**Persistent**\nPersistent marker for switch decks.\nEnergy 1.\nHeal 2.',
   },
   ninja_dragon_ambush_t1: {
     full: 'Your next Tiger card applies bonus Expose per Energy (capped).\nTags: Stance, Expose.',
@@ -344,6 +479,55 @@ const CYBERPUNK_CARD_TEXT: Record<string, { full: string; compact: string }> = {
   },
 };
 
+const CLOCKWORK_CARD_TEXT: Record<string, { full: string; compact: string }> = {
+  clockwork_song_iron_intro_t1: {
+    full:
+      '**Strike** 1.\n**Sequence** Start: **Strike** 2, +1 **Potency**.\nTags: Strike, Potency.',
+    compact: '**Strike** 1.\n**Sequence** Start: **Strike** 2, +1 **Potency**.',
+  },
+  clockwork_song_iron_verse_t1: {
+    full:
+      '**Strike** 1.\n**Sequence** 2: **Strike** 4, +1 **Potency**.\nTags: Strike, Potency.',
+    compact: '**Strike** 1.\n**Sequence** 2: **Strike** 4, +1 **Potency**.',
+  },
+  clockwork_song_sanctuary_intro_t1: {
+    full: '**Shield** 3.\n**Sequence** Start: **Shield** 6.\nTags: Shield.',
+    compact: '**Shield** 3.\n**Sequence** Start: **Shield** 6.',
+  },
+  clockwork_song_iron_bridge_t1: {
+    full:
+      '+1 **Potency**.\n**Sequence** 3: **Strike** 3, **Shield** 3.\n**Prime**: Delayed 1 → **Strike** 5, **Shield** 5.\nTags: Strike, Shield, Potency.',
+    compact:
+      '+1 **Potency**.\n**Sequence** 3: **Strike** 3, **Shield** 3.\n**Prime**: Delayed **Strike** 5 + **Shield** 5.',
+  },
+  clockwork_canticle_interleave_verse_t1: {
+    full:
+      '**Strike** 1.\n**Sequence** 2: **Strike** 3.\n**Prime**: Deal 3 **direct** damage.\nTags: Strike, Direct.',
+    compact: '**Strike** 1.\n**Sequence** 2: **Strike** 3.\n**Prime**: Deal 3 **direct** damage.',
+  },
+  clockwork_song_iron_chorus_t1: {
+    full:
+      '**Strike** 1.\n**Sequence** 4: **Strike** 7, +2 **Potency**.\nTags: Strike, Potency.',
+    compact: '**Strike** 1.\n**Sequence** 4: **Strike** 7, +2 **Potency**.',
+  },
+  clockwork_song_sanctuary_verse_t1: {
+    full:
+      '**Shield** 2.\n**Sequence** 2: cards on **Prime** slots gain +2 **Potency**.\nTags: Shield, Potency.',
+    compact: '**Shield** 2.\n**Sequence** 2: **Prime**-slot cards gain +2 **Potency**.',
+  },
+  clockwork_canticle_interleave_chorus_t1: {
+    full:
+      '**Strike** 1.\n**Sequence** Start: **Strike** 2, +1 **Potency**.\n**Sequence** 2: **Strike** 3, +1 **Potency**.\n**Sequence** 3: **Strike** 4, +2 **Potency**.\nTags: Strike, Potency.',
+    compact:
+      '**Strike** 1.\n**Sequence** Start: **Strike** 2, +1 **Potency**.\n**Sequence** 2: **Strike** 3, +1 **Potency**.\n**Sequence** 3: **Strike** 4, +2 **Potency**.',
+  },
+  clockwork_song_iron_coda_t1: {
+    full:
+      '**Strike** 1.\n**Sequence** 5: **Strike** 8, +2 **Potency**.\nTags: Strike, Potency.',
+    compact: '**Strike** 1.\n**Sequence** 5: **Strike** 8, +2 **Potency**.',
+  },
+};
+
 /** Shared card body text for previews (deck builder dock, combat hover, etc.). */
 export function buildCardDescription(
   card: CardDef,
@@ -363,6 +547,24 @@ export function buildCardDescription(
   if (cyberpunkPinned) {
     const raw = omit ? cyberpunkPinned.compact : cyberpunkPinned.full;
     const base = stripSelfHpPlayCostFromDescriptionText(raw, card);
+    const bonus = cyberpunkNeutralTraitBonusLine(card, options?.activeTraitIds);
+    return bonus ? `${base}\n${bonus}` : base;
+  }
+  const clockworkPinned = CLOCKWORK_CARD_TEXT[card.id];
+  if (clockworkPinned) {
+    const raw = omit ? clockworkPinned.compact : clockworkPinned.full;
+    const base = stripSelfHpPlayCostFromDescriptionText(raw, card);
+    const bonus = cyberpunkNeutralTraitBonusLine(card, options?.activeTraitIds);
+    return bonus ? `${base}\n${bonus}` : base;
+  }
+
+  /* Prime / Sequence / Faith riders: print actual bonuses, not generic keyword blurbs. */
+  const effectDrivenClockwork = buildEffectDrivenClockworkLines(card);
+  if (effectDrivenClockwork) {
+    const body = effectDrivenClockwork.join('\n');
+    const withTags =
+      !omit && card.tags.length > 0 ? `${body}\nTags: ${card.tags.join(', ')}.` : body;
+    const base = stripSelfHpPlayCostFromDescriptionText(withTags, card);
     const bonus = cyberpunkNeutralTraitBonusLine(card, options?.activeTraitIds);
     return bonus ? `${base}\n${bonus}` : base;
   }
@@ -676,20 +878,16 @@ export function buildCardDescription(
     !delayedBurstText
   ) {
     if (card.tags.includes('Direct')) {
-      parts.push(
-        `Deals ${card.base_damage} direct damage (not a Strike; potency is not added to this hit’s damage).`,
-      );
+      parts.push(`Deal ${card.base_damage} **direct** damage.`);
     } else if (card.tags.includes('Strike')) {
-      parts.push(`Deals ${card.base_damage} base damage.`);
+      parts.push(`Deal ${card.base_damage} **Strike** damage.`);
     } else {
-      parts.push(`Deals ${card.base_damage} damage.`);
+      parts.push(`Deal ${card.base_damage} damage.`);
     }
   }
   const shieldReinf = /^neutral_shield_reinforcement_t[123]$/.test(card.id);
   if (card.base_block && !sacrifCustomText && !shieldReinf) {
-    parts.push(
-      `Grants ${card.base_block} block (shield absorbs incoming damage before HP).`,
-    );
+    parts.push(`Gain ${card.base_block} **Shield**.`);
   }
 
   if (shieldReinf && card.effects?.some((e) => e.type === 'DoubleActorBlock')) {
@@ -810,6 +1008,14 @@ export function buildCardDescription(
         continue;
       }
       if (shieldConditioningText && kw.type === 'Persistent') {
+        continue;
+      }
+      if (KEYWORDS_COVERED_BY_EFFECT_RIDERS.has(kw.type)) {
+        /* Rider effects already printed above when present; otherwise keep a short marker. */
+        if ((card.effects ?? []).some((e) => e.type === 'BranchIfOnPrimeSlot' || e.type === 'BranchIfClockworkSequence' || e.type === 'BranchIfFaithGte')) {
+          continue;
+        }
+        parts.push(compactKeywordHeadline(kw));
         continue;
       }
       if (omit) {

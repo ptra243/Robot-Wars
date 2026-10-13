@@ -30,6 +30,8 @@ export interface ForgeDeckRoundMetrics {
    * (resolve / stall / whiff / skip), for forge chart hover.
    */
   programCardId: string | null;
+  /** Multiple cards resolved from the same round start (e.g. Overclock bonus). */
+  programCardIds: string[];
 }
 
 /** Player vitals at combat start (before round 1), for cumulative chart mode. */
@@ -73,8 +75,9 @@ function programCardIdFromPlayerSnapshot(ev: CombatEvent): string | null {
 export function aggregateProgramCardIdPerRound(
   events: CombatEvent[],
   roundCount: number,
-): (string | null)[] {
+): { first: (string | null)[]; all: string[][] } {
   const byRound: (string | null)[] = Array.from({ length: roundCount }, () => null);
+  const byRoundAll: string[][] = Array.from({ length: roundCount }, () => []);
   for (const ev of events) {
     if (ev.actor !== 'Player') {
       continue;
@@ -87,12 +90,13 @@ export function aggregateProgramCardIdPerRound(
       continue;
     }
     const idx = r - 1;
-    if (byRound[idx] !== null) {
-      continue;
-    }
-    byRound[idx] = programCardIdFromPlayerSnapshot(ev);
+    const id = programCardIdFromPlayerSnapshot(ev);
+    if (!id) continue;
+    if (byRound[idx] == null) byRound[idx] = id;
+    const arr = byRoundAll[idx]!;
+    if (arr.length < 2 && arr[arr.length - 1] !== id) arr.push(id);
   }
-  return byRound;
+  return { first: byRound, all: byRoundAll };
 }
 
 /**
@@ -112,7 +116,8 @@ export function aggregateForgeDeckMetricsFromEvents(
     stalls: 0,
     continuousTicks: 0,
     continuousSkips: 0,
-    programCardId: programIds[i] ?? null,
+    programCardId: programIds.first[i] ?? null,
+    programCardIds: programIds.all[i] ?? [],
   }));
 
   for (const ev of events) {
@@ -180,6 +185,7 @@ export function simulateForgeDeckMetrics(
   }
   callTraitOnCombatStart(setup.player, content);
   setup.player.hp = 9999;
+  setup.player.maxHp = 9999;
   setup.enemy.hp = 9999;
   setup.player.block = 0;
   setup.enemy.block = 0;

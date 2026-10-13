@@ -1,0 +1,203 @@
+{
+  "cards": [
+    {
+      "id": "clockwork_song_iron_chorus_t1",
+      "name": "Song of Iron: Chorus",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 0,
+      "base_damage": 1,
+      "tags": ["Strike", "Potency"],
+      "keywords": [{ "type": "Sequence", "value": 4 }],
+      "effects": [
+        { "type": "SelfDamageRespectFloor1", "amount": 2 },
+        { "type": "StrikeDamage", "baseDamage": 1, "pierce": false, "useStrikePotency": true },
+        { "type": "BranchIfClockworkSequence", "step": 4, "thenSteps": [{ "type": "StrikeDamage", "baseDamage": 7, "pierce": false, "useStrikePotency": true }, { "type": "AddStrikePotency", "amount": 2 }], "elseSteps": [] }
+      ]
+    },
+    {
+      "id": "clockwork_prime_consecration_t1",
+      "name": "Prime Consecration",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "base_damage": 2,
+      "tags": ["Direct"],
+      "keywords": [{ "type": "Prime", "value": 1 }],
+      "effects": [
+        { "type": "DirectHpDamage", "baseDamage": 2, "pierce": false },
+        { "type": "BranchIfOnPrimeSlot", "thenSteps": [{ "type": "GrantTemporaryPrimeSlots", "count": 2 }], "elseSteps": [{ "type": "GrantTemporaryPrimeSlots", "count": 2 }] }
+      ]
+    },
+    {
+      "id": "clockwork_song_sanctuary_verse_t1",
+      "name": "Song of Sanctuary: Verse",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 0,
+      "base_block": 2,
+      "tags": ["Shield", "Potency"],
+      "keywords": [{ "type": "Sequence", "value": 2 }],
+      "effects": [
+        { "type": "SelfDamageRespectFloor1", "amount": 1 },
+        { "type": "ShieldBlock", "baseBlock": 2 },
+        { "type": "BranchIfClockworkSequence", "step": 2, "thenSteps": [{ "type": "AddPrimeSlotStrikePotencyBonus", "amount": 2 }], "elseSteps": [] }
+      ]
+    },
+    {
+      "id": "clockwork_canticle_interleave_chorus_t1",
+      "name": "Canticle Interleave: Chorus",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 0,
+      "base_damage": 1,
+      "tags": ["Strike", "Potency"],
+      "keywords": [{ "type": "Sequence", "value": 1 }, { "type": "Sequence", "value": 2 }, { "type": "Sequence", "value": 3 }],
+      "effects": [
+        { "type": "SelfDamageRespectFloor1", "amount": 2 },
+        { "type": "StrikeDamage", "baseDamage": 1, "pierce": false, "useStrikePotency": true },
+        { "type": "BranchIfClockworkSequence", "step": 1, "thenSteps": [{ "type": "StrikeDamage", "baseDamage": 2, "pierce": false, "useStrikePotency": true }, { "type": "AddStrikePotency", "amount": 1 }], "elseSteps": [] },
+        { "type": "BranchIfClockworkSequence", "step": 2, "thenSteps": [{ "type": "StrikeDamage", "baseDamage": 3, "pierce": false, "useStrikePotency": true }, { "type": "AddStrikePotency", "amount": 1 }], "elseSteps": [] },
+        { "type": "BranchIfClockworkSequence", "step": 3, "thenSteps": [{ "type": "StrikeDamage", "baseDamage": 4, "pierce": false, "useStrikePotency": true }, { "type": "AddStrikePotency", "amount": 2 }], "elseSteps": [] }
+      ]
+    },
+    {
+      "id": "clockwork_song_iron_coda_t1",
+      "name": "Song of Iron: Coda",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 0,
+      "base_damage": 1,
+      "tags": ["Strike", "Potency"],
+      "keywords": [{ "type": "Sequence", "value": 5 }],
+      "effects": [
+        { "type": "SelfDamageRespectFloor1", "amount": 3 },
+        { "type": "StrikeDamage", "baseDamage": 1, "pierce": false, "useStrikePotency": true },
+        { "type": "BranchIfClockworkSequence", "step": 5, "thenSteps": [{ "type": "StrikeDamage", "baseDamage": 8, "pierce": false, "useStrikePotency": true }, { "type": "AddStrikePotency", "amount": 2 }], "elseSteps": [] }
+      ]
+    },
+    {
+      "id": "clockwork_hymn_warmth_t1",
+      "name": "Hymn: Warmth",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 2,
+      "base_damage": 5,
+      "tags": ["Direct"],
+      "keywords": [{ "type": "Persistent", "value": 1 }, { "type": "Prime", "value": 1 }],
+      "effects": [
+        { "type": "HealSelf", "amount": 2 },
+        { "type": "BranchIfOnPrimeSlot", "thenSteps": [{ "type": "DirectHpDamage", "baseDamage": 5, "pierce": false }], "elseSteps": [] }
+      ]
+    },
+    {
+      "id": "clockwork_prime_benediction_t1",
+      "name": "Prime Benediction",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "gain_charge": 1,
+      "tags": ["Energy", "Potency"],
+      "keywords": [{ "type": "Prime", "value": 1 }, { "type": "Faith", "value": 1 }],
+      "effects": [
+        { "type": "GainFaith", "amount": 1 },
+        { "type": "BranchIfOnPrimeSlot", "thenSteps": [{ "type": "GainFaith", "amount": 1 }, { "type": "GainCharge", "amount": 1 }], "elseSteps": [] }
+      ]
+    },
+    {
+      "id": "clockwork_prime_tithe_t1",
+      "name": "Prime Tithe",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 2,
+      "gain_charge": 1,
+      "tags": ["Energy", "Potency"],
+      "keywords": [{ "type": "Prime", "value": 1 }, { "type": "Faith", "value": 2 }],
+      "effects": [
+        { "type": "GainFaith", "amount": 2 },
+        { "type": "BranchIfOnPrimeSlot", "thenSteps": [{ "type": "GainFaith", "amount": 1 }, { "type": "GainCharge", "amount": 1 }], "elseSteps": [] }
+      ]
+    },
+    {
+      "id": "clockwork_judgment_measure_t1",
+      "name": "Judgment by Measure",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "base_damage": 4,
+      "tags": ["Direct"],
+      "keywords": [{ "type": "Faith", "value": 3 }],
+      "effects": [
+        { "type": "DirectHpDamage", "baseDamage": 4, "pierce": false },
+        { "type": "BranchIfFaithGte", "minFaith": 3, "thenSteps": [{ "type": "ApplyWeaken", "stacks": 1 }], "elseSteps": [] }
+      ]
+    },
+    {
+      "id": "clockwork_ordinance_silence_t1",
+      "name": "Ordinance of Silence",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 2,
+      "base_damage": 3,
+      "tags": ["Direct"],
+      "keywords": [{ "type": "Faith", "value": 5 }],
+      "effects": [
+        { "type": "DirectHpDamage", "baseDamage": 3, "pierce": false },
+        { "type": "BranchIfFaithGte", "minFaith": 5, "thenSteps": [{ "type": "ApplyWeaken", "stacks": 2 }], "elseSteps": [] }
+      ]
+    },
+    {
+      "id": "clockwork_mercy_lattice_t1",
+      "name": "Mercy of the Lattice",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "base_damage": 3,
+      "tags": ["Direct"],
+      "keywords": [{ "type": "Faith", "value": 4 }],
+      "effects": [
+        { "type": "DirectHpDamage", "baseDamage": 3, "pierce": false },
+        { "type": "BranchIfFaithGte", "minFaith": 4, "thenSteps": [{ "type": "HealSelf", "amount": 4 }], "elseSteps": [] }
+      ]
+    },
+    {
+      "id": "clockwork_prime_cataclysm_t1",
+      "name": "Prime Cataclysm",
+      "faction": "clockwork",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 2,
+      "base_damage": 5,
+      "tags": ["Direct"],
+      "keywords": [{ "type": "Prime", "value": 1 }, { "type": "Faith", "value": 6 }],
+      "effects": [
+        { "type": "DirectHpDamage", "baseDamage": 5, "pierce": false },
+        { "type": "BranchIfOnPrimeSlot", "thenSteps": [{ "type": "GainCharge", "amount": 1 }], "elseSteps": [] },
+        { "type": "BranchIfFaithGte", "minFaith": 6, "thenSteps": [{ "type": "DirectHpDamage", "baseDamage": 12, "pierce": false }], "elseSteps": [] }
+      ]
+    }
+  ]
+}

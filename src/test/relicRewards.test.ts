@@ -5,6 +5,7 @@ import {
   getRelicDef,
   listRelicsForSource,
   rollRelicForSource,
+  rollRelicOffers,
 } from '../core/run';
 
 describe('relic source gating', () => {
@@ -32,25 +33,40 @@ describe('relic source gating', () => {
     expect(bossPool.length).toBeGreaterThan(0);
     expect(bossPool.every((r) => r.rarity === 'epic')).toBe(true);
   });
+
+  it('clockwork boss pool excludes scavenger-faction epics', () => {
+    const run = createNewRun(103);
+    run.faction = 'clockwork';
+    const bossPool = listRelicsForSource('boss', run);
+    expect(bossPool.length).toBeGreaterThan(0);
+    expect(bossPool.every((r) => !r.faction || r.faction === 'clockwork')).toBe(true);
+    expect(bossPool.some((r) => r.id === 'clockwork_septenary_crown')).toBe(true);
+    expect(bossPool.some((r) => r.id === 'epic_gunslingers_flourish')).toBe(false);
+    expect(bossPool.some((r) => r.id === 'epic_emergency_junk_shield')).toBe(false);
+  });
 });
 
 describe('post-combat relic rewards', () => {
-  it('elite rewards grant an uncommon relic', () => {
+  it('elite rewards queue a pending uncommon relic pick instead of auto-granting', () => {
     const run = createNewRun(201);
     run.loop.pendingEncounterType = 'elite';
     applyPostCombatRewards(run, true);
-    expect(run.loop.relicIds.length).toBe(1);
-    const relic = getRelicDef(run.loop.relicIds[0]);
-    expect(relic?.rarity).toBe('uncommon');
+    expect(run.loop.relicIds.length).toBe(0);
+    expect(run.loop.pendingRelicRewardSource).toBe('elite');
+    const offers = rollRelicOffers(run, 'elite', 999);
+    expect(offers.length).toBeGreaterThan(0);
+    expect(offers.every((id) => getRelicDef(id)?.rarity === 'uncommon')).toBe(true);
   });
 
-  it('boss rewards grant an epic relic', () => {
+  it('boss rewards queue a pending epic relic pick instead of auto-granting', () => {
     const run = createNewRun(202);
     run.loop.pendingEncounterType = 'boss';
     applyPostCombatRewards(run, true);
-    expect(run.loop.relicIds.length).toBe(1);
-    const relic = getRelicDef(run.loop.relicIds[0]);
-    expect(relic?.rarity).toBe('epic');
+    expect(run.loop.relicIds.length).toBe(0);
+    expect(run.loop.pendingRelicRewardSource).toBe('boss');
+    const offers = rollRelicOffers(run, 'boss', 1001);
+    expect(offers.length).toBeGreaterThan(0);
+    expect(offers.every((id) => getRelicDef(id)?.rarity === 'epic')).toBe(true);
   });
 
   it('source roller never returns off-rarity relics', () => {

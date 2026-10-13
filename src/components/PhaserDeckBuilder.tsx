@@ -89,7 +89,7 @@ export function PhaserDeckBuilder({
     displayHover: deckHoverDisplay,
     pinned: deckHoverPinned,
     dismissPin: dismissDeckHoverPin,
-  } = usePinnableCardHover(deckHover, deckBuilderHoverIdentityKey, 1000, deckPopoverPointerOver);
+  } = usePinnableCardHover(deckHover, deckBuilderHoverIdentityKey, 2000, deckPopoverPointerOver);
 
   useEffect(() => {
     if (!deckHoverDisplay) {

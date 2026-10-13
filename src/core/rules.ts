@@ -6,9 +6,9 @@
  *   when `roundIndex` reaches that value (see `CombatSimulator` loop).
  * - **Bulk keyword:** grants **bulk stacks** only (no potency by itself). Each stack reduces **incoming strike
  *   damage** to HP by 1 (consumed when mitigating).
- * - **Blank queue slot:** At combat start, empty planned slots are stored as `neutral_basic_strike_t1` so
- *   queue-targeting effects (e.g. Core Rebirth) see real basic ids. `combat.ts` still substitutes `neutral_basic_strike_t1`
- *   if a slot is ever empty at resolve time.
+ * - **Blank queue slot:** At combat start, empty planned slots are stored as `blankCardIdForTraits` (usually
+ *   `neutral_basic_strike_t1`; Tempered Blanks / Multistrike Protocol upgrade). Factory Reset destroys the card and
+ *   rematerializes the same blank. Resolve still substitutes that blank id if a slot is ever null.
  * - **Draw mix (run/shop):** `CardContentService.drawWeighted` — not mid-battle draw.
  */
 export const COMBAT_RULES = {

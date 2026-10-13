@@ -126,6 +126,22 @@
   max-width: 760px;
 }
 
+.reward-view__rerolls {
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.reward-view__cards-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
 .reward-view__cards-heading {
   font-size: 11px;
   letter-spacing: 0.3em;
@@ -133,11 +149,31 @@
   text-transform: uppercase;
 }
 
-.reward-view__cards {
+.reward-view__reroll-btn {
+  appearance: none;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 200, 255, 0.35);
+  background: rgba(0, 200, 255, 0.08);
+  color: #7dd3fc;
+  cursor: pointer;
+}
+
+.reward-view__reroll-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.reward-view__cards,
+.reward-view__relics {
   display: flex;
   gap: 16px;
   justify-content: center;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 /* ── Individual card choice ──────────────────────────── */
@@ -146,18 +182,100 @@
   font-family: inherit;
   cursor: pointer;
   width: 200px;
-  min-height: 240px;
-  padding: 18px 16px;
+  min-height: 280px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
   text-align: left;
   background: rgba(5, 15, 30, 0.9);
   border: 1px solid rgba(0, 200, 255, 0.2);
   clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
   color: #d0e8ff;
   position: relative;
+  overflow: hidden;
   transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.reward-view__card-art {
+  position: relative;
+  height: 140px;
+  background-size: cover;
+  background-position: center top;
+  border-bottom: 1px solid rgba(0, 200, 255, 0.2);
+}
+
+.reward-view__card-art .reward-view__card-tier,
+.reward-view__card-cost {
+  position: absolute;
+  top: 8px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  background: rgba(2, 6, 23, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.reward-view__card-art .reward-view__card-tier {
+  left: 8px;
+  color: rgba(0, 200, 255, 0.85);
+}
+
+.reward-view__card-cost {
+  right: 8px;
+  color: #fde68a;
+}
+
+.reward-view__card-body {
+  padding: 12px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.reward-view__relic-card {
+  appearance: none;
+  font-family: inherit;
+  cursor: pointer;
+  width: 220px;
+  min-height: 180px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  background: rgba(20, 8, 30, 0.92);
+  border: 1px solid rgba(200, 80, 255, 0.35);
+  color: #f3e8ff;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.reward-view__relic-card:hover {
+  border-color: rgba(200, 80, 255, 0.8);
+  box-shadow: 0 0 20px rgba(200, 80, 255, 0.25);
+  transform: translateY(-3px);
+}
+
+.reward-view__relic-rarity {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(216, 180, 254, 0.75);
+}
+
+.reward-view__relic-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reward-view__relic-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(233, 213, 255, 0.8);
 }
 
 .reward-view__card::before {

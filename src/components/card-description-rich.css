@@ -1,0 +1,19 @@
+.card-description__trait-bonus {
+  font-weight: 600;
+}
+
+.card-description__trait-bonus--dragon {
+  color: #67b8ff;
+}
+
+.card-description__trait-bonus--tiger {
+  color: #ffb347;
+}
+
+.card-description__trait-bonus--bird {
+  color: #ff6b8f;
+}
+
+.card-description__trait-bonus--tortoise {
+  color: #86dca2;
+}

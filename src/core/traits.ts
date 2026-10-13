@@ -16,6 +16,7 @@
  */
 
 import { syncExposeAuraFromField } from './combat/state';
+import { isPrimeSlotForActor } from './clockwork';
 import { COMBAT_RULES } from './rules';
 import type { CardContentService } from './content';
 import type { CardDef, CombatEvent, CombatState, FighterState } from './types';
@@ -49,6 +50,8 @@ export interface TraitCardResolutionSummary {
   junkGained: number;
   junkSpent: number;
   cardHadDelayScheduling: boolean;
+  completedClockworkSequenceStep?: number | null;
+  primeActivated?: boolean;
 }
 
 /* ── TraitDef ─────────────────────────────────────────────────────────────── */
@@ -461,6 +464,168 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
   },
 
   /* ────────────────────────────────────────────────────────────────────────
+   * CLOCKWORK COLLECTIVE
+   * ──────────────────────────────────────────────────────────────────────── */
+  clockwork_father_time_base: {
+    id: 'clockwork_father_time_base',
+    label: 'Cantor of the Open Book',
+    text: 'Neutral cards do not break your Sequence chain.',
+    hooks: {},
+  },
+  clockwork_father_time_aw0: {
+    id: 'clockwork_father_time_aw0',
+    label: 'Wild Canticle',
+    text: 'Prime activations may stabilize your Sequence as Sequence 1 (cap).',
+    hooks: {
+      onCardResolved(actor, _target, _card, _queueIndex, _ctx, resolution) {
+        if (!resolution.primeActivated) return;
+        actor.clockworkSequencePrev = Math.max(1, actor.clockworkSequencePrev ?? 0);
+      },
+    },
+  },
+  clockwork_father_time_aw1: {
+    id: 'clockwork_father_time_aw1',
+    label: 'Measured Verdict',
+    text: 'When Sequence triggers, deal direct damage equal to the step. Prime activations grant +1 potency.',
+    hooks: {
+      onCardResolved(actor, target, _card, _queueIndex, ctx, resolution) {
+        const step = resolution.completedClockworkSequenceStep ?? null;
+        if (step && step > 0) {
+          const absorbed = Math.min(target.block, step);
+          target.block -= absorbed;
+          const hpLoss = step - absorbed;
+          if (hpLoss > 0) target.hp = Math.max(0, target.hp - hpLoss);
+          ctx.push({
+            type: 'trait_effect',
+            round: ctx.state.roundIndex,
+            actor: actor.name,
+            text: `Measured Verdict: Sequence ${String(step)} deals ${String(step)} direct damage.`,
+          });
+        }
+        if (resolution.primeActivated) {
+          actor.potency += 1;
+        }
+      },
+    },
+  },
+  clockwork_rook_base: {
+    id: 'clockwork_rook_base',
+    label: 'Inquisitor Geometry',
+    text: 'Slots 1 and 2 count as Prime. Prime direct lines deal +1 damage.',
+    hooks: {
+      onCombatStart(fighter) {
+        fighter.primeSlotOverrides = Array.from(new Set([...(fighter.primeSlotOverrides ?? []), 0, 1]));
+      },
+      onCardResolved(actor, target, card, queueIndex, _ctx) {
+        if (!card.tags.includes('Direct')) return;
+        if (!isPrimeSlotForActor(queueIndex, actor).isPrime) return;
+        const absorbed = Math.min(target.block, 1);
+        target.block -= absorbed;
+        const hpLoss = 1 - absorbed;
+        if (hpLoss > 0) target.hp = Math.max(0, target.hp - hpLoss);
+      },
+    },
+  },
+  clockwork_rook_aw0: {
+    id: 'clockwork_rook_aw0',
+    label: 'Inquisitor Refrain',
+    text: 'Hymn recitations are steadier on later cycles.',
+    hooks: {},
+  },
+  clockwork_rook_aw1: {
+    id: 'clockwork_rook_aw1',
+    label: 'Rite Slot',
+    text: 'Inquisitor rite slot reserved (run-layer mutation pending).',
+    hooks: {},
+  },
+  clockwork_verity_base: {
+    id: 'clockwork_verity_base',
+    label: 'Four Horsemen',
+    text:
+      'On Sequence complete — Step 1: enemy +1 Virus. Step 2: you +1 Potency. Step 3: heal 1 and enemy +1 Expose. Step 4: deal 2 (shield then HP).',
+    hooks: {
+      onCardResolved(actor, target, _card, _queueIndex, _ctx, resolution) {
+        const step = resolution.completedClockworkSequenceStep ?? 0;
+        if (step === 1) target.virusStacks = (target.virusStacks ?? 0) + 1;
+        if (step === 2) actor.potency += 1;
+        if (step === 3) {
+          actor.hp = Math.min(Math.max(1, actor.maxHp || COMBAT_RULES.startingHp), actor.hp + 1);
+          target.exposeDamage = Math.min(COMBAT_RULES.maxExposeArm, target.exposeDamage + 1);
+          syncExposeAuraFromField(target);
+        }
+        if (step === 4) {
+          const absorbed = Math.min(target.block, 2);
+          target.block -= absorbed;
+          const hpLoss = 2 - absorbed;
+          if (hpLoss > 0) target.hp = Math.max(0, target.hp - hpLoss);
+        }
+      },
+    },
+  },
+  clockwork_verity_aw0: {
+    id: 'clockwork_verity_aw0',
+    label: 'Riders Intensify I',
+    text:
+      'Stacks with Four Horsemen — Step 1: +1 Virus. Step 2: +1 Potency. Step 3: heal 1. Step 4: deal 1 more (shield then HP).',
+    hooks: {
+      onCardResolved(actor, target, _card, _queueIndex, _ctx, resolution) {
+        const step = resolution.completedClockworkSequenceStep ?? 0;
+        if (step === 1) target.virusStacks = (target.virusStacks ?? 0) + 1;
+        if (step === 2) actor.potency += 1;
+        if (step === 3) {
+          actor.hp = Math.min(Math.max(1, actor.maxHp || COMBAT_RULES.startingHp), actor.hp + 1);
+        }
+        if (step === 4) {
+          const absorbed = Math.min(target.block, 1);
+          target.block -= absorbed;
+          const hpLoss = 1 - absorbed;
+          if (hpLoss > 0) target.hp = Math.max(0, target.hp - hpLoss);
+        }
+      },
+    },
+  },
+  clockwork_verity_aw1: {
+    id: 'clockwork_verity_aw1',
+    label: 'Riders Intensify II',
+    text:
+      'Stacks again — Step 1: +1 Virus. Step 2: +1 Potency. Step 3: heal 1. Step 4: deal 1 more (shield then HP).',
+    hooks: {
+      onCardResolved(actor, target, _card, _queueIndex, _ctx, resolution) {
+        const step = resolution.completedClockworkSequenceStep ?? 0;
+        if (step === 1) target.virusStacks = (target.virusStacks ?? 0) + 1;
+        if (step === 2) actor.potency += 1;
+        if (step === 3) {
+          actor.hp = Math.min(Math.max(1, actor.maxHp || COMBAT_RULES.startingHp), actor.hp + 1);
+        }
+        if (step === 4) {
+          const absorbed = Math.min(target.block, 1);
+          target.block -= absorbed;
+          const hpLoss = 1 - absorbed;
+          if (hpLoss > 0) target.hp = Math.max(0, target.hp - hpLoss);
+        }
+      },
+    },
+  },
+  clockwork_verity_aw2: {
+    id: 'clockwork_verity_aw2',
+    label: 'Fifth Seal',
+    text: 'First Sequence Step 5 each combat: deal 20 (shield then HP), then you gain 1 Stun.',
+    hooks: {
+      onCardResolved(actor, target, _card, _queueIndex, _ctx, resolution) {
+        if ((resolution.completedClockworkSequenceStep ?? 0) !== 5) return;
+        const flag = (actor as FighterState & { verityAw2Triggered?: boolean }).verityAw2Triggered ?? false;
+        if (flag) return;
+        (actor as FighterState & { verityAw2Triggered?: boolean }).verityAw2Triggered = true;
+        const absorbed = Math.min(target.block, 20);
+        target.block -= absorbed;
+        const hpLoss = 20 - absorbed;
+        if (hpLoss > 0) target.hp = Math.max(0, target.hp - hpLoss);
+        addStunnedTurns(actor, 1);
+      },
+    },
+  },
+
+  /* ────────────────────────────────────────────────────────────────────────
    * NEUTRAL TRAITS
    * Add new neutral (non-pilot) traits below. Grant them by pushing the ID
    * into run.loop.playerTraitIds (e.g. from a relic or travel event).
@@ -487,6 +652,7 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
         actor.block += 2;
         ctx.push({
           type: 'trait_effect',
+          sourceId: 'relic_reactive_plating',
           round: ctx.state.roundIndex,
           actor: actor.name,
           text: `Reactive Plating: ${actor.name} gains 2 shield.`,
@@ -502,10 +668,11 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
     hooks: {
       onTurnStart(actor, _opponent, ctx) {
         const before = actor.hp;
-        actor.hp = Math.min(COMBAT_RULES.startingHp, actor.hp + 1);
+        actor.hp = Math.min(Math.max(1, actor.maxHp || COMBAT_RULES.startingHp), actor.hp + 1);
         if (actor.hp === before) return;
         ctx.push({
           type: 'trait_effect',
+          sourceId: 'relic_repair_nanites',
           round: ctx.state.roundIndex,
           actor: actor.name,
           text: `Repair Nanites: ${actor.name} recovers 1 HP.`,
@@ -525,6 +692,7 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
         actor.junk += 2;
         ctx.push({
           type: 'trait_effect',
+          sourceId: 'relic_scrap_condenser',
           round: ctx.state.roundIndex,
           actor: actor.name,
           text: `Scrap Condenser: ${actor.name} gains 2 junk.`,
@@ -549,6 +717,7 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
         }
         ctx.push({
           type: 'trait_effect',
+          sourceId: 'relic_berserker_instincts',
           round: ctx.state.roundIndex,
           actor: actor.name,
           text: `Berserker Instincts: ${actor.name} reflects ${String(damage)} damage.`,
@@ -573,6 +742,7 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
         }
         ctx.push({
           type: 'trait_effect',
+          sourceId: 'relic_hot_swap_injector',
           round: ctx.state.roundIndex,
           actor: actor.name,
           text: `Hot-Swap Injector: ${actor.name} triggers Strike 2.`,
@@ -591,6 +761,7 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
         actor.junk += 2;
         ctx.push({
           type: 'trait_effect',
+          sourceId: 'relic_trash_dynamo',
           round: ctx.state.roundIndex,
           actor: actor.name,
           text: `Trash Dynamo: ${actor.name} gains 2 junk.`,
@@ -608,11 +779,12 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
         if (resolution.junkGained <= 0) return;
         const heal = Math.min(5, resolution.junkGained);
         const before = actor.hp;
-        actor.hp = Math.min(COMBAT_RULES.startingHp, actor.hp + heal);
+        actor.hp = Math.min(Math.max(1, actor.maxHp || COMBAT_RULES.startingHp), actor.hp + heal);
         const gained = actor.hp - before;
         if (gained <= 0) return;
         ctx.push({
           type: 'trait_effect',
+          sourceId: 'relic_scrap_recycling',
           round: ctx.state.roundIndex,
           actor: actor.name,
           text: `Scrap Recycling: ${actor.name} recovers ${String(gained)} HP.`,
@@ -637,6 +809,7 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
         }
         ctx.push({
           type: 'trait_effect',
+          sourceId: 'relic_junk_shrapnel',
           round: ctx.state.roundIndex,
           actor: actor.name,
           text: `Junk Shrapnel: ${actor.name} deals ${String(damage)} damage.`,
@@ -656,6 +829,7 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
         target.weakenStacks += 2;
         ctx.push({
           type: 'trait_effect',
+          sourceId: 'relic_stall_shield_weaken',
           round: ctx.state.roundIndex,
           actor: actor.name,
           text: `Shock Buffer: ${actor.name} stalls on ${card.name}, gains 2 shield and applies 2 Weaken.`,
@@ -674,6 +848,7 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
         actor.charge += 1;
         ctx.push({
           type: 'trait_effect',
+          sourceId: 'relic_delay_double_cast',
           round: ctx.state.roundIndex,
           actor: actor.name,
           text: `Chrono Fork: ${actor.name} gains +1 energy from immediate delay trigger.`,
@@ -699,6 +874,7 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
         actor.preventEmergencyProtocolSpendThisTurn = true;
         ctx.push({
           type: 'trait_effect',
+          sourceId: 'relic_prime_directive',
           round: ctx.state.roundIndex,
           actor: actor.name,
           text: `Prime Directive: ${actor.name} gains ${String(gain)} potency and enters Emergency Protocol mode.`,
@@ -721,11 +897,64 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
     hooks: {},
   },
 
+  relic_tempered_blanks: {
+    id: 'relic_tempered_blanks',
+    label: 'Tempered Blanks',
+    text: 'Empty program slots resolve as upgraded Basic Strike (T2).',
+    hooks: {},
+  },
+
+  relic_multistrike_protocol: {
+    id: 'relic_multistrike_protocol',
+    label: 'Multistrike Protocol',
+    text: 'Empty program slots resolve as Multi-strike.',
+    hooks: {},
+  },
+
   relic_emergency_junk_shield: {
     id: 'relic_emergency_junk_shield',
     label: 'Emergency Junk Shield',
     text: 'Incoming damage hits junk first. Non-strike damage is doubled against junk.',
     hooks: {},
+  },
+  relic_clockwork_astrolabe_chip: {
+    id: 'relic_clockwork_astrolabe_chip',
+    label: 'Astrolabe Chip',
+    text: 'First Prime activation each combat: gain +1 energy.',
+    hooks: {
+      onCombatStart(fighter) {
+        (fighter as FighterState & { astrolabeTriggered?: boolean }).astrolabeTriggered = false;
+      },
+      onCardResolved(actor, _target, _card, _queueIndex, _ctx, resolution) {
+        if (!resolution.primeActivated) return;
+        const triggered = (actor as FighterState & { astrolabeTriggered?: boolean }).astrolabeTriggered;
+        if (triggered) return;
+        (actor as FighterState & { astrolabeTriggered?: boolean }).astrolabeTriggered = true;
+        actor.charge += 1;
+      },
+    },
+  },
+  relic_clockwork_second_pendulum: {
+    id: 'relic_clockwork_second_pendulum',
+    label: 'Second Pendulum',
+    text: 'Temporary Prime granted by cards lasts +1 visit.',
+    hooks: {},
+  },
+  relic_clockwork_septenary_crown: {
+    id: 'relic_clockwork_septenary_crown',
+    label: 'Septenary Crown',
+    text: 'Slots 1–7 count as Prime. Prime activations grant Faith.',
+    hooks: {
+      onCombatStart(fighter) {
+        fighter.primeSlotOverrides = Array.from(
+          new Set([...(fighter.primeSlotOverrides ?? []), 0, 1, 2, 3, 4, 5, 6]),
+        );
+      },
+      onCardResolved(actor, _target, _card, _queueIndex, _ctx, resolution) {
+        if (!resolution.primeActivated) return;
+        actor.faithStacks += 3;
+      },
+    },
   },
 };
 

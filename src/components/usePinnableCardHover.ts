@@ -4,18 +4,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * After `pinMs` of continuous hover on the same logical card (see `getIdentityKey`), pins that
  * card as the modal body. Hovering a **different** card for `pinMs` **replaces** the pinned card.
  * While `pausePinTimer` is true (e.g. pointer over the card modal), the timer does not advance.
+ * Once the pointer leaves both the source card and the popover, the popup lingers for
+ * `idleDismissMs` then auto-closes (pinned or soft linger).
  */
 export function usePinnableCardHover<T extends { clientX: number; clientY: number }>(
   hover: T | null,
   getIdentityKey: (h: T) => string,
   pinMs = 1000,
   pausePinTimer = false,
+  idleDismissMs = 5000,
 ): {
   displayHover: T | null;
   pinned: boolean;
   dismissPin: () => void;
 } {
   const [pinned, setPinned] = useState<T | null>(null);
+  const [held, setHeld] = useState<T | null>(null);
   const [pinCycle, setPinCycle] = useState(0);
 
   const hoverRef = useRef(hover);
@@ -28,13 +32,22 @@ export function usePinnableCardHover<T extends { clientX: number; clientY: numbe
   getKeyRef.current = getIdentityKey;
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const identityKey = hover ? getIdentityKey(hover) : null;
 
   const dismissPin = useCallback(() => {
     setPinned(null);
+    setHeld(null);
     setPinCycle((c) => c + 1);
   }, []);
+
+  /* Keep a soft linger copy while the pointer is over a card. */
+  useEffect(() => {
+    if (hover) {
+      setHeld(hover);
+    }
+  }, [hover]);
 
   useEffect(() => {
     if (pausePinTimer) {
@@ -81,7 +94,37 @@ export function usePinnableCardHover<T extends { clientX: number; clientY: numbe
     };
   }, [identityKey, pinned, pinCycle, pinMs, pausePinTimer]);
 
-  const displayHover = pinned ?? hover;
+  /* Auto-close when neither the source card nor the popover is hovered. */
+  useEffect(() => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+
+    const engaged = pausePinTimer || identityKey !== null;
+    if (engaged) {
+      return undefined;
+    }
+
+    if (!pinned && !held) {
+      return undefined;
+    }
+
+    idleTimerRef.current = setTimeout(() => {
+      setPinned(null);
+      setHeld(null);
+      setPinCycle((c) => c + 1);
+    }, idleDismissMs);
+
+    return () => {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+    };
+  }, [pinned, held, pausePinTimer, identityKey, idleDismissMs]);
+
+  const displayHover = pinned ?? hover ?? held;
 
   return {
     displayHover,

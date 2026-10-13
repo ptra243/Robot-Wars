@@ -47,11 +47,17 @@ export const KEYWORD_TYPE_HELP: Record<KeywordType, string> = {
   Continuous:
     'While this queue slot keeps resolving, every N rounds (the keyword value) you gain +1 junk and +1 energy from this slot.',
   FactoryReset:
-    'After this card resolves, this deck entry becomes a Neutral Basic Strike at the printed tier (queue slot updates).',
+    'After this card resolves, destroy it: the program slot becomes empty and rematerializes as a blank (Neutral Basic Strike, or upgraded blanks from relics like Tempered Blanks / Multistrike Protocol).',
   UniqueDeck:
     'Deckbuilding only: at most one copy of any UniqueDeck card across your hand and fatigue deck (e.g. Gathering Strike).',
   Persistent:
-    'Marks rest-of-battle effects when the card’s rules say so. Counts toward the max Continuous/Persistent cards per deck.',
+    'Resolves once, then this program slot is skipped for the rest of the fight. Counts toward the Continuous/Persistent deck limit.',
+  Prime:
+    'Lines labeled Prime on the card activate when it resolves from a Prime program slot. Natural prime slots are 3, 5, and 7 (left to right). Pilots and relics can add more; Temporary Prime from card effects also counts.',
+  Sequence:
+    'Lines labeled Sequence are chain-gated: Sequence Start opens the chain, then Sequence 2/3/4/5 need the previous step from your last Clockwork resolution.',
+  Faith:
+    'Faith stacks boost damage on Prime-slot resolutions: each stack adds +1 to Strike and Direct packets resolved from a Prime slot. Card lines may also gain or spend Faith.',
   Virus:
     'Applies virus stacks to the target. Virus is a non-Strike debuff lane used by cyberpunk cards.',
   Evade:

@@ -14,6 +14,7 @@ export function mergeFighterVitals(base: FighterState, snap: CombatFighterSnapsh
   return {
     ...base,
     hp: snap.hp,
+    maxHp: snap.maxHp ?? base.maxHp,
     block: snap.block,
     charge: snap.charge,
     junk: snap.junk,

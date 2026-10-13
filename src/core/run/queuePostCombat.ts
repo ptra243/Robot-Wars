@@ -8,7 +8,7 @@ function isNeutralBasicId(id: string | null | undefined): boolean {
 
 /**
  * After combat, the run’s planned queue should **not** keep in-combat “factory reset”
- * (TransformCurrentQueueSlot / FactoryReset) that rewrites a program slot to Neutral Basic
+ * (TransformCurrentQueueSlot / FactoryReset) that clears a program slot to a blank/basic
  * or rewrites a basic’s tier. Those are tactical for the fight only.
  *
  * We **do** keep durable changes where the final id is not a neutral basic (e.g. Core Rebirth

@@ -2,7 +2,13 @@ import type { DragEvent as ReactDragEvent, MouseEvent as ReactMouseEvent } from 
 import type { CardTag, KeywordType } from '../../../core/types';
 
 /** Faction token used for CSS modifiers (`.forge-poc__slot--${faction}`). */
-export type ForgeFaction = 'scavengers' | 'neutral' | 'overclock' | 'aegis' | 'cyberpunk';
+export type ForgeFaction =
+  | 'scavengers'
+  | 'neutral'
+  | 'overclock'
+  | 'aegis'
+  | 'cyberpunk'
+  | 'clockwork';
 
 export interface ForgeKeyword {
   type: KeywordType;
@@ -58,8 +64,12 @@ export interface ContextMenuState {
 
 export interface HoverState {
   card: ForgeCard;
+  secondaryCard?: ForgeCard;
   x: number;
   y: number;
+  /** Same as x/y — required by pinnable hover helpers. */
+  clientX: number;
+  clientY: number;
 }
 
 export type QueueDragHandler = (e: ReactDragEvent<HTMLElement>) => void;

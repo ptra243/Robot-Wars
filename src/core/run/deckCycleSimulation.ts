@@ -144,6 +144,7 @@ export function simulateDeckCycleReport(run: RunState, content: CardContentServi
   }
   callTraitOnCombatStart(setup.player, content);
   setup.player.hp = 9999;
+  setup.player.maxHp = 9999;
   setup.enemy.hp = 9999;
   setup.player.block = 0;
   setup.enemy.block = 0;

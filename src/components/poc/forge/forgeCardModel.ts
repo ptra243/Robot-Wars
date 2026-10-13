@@ -64,6 +64,7 @@ function factionClass(card: CardDef): ForgeFaction {
     case 'overclock':
     case 'aegis':
     case 'cyberpunk':
+    case 'clockwork':
       return card.faction;
     default:
       return 'neutral';
@@ -97,6 +98,17 @@ export function forgeCardFromDef(card: CardDef): ForgeCard {
     art: artForCard(card),
     artFocus: isCoreSacrificeLineCardId(card.id) ? 'core-reactor' : 'default',
     blurb: buildCardDescription(card, { omitTagsAndKeywords: true }),
+  };
+}
+
+export function forgeCardFromDefWithTraits(card: CardDef, activeTraitIds: readonly string[] = []): ForgeCard {
+  const base = forgeCardFromDef(card);
+  return {
+    ...base,
+    blurb: buildCardDescription(card, {
+      omitTagsAndKeywords: true,
+      activeTraitIds,
+    }),
   };
 }
 
@@ -166,7 +178,12 @@ export function resolveMergeUpgradeFromIds(
 
 function eligibleForForgePoc(card: CardDef): boolean {
   if (card.awakening_min > 1) return false;
-  return card.faction === 'scavengers' || card.faction === 'cyberpunk' || card.neutral;
+  return (
+    card.faction === 'scavengers' ||
+    card.faction === 'cyberpunk' ||
+    card.faction === 'clockwork' ||
+    card.neutral
+  );
 }
 
 /**

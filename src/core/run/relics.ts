@@ -110,10 +110,25 @@ export const RELIC_DEFS: RelicDef[] = [
     sources: ['elite'],
   },
   {
+    id: 'clockwork_astrolabe_chip',
+    name: 'Astrolabe Chip',
+    rarity: 'uncommon',
+    sources: ['elite'],
+    faction: 'clockwork',
+  },
+  {
+    id: 'clockwork_second_pendulum',
+    name: 'Second Pendulum',
+    rarity: 'uncommon',
+    sources: ['elite'],
+    faction: 'clockwork',
+  },
+  {
     id: 'epic_lucky_circuit',
     name: 'Lucky Circuit',
     rarity: 'epic',
     sources: ['boss'],
+    faction: 'scavengers',
     onAcquire: (run) => {
       if (!run.loop.playerTraitIds.includes('glint_aw1')) {
         run.loop.playerTraitIds.push('glint_aw1');
@@ -125,6 +140,7 @@ export const RELIC_DEFS: RelicDef[] = [
     name: 'Whole Hog Treasury',
     rarity: 'epic',
     sources: ['boss'],
+    faction: 'scavengers',
     onAcquire: (run) => {
       if (!run.loop.playerTraitIds.includes('baron_aw1')) {
         run.loop.playerTraitIds.push('baron_aw1');
@@ -136,6 +152,7 @@ export const RELIC_DEFS: RelicDef[] = [
     name: "Gunslinger's Flourish",
     rarity: 'epic',
     sources: ['boss'],
+    faction: 'scavengers',
     onAcquire: (run) => {
       if (!run.loop.playerTraitIds.includes('rust_ranger_aw0')) {
         run.loop.playerTraitIds.push('rust_ranger_aw0');
@@ -162,12 +179,34 @@ export const RELIC_DEFS: RelicDef[] = [
     name: 'Basic Instincts',
     rarity: 'epic',
     sources: ['boss'],
+    faction: 'scavengers',
+  },
+  {
+    id: 'tempered_blanks',
+    name: 'Tempered Blanks',
+    rarity: 'uncommon',
+    sources: ['elite'],
+  },
+  {
+    id: 'epic_multistrike_protocol',
+    name: 'Multistrike Protocol',
+    rarity: 'epic',
+    sources: ['boss'],
+    faction: 'scavengers',
   },
   {
     id: 'epic_emergency_junk_shield',
     name: 'Emergency Junk Shield',
     rarity: 'epic',
     sources: ['boss'],
+    faction: 'scavengers',
+  },
+  {
+    id: 'clockwork_septenary_crown',
+    name: 'Septenary Crown',
+    rarity: 'epic',
+    sources: ['boss'],
+    faction: 'clockwork',
   },
 ];
 
@@ -216,6 +255,10 @@ export function getRelicDescription(id: string): string {
   if (id === 'junk_shrapnel') return 'When you spend junk, deal that much damage.';
   if (id === 'stall_shield_weaken') return 'When you stall, gain 2 shield and apply 2 weaken.';
   if (id === 'delay_double_cast') return 'Delay cards also trigger an immediate bonus effect.';
+  if (id === 'clockwork_astrolabe_chip')
+    return 'First Prime activation each combat: gain +1 energy.';
+  if (id === 'clockwork_second_pendulum')
+    return 'Temporary Prime from cards lasts +1 additional visit.';
   if (id === 'epic_lucky_circuit') return 'Gain Glint Aw1 trait behavior for the run.';
   if (id === 'epic_whole_hog_treasury') return 'Gain Baron Aw1 trait behavior for the run.';
   if (id === 'epic_gunslingers_flourish')
@@ -226,7 +269,33 @@ export function getRelicDescription(id: string): string {
     return 'Cards with junk-threshold lines also gain >40 junk: Overclock.';
   if (id === 'epic_basic_instincts')
     return 'If your deck is all neutral, basic strikes gain Overclock.';
+  if (id === 'tempered_blanks')
+    return 'Empty program slots resolve as upgraded Basic Strike (T2).';
+  if (id === 'epic_multistrike_protocol')
+    return 'Empty program slots resolve as Multi-strike.';
   if (id === 'epic_emergency_junk_shield')
     return 'Incoming damage is absorbed by junk first; non-strike damage is extra effective.';
+  if (id === 'clockwork_septenary_crown')
+    return 'Slots 1-7 count as Prime. Prime activations grant Faith.';
+  if (id === 'relic_max_hp_plus_3') return 'Permanently gain +3 Max HP.';
   return id;
+}
+
+/** Roll up to `count` distinct relics for a pick-one reward. */
+export function rollRelicOffers(
+  run: RunState,
+  source: RelicSource,
+  seed: number,
+  count = 3,
+): string[] {
+  const pool = [...listRelicsForSource(source, run)];
+  if (pool.length === 0) return [];
+  const rng = new SeededRandom(seed);
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = rng.nextInt(i + 1);
+    const tmp = pool[i]!;
+    pool[i] = pool[j]!;
+    pool[j] = tmp;
+  }
+  return pool.slice(0, Math.min(count, pool.length)).map((r) => r.id);
 }

@@ -1,4 +1,5 @@
 import type { MutableRefObject, MouseEvent as ReactMouseEvent } from 'react';
+import { isPrimeSlotForTraitPlanning } from '../../../core/clockwork';
 import type { DragPayload, ForgeCard } from './types';
 import { QueueSlot } from './QueueSlot';
 
@@ -19,6 +20,9 @@ interface BattleProgramSectionProps {
   sectionTitle?: string;
   sectionSubtitle?: string;
   readOnly?: boolean;
+  /** Pilot + relic traits — used to mark Prime slots (player forge). Omit for natural 3/5/7 only. */
+  primeTraitIds?: readonly string[];
+  faction?: string;
 }
 
 export function BattleProgramSection({
@@ -37,10 +41,11 @@ export function BattleProgramSection({
   sectionTitle = 'BATTLE PROGRAM',
   sectionSubtitle = 'Instruction sequence · executes left to right each round',
   readOnly = false,
+  primeTraitIds = [],
+  faction,
 }: BattleProgramSectionProps) {
   const maxSlot = activeProgramSlots;
   const filledCount = queue.slice(0, maxSlot).filter((c) => c !== null).length;
-
   return (
     <section className="forge-poc__program">
       <div className="forge-poc__program-head">
@@ -66,6 +71,9 @@ export function BattleProgramSection({
             index={idx}
             card={card}
             locked={locked}
+            isPrime={!locked && isPrimeSlotForTraitPlanning(idx, primeTraitIds, faction)}
+            primeTraitIds={primeTraitIds}
+            faction={faction}
             isDragOver={!locked && dragOverSlot === idx}
             onHover={setHoverCardAt}
             onClear={() => clearSlot(idx)}

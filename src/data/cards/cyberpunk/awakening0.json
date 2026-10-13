@@ -1,0 +1,183 @@
+{
+  "cards": [
+    {
+      "id": "ninja_tortoise_guard_t1",
+      "name": "Shell Entry",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 0,
+      "card_tier": 1,
+      "charge_cost": 0,
+      "base_block": 4,
+      "tags": ["Shield", "Stance"],
+      "effects": [
+        { "type": "ShieldBlock", "baseBlock": 4 },
+        { "type": "SetStance", "stance": "tortoise" }
+      ]
+    },
+    {
+      "id": "ninja_tortoise_virus_t1",
+      "name": "Plague Shell",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 0,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "base_block": 3,
+      "tags": ["Shield", "Virus", "Stance"],
+      "effects": [
+        { "type": "ShieldBlock", "baseBlock": 3 },
+        {
+          "type": "BranchIfActorStance",
+          "stance": "tortoise",
+          "thenSteps": [{ "type": "ApplyVirus", "stacks": 2 }],
+          "elseSteps": []
+        }
+      ]
+    },
+    {
+      "id": "ninja_tiger_mark_t1",
+      "name": "Predator Entry",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 0,
+      "card_tier": 1,
+      "charge_cost": 0,
+      "tags": ["Expose", "Stance"],
+      "effects": [
+        { "type": "Keyword", "spec": { "type": "Expose", "value": 1 } },
+        { "type": "SetStance", "stance": "tiger" }
+      ]
+    },
+    {
+      "id": "ninja_tiger_double_strike_t1",
+      "name": "Twin Claw",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 0,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "base_damage": 3,
+      "tags": ["Strike", "Stance"],
+      "effects": [
+        { "type": "StrikeDamage", "baseDamage": 3, "pierce": false, "useStrikePotency": true },
+        {
+          "type": "BranchIfActorStance",
+          "stance": "tiger",
+          "thenSteps": [
+            { "type": "StrikeDamage", "baseDamage": 3, "pierce": false, "useStrikePotency": true }
+          ],
+          "elseSteps": []
+        }
+      ]
+    },
+    {
+      "id": "ninja_dragon_charge_t1",
+      "name": "Storm Entry",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 0,
+      "card_tier": 1,
+      "charge_cost": 0,
+      "gain_charge": 1,
+      "tags": ["Energy", "Stance"],
+      "effects": [
+        { "type": "GainCharge", "amount": 1 },
+        { "type": "SetStance", "stance": "dragon" }
+      ]
+    },
+    {
+      "id": "ninja_dragon_threshold_bolt_t1",
+      "name": "Storm Ladder",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 0,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "gain_charge": 1,
+      "tags": ["Direct", "Energy", "Stance"],
+      "effects": [
+        { "type": "GainCharge", "amount": 1 },
+        {
+          "type": "BranchIfActorStance",
+          "stance": "dragon",
+          "thenSteps": [
+            {
+              "type": "BranchIfChargeGte",
+              "minCharge": 6,
+              "thenSteps": [{ "type": "DirectHpDamage", "baseDamage": 5, "pierce": false }],
+              "elseSteps": []
+            },
+            {
+              "type": "BranchIfChargeGte",
+              "minCharge": 11,
+              "thenSteps": [{ "type": "DirectHpDamage", "baseDamage": 5, "pierce": false }],
+              "elseSteps": []
+            }
+          ],
+          "elseSteps": []
+        }
+      ]
+    },
+    {
+      "id": "ninja_bird_reload_t1",
+      "name": "Sky Entry",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 0,
+      "card_tier": 1,
+      "charge_cost": 0,
+      "tags": ["Shuriken", "Stance"],
+      "effects": [
+        { "type": "GainShuriken", "amount": 1 },
+        { "type": "SetStance", "stance": "bird" }
+      ]
+    },
+    {
+      "id": "ninja_bird_unload_t1",
+      "name": "Kunai Unload",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 0,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "tags": ["Shuriken", "Direct", "Stance"],
+      "effects": [
+        { "type": "GainShuriken", "amount": 1 },
+        {
+          "type": "BranchIfActorStance",
+          "stance": "bird",
+          "thenSteps": [{ "type": "DirectHpDamagePerShurikenSpent", "damagePerShuriken": 3, "pierce": false }],
+          "elseSteps": []
+        }
+      ]
+    },
+    {
+      "id": "ninja_masterful_form_t1",
+      "name": "Masterful Form",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 0,
+      "card_tier": 1,
+      "charge_cost": 0,
+      "gain_charge": 1,
+      "tags": ["Energy", "Stance"],
+      "effects": [
+        { "type": "GainCharge", "amount": 1 }
+      ]
+    },
+    {
+      "id": "ninja_smoke_step_t1",
+      "name": "Smoke Step",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 0,
+      "card_tier": 1,
+      "charge_cost": 0,
+      "tags": ["Evade", "Stance"],
+      "effects": [
+        { "type": "GainEvade", "amount": 1 }
+      ]
+    }
+  ]
+}

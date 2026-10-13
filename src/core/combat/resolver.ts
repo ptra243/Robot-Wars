@@ -6,15 +6,35 @@ import { getSpendPrerequisites, runEffectPipeline } from '../effects/runner';
 import { COMBAT_RULES } from '../rules';
 import { callTraitOnCardResolved } from '../traits';
 import type { CardDef, CombatEvent, CombatState, FighterState, KeywordSpec } from '../types';
+import { isPrimeSlotForActor } from '../clockwork';
+import { blankCardIdForTraits } from '../run/combatSetup';
 import { createAuraDispatchBudget, dispatchAuraTrigger } from './auras';
 import {
   addStunnedTurns,
   advanceQueue,
   effectiveChargeCost,
   isContinuousSkipped,
+  isPersistentSkipped,
+  markPersistentResolved,
   performStallOnCurrentQueuedCard,
 } from './flow';
 import { pushEv, syncExposeAuraFromField } from './state';
+
+function inferPrimaryStanceForCard(card: CardDef): 'dragon' | 'tiger' | 'bird' | 'tortoise' | null {
+  for (const step of card.effects ?? []) {
+    if (step.type === 'BranchIfActorStance') {
+      return step.stance;
+    }
+    if (step.type === 'SetStance') {
+      return step.stance;
+    }
+  }
+  if (card.id.includes('_dragon_') || card.id.includes('dragon_')) return 'dragon';
+  if (card.id.includes('_tiger_') || card.id.includes('tiger_')) return 'tiger';
+  if (card.id.includes('_bird_') || card.id.includes('bird_')) return 'bird';
+  if (card.id.includes('_tortoise_') || card.id.includes('tortoise_')) return 'tortoise';
+  return null;
+}
 
 function cardHasJunkThreshold(card: CardDef): boolean {
   if (card.bonus_strike_damage_if_junk_plus_core_gte || card.bonus_block_if_junk_plus_core_gte) {
@@ -53,12 +73,13 @@ export function resolveFighter(
   const activeSlots = Math.max(5, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
   const queueIndex = actor.queueCursor % activeSlots;
   let queuedId = actor.queue[queueIndex];
+  const blankId = blankCardIdForTraits(actor.traitIds ?? []);
 
   if (!queuedId) {
-    queuedId = 'neutral_basic_strike_t1';
+    queuedId = blankId;
   }
   if (actor.primeDirectiveActiveThisTurn) {
-    queuedId = 'neutral_basic_strike_t1';
+    queuedId = blankId;
   }
 
   const card = content.get(queuedId);
@@ -68,6 +89,16 @@ export function resolveFighter(
       round: state.roundIndex,
       actor: actor.name,
       text: `${actor.name} skips ${card.name}.`,
+    });
+    advanceQueue(actor, state, events);
+    return;
+  }
+  if (isPersistentSkipped(actor, queueIndex, card)) {
+    pushEv(state, events, {
+      type: 'persistent_skip',
+      round: state.roundIndex,
+      actor: actor.name,
+      text: `${actor.name} skips ${card.name} (Persistent already active).`,
     });
     advanceQueue(actor, state, events);
     return;
@@ -82,6 +113,7 @@ export function resolveFighter(
   actor.stallCountAtCursor = 0;
   actor.charge -= chargeCost;
   resolveCard(content, state, actor, target, card, queueIndex, events, true, combatSeed);
+  markPersistentResolved(actor, queueIndex, card);
   state.globalResolutions += 1;
   advanceQueue(actor, state, events);
 }
@@ -195,49 +227,74 @@ function resolveCard(
   const auraBudget = createAuraDispatchBudget();
 
   let overclockConsumedThisResolution = false;
+  /** Deferred so bonus resolve does not bleed damage/selfDmg into this card's metrics. */
+  let pendingBonusNext = false;
   const queueIdBeforeResolve = actor.queue[queueIndex] ?? null;
+  const primeState = isPrimeSlotForActor(queueIndex, actor);
+  const primeActiveForResolution = primeState.isPrime;
+  if (primeActiveForResolution) {
+    pushEv(state, events, {
+      type: 'prime_activation',
+      round: state.roundIndex,
+      actor: actor.name,
+      text: `Prime activated on slot ${String(queueIndex + 1)}.`,
+    });
+  }
+  if ((actor.temporaryPrimeSlots ?? []).includes(queueIndex)) {
+    actor.temporaryPrimeSlots = actor.temporaryPrimeSlots.filter((slot) => slot !== queueIndex);
+  }
 
+  const pipelineCtx = {
+    applyKeyword: (spec: KeywordSpec) => {
+      if (spec.type === 'Overclock') {
+        if (overclockConsumedThisResolution) {
+          return;
+        }
+        overclockConsumedThisResolution = true;
+        if (allowBonusNext && spec.value > 0 && !actor.overclockBonusUsedThisTurn) {
+          pendingBonusNext = true;
+        }
+        return;
+      }
+      if (spec.type === 'TurboLink' && allowBonusNext) {
+        pendingBonusNext = true;
+      }
+      applyKeyword(
+        content,
+        state,
+        actor,
+        target,
+        queueIndex,
+        card,
+        spec,
+        events,
+        allowBonusNext,
+        combatSeed,
+      );
+    },
+    dispatchAuraTrigger: (dispatchState, dispatchActor, dispatchTarget, trigger) =>
+      dispatchAuraTrigger(
+        dispatchState,
+        dispatchActor,
+        dispatchTarget,
+        trigger,
+        events,
+        auraBudget,
+      ),
+    auraBudget,
+    pushEv: (event) => pushEv(state, events, event),
+    resolvingCard: card,
+    content,
+    effectRngSeed,
+    primeActiveForResolution,
+    completedClockworkSequenceStep: null as number | null,
+  };
   const { dealt, blocked, selfDamage } = runEffectPipeline(
     state,
     actor,
     target,
     steps,
-    {
-      applyKeyword: (spec) => {
-        if (spec.type === 'Overclock') {
-          if (overclockConsumedThisResolution) {
-            return;
-          }
-          overclockConsumedThisResolution = true;
-        }
-        applyKeyword(
-          content,
-          state,
-          actor,
-          target,
-          queueIndex,
-          card,
-          spec,
-          events,
-          allowBonusNext,
-          combatSeed,
-        );
-      },
-      dispatchAuraTrigger: (dispatchState, dispatchActor, dispatchTarget, trigger) =>
-        dispatchAuraTrigger(
-          dispatchState,
-          dispatchActor,
-          dispatchTarget,
-          trigger,
-          events,
-          auraBudget,
-        ),
-      auraBudget,
-      pushEv: (event) => pushEv(state, events, event),
-      resolvingCard: card,
-      content,
-      effectRngSeed,
-    },
+    pipelineCtx,
     queueIndex,
     junkSnapshotAtResolveStart,
   );
@@ -266,17 +323,38 @@ function resolveCard(
     junkGained: Math.max(0, actor.junk - junkBefore),
     junkSpent: Math.max(0, junkBefore - actor.junk),
     cardHadDelayScheduling,
+    completedClockworkSequenceStep: pipelineCtx.completedClockworkSequenceStep,
+    primeActivated: primeActiveForResolution,
   });
 
   pushEv(state, events, {
     type: 'resolve',
     round: state.roundIndex,
     actor: actor.name,
+    cardId: card.id,
     text:
       `${actor.name} resolves ${card.name} | dealt=${dealt} blocked=${blocked} selfDmg=${selfDamage} | ` +
       `${actor.name} HP=${actor.hp} EN=${actor.charge} J=${actor.junk} B=${actor.bulkStacks} | ` +
       `${target.name} HP=${target.hp} BL=${target.block}`,
   });
+
+  if (pendingBonusNext) {
+    const fired = resolveBonusNext(content, state, actor, target, events, combatSeed);
+    if (fired && overclockConsumedThisResolution) {
+      actor.overclockBonusUsedThisTurn = true;
+    }
+  }
+
+  if (card.id === 'ninja_masterful_form_t1') {
+    const activeSlots = Math.max(5, Math.min(COMBAT_RULES.queueSize, actor.activeQueueSlots));
+    const nextQueueIndex = (queueIndex + 1) % activeSlots;
+    const nextQueuedId = actor.queue[nextQueueIndex] ?? blankCardIdForTraits(actor.traitIds ?? []);
+    const nextCard = content.get(nextQueuedId);
+    const inferred = inferPrimaryStanceForCard(nextCard);
+    if (inferred) {
+      actor.stance = inferred;
+    }
+  }
 
   if (isTigerCard) {
     if (consumeTigerAfterCardLoss > 0) {
@@ -290,6 +368,11 @@ function resolveCard(
     actor.nextTigerCardExtraStrikeFromTargetVirusCap = null;
   }
   actor.lastResolvedCardFaction = card.faction;
+  if (card.faction !== 'clockwork' && !(card.neutral && actor.traitIds.includes('clockwork_father_time_base'))) {
+    actor.clockworkSequencePrev = null;
+  } else {
+    actor.clockworkSequencePrev = pipelineCtx.completedClockworkSequenceStep ?? null;
+  }
   if (potencyBefore !== actor.potency) {
     actor.potency = Math.max(0, actor.potency);
   }
@@ -324,15 +407,7 @@ function applyKeyword(
       return;
     }
     case 'Overclock':
-      if (allowBonusNext && keyword.value > 0) {
-        if (actor.overclockBonusUsedThisTurn) {
-          return;
-        }
-        const fired = resolveBonusNext(content, state, actor, target, events, combatSeed);
-        if (fired) {
-          actor.overclockBonusUsedThisTurn = true;
-        }
-      }
+      /* Bonus resolution is deferred until after this card's resolve event (see resolveCard). */
       return;
     case 'Switch':
       return;
@@ -341,7 +416,7 @@ function applyKeyword(
         const spent = Math.max(1, Math.min(actor.bulkStacks, keyword.value));
         actor.bulkStacks -= spent;
         actor.junk += spent;
-        resolveBonusNext(content, state, actor, target, events, combatSeed);
+        /* Bonus resolution deferred in resolveCard via pendingBonusNext. */
       }
       return;
     case 'Continuous':
@@ -365,6 +440,9 @@ function applyKeyword(
       }
       return;
     case 'Pierce':
+    case 'Prime':
+    case 'Sequence':
+    case 'Faith':
     case 'CoreParts':
     case 'UniqueDeck':
     case 'Persistent':
@@ -374,8 +452,8 @@ function applyKeyword(
     case 'Stance':
       return;
     case 'FactoryReset': {
-      const tier = Math.min(3, Math.max(1, keyword.value));
-      const newId = `neutral_basic_strike_t${tier}` as const;
+      // Destroy the resolved card; rematerialize as an empty/blank slot (same as combat-start blanks).
+      const newId = blankCardIdForTraits(actor.traitIds ?? []);
       content.get(newId);
       const oldId = actor.queue[queueIndex] ?? undefined;
       actor.queue[queueIndex] = newId;
@@ -389,7 +467,8 @@ function applyKeyword(
         type: 'factory_reset',
         round: state.roundIndex,
         actor: actor.name,
-        text: `${actor.name} Factory Reset: queue slot ${queueIndex + 1} -> ${newId}.`,
+        cardId: oldId ?? card.id,
+        text: `${actor.name} Factory Reset: queue slot ${queueIndex + 1} cleared -> ${newId}.`,
       });
       return;
     }
@@ -427,7 +506,12 @@ function resolveBonusNext(
   }
 
   const card = content.get(queuedId);
+  const savedCursor = actor.queueCursor;
+  actor.queueCursor = next;
   resolveCard(content, state, actor, target, card, next, events, false, combatSeed);
+  markPersistentResolved(actor, next, card);
   state.globalResolutions += 1;
+  actor.queueCursor = savedCursor;
+  advanceQueue(actor, state, events);
   return true;
 }

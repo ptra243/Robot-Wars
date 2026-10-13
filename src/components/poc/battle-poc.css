@@ -326,6 +326,31 @@
   color: var(--bp-text);
 }
 
+.battle-poc__skip-battle {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 6px 10px;
+  margin-left: 4px;
+  border: 1px solid rgba(251, 113, 133, 0.55);
+  background: rgba(30, 20, 28, 0.85);
+  color: #fda4af;
+  cursor: pointer;
+  border-radius: 2px;
+  align-self: stretch;
+}
+
+.battle-poc__skip-battle:hover:not(:disabled) {
+  background: rgba(251, 113, 133, 0.15);
+  border-color: #fb7185;
+}
+
+.battle-poc__skip-battle:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 .battle-poc__speed-btn--active {
   background: var(--bp-ally-soft);
   color: var(--bp-text-strong);
@@ -449,11 +474,42 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.14em;
   color: var(--bp-text-dim);
   background: rgba(0, 0, 0, 0.35);
+}
+
+.battle-poc__chip--prime {
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 0 16px rgba(255, 255, 255, 0.5),
+    0 0 28px rgba(255, 255, 255, 0.25),
+    inset 0 0 14px rgba(255, 255, 255, 0.16);
+}
+
+.battle-poc__chip--prime::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.battle-poc__chip--prime .battle-poc__chip-index {
+  color: rgba(255, 255, 255, 0.98);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.battle-poc__prime-mark.prime-slot-mark {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.98);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 1);
+  cursor: help;
 }
 
 .battle-poc__chip-art {
@@ -677,6 +733,168 @@
   border-style: dotted;
   border-color: rgba(148, 163, 184, 0.4);
   filter: grayscale(0.35);
+}
+
+/* Factory Reset — card rips apart + scrap burst on the program chip. */
+.battle-poc__chip--factory-reset {
+  z-index: 20;
+  overflow: visible;
+  animation: bp-factory-reset-shake 520ms ease-out both;
+  box-shadow:
+    0 0 0 1px rgba(255, 180, 80, 0.55),
+    0 0 28px rgba(255, 120, 40, 0.55),
+    inset 0 0 0 1px rgba(255, 220, 160, 0.2);
+}
+
+.battle-poc__chip--factory-reset .battle-poc__chip-art {
+  overflow: visible;
+}
+
+.battle-poc__chip--factory-reset .battle-poc__chip-art > :not(.battle-poc__factory-reset-fx) {
+  animation: bp-factory-reset-fade-base 180ms ease-out forwards;
+}
+
+.battle-poc__factory-reset-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.battle-poc__factory-reset-half {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 52%;
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  background-color: rgba(40, 28, 18, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(255, 200, 120, 0.35);
+}
+
+.battle-poc__factory-reset-half--left {
+  left: 0;
+  background-position: left center;
+  clip-path: polygon(0 0, 100% 0, 88% 100%, 0 100%);
+  transform-origin: left center;
+  animation: bp-factory-reset-half-left 720ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+
+.battle-poc__factory-reset-half--right {
+  right: 0;
+  background-position: right center;
+  clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%);
+  transform-origin: right center;
+  animation: bp-factory-reset-half-right 720ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+
+.battle-poc__factory-reset-burst {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe7b0 0%, #ff8a2a 42%, transparent 70%);
+  box-shadow: 0 0 18px 8px rgba(255, 140, 50, 0.55);
+  animation: bp-factory-reset-burst 720ms ease-out both;
+}
+
+.battle-poc__factory-reset-shard {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 3px;
+  margin: -1px 0 0 -5px;
+  background: linear-gradient(90deg, #ffd089, #ff6a1a);
+  border-radius: 1px;
+  opacity: 0;
+}
+
+.battle-poc__factory-reset-shard--a {
+  animation: bp-factory-reset-shard-a 700ms ease-out both;
+}
+
+.battle-poc__factory-reset-shard--b {
+  animation: bp-factory-reset-shard-b 700ms ease-out both;
+}
+
+.battle-poc__factory-reset-shard--c {
+  animation: bp-factory-reset-shard-c 700ms ease-out both;
+}
+
+.battle-poc__factory-reset-tag {
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  transform: translateX(-50%);
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 190, 110, 0.7);
+  border-radius: 3px;
+  background: rgba(40, 18, 8, 0.88);
+  color: #ffd7a0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-shadow: 0 0 8px rgba(255, 140, 50, 0.65);
+  animation: bp-factory-reset-tag 720ms ease-out both;
+}
+
+@keyframes bp-factory-reset-shake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  18% { transform: translate(-2px, 1px) rotate(-1.2deg); }
+  36% { transform: translate(2px, -1px) rotate(1deg); }
+  54% { transform: translate(-1px, 0) rotate(-0.6deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes bp-factory-reset-fade-base {
+  to { opacity: 0; }
+}
+
+@keyframes bp-factory-reset-half-left {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; filter: brightness(1.15); }
+  55% { opacity: 1; }
+  100% { transform: translate(-42%, -8%) rotate(-18deg); opacity: 0; filter: brightness(0.7); }
+}
+
+@keyframes bp-factory-reset-half-right {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; filter: brightness(1.15); }
+  55% { opacity: 1; }
+  100% { transform: translate(42%, 10%) rotate(20deg); opacity: 0; filter: brightness(0.7); }
+}
+
+@keyframes bp-factory-reset-burst {
+  0% { transform: scale(0.2); opacity: 0; }
+  18% { transform: scale(1.8); opacity: 1; }
+  100% { transform: scale(3.4); opacity: 0; }
+}
+
+@keyframes bp-factory-reset-shard-a {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translate(-34px, -28px) rotate(-40deg); opacity: 0; }
+}
+
+@keyframes bp-factory-reset-shard-b {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translate(36px, -18px) rotate(28deg); opacity: 0; }
+}
+
+@keyframes bp-factory-reset-shard-c {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translate(8px, 32px) rotate(12deg); opacity: 0; }
+}
+
+@keyframes bp-factory-reset-tag {
+  0% { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.85); }
+  20% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.05); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(1); }
 }
 
 .battle-poc__chip-fog {
@@ -1174,10 +1392,16 @@
   animation: bp-mech-idle-bob 1700ms ease-in-out infinite;
 }
 
+/* Strip attack: play frames once only. Do not stack idle/jolt translate
+ * animations here — they fight the parent lunge and read as stutter. */
 .battle-poc__mech-sprite-strip--attack {
-  animation:
-    bp-mech-attack-jolt 260ms ease-in-out infinite alternate,
-    bp-sprite-steps var(--bp-sheet-dur) steps(var(--bp-sheet-frames), jump-none) 1 forwards;
+  animation: bp-sprite-steps var(--bp-sheet-dur) steps(var(--bp-sheet-frames), jump-none) 1 forwards;
+}
+
+/* Weighted punch: snap through windup, linger on the fully-extended impact frame.
+ * Frame stops for a 6-col strip: 0 / 20 / 40 / 60 / 80 / 100%. */
+.battle-poc__mech-sprite-strip--attack[data-punch-timing='weighted'] {
+  animation: bp-sprite-punch-weighted var(--bp-sheet-dur) linear 1 forwards;
 }
 
 /* Frozen last frame — paired with `player-strike-hold` phase */
@@ -1221,7 +1445,7 @@
 .battle-poc__mech--player {
   right: 54%;
   left: auto;
-  transition: transform 520ms cubic-bezier(0.33, 0.82, 0.33, 1);
+  transition: transform 320ms cubic-bezier(0.33, 0.82, 0.33, 1);
 }
 
 .battle-poc__mech--enemy {
@@ -1314,6 +1538,9 @@
 .battle-poc__mech--player.battle-poc__mech--attack-rush.battle-poc__mech--player-strike,
 .battle-poc__mech--player.battle-poc__mech--attack-rush.battle-poc__mech--player-strike-hold {
   transform: translateX(96px) translateY(-5px) scale(1.06);
+  /* Snappier lunge so the body move lands with the punch strip, not after it. */
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.2, 0.85, 0.25, 1);
 }
 
 .battle-poc__mech--player.battle-poc__mech--attack-overhead.battle-poc__mech--player-reveal {
@@ -1347,6 +1574,34 @@
     background-position-x: 0%;
   }
   to {
+    background-position-x: 100%;
+  }
+}
+
+/* 6-frame Glint punch: rush early frames, park on the impact pose. */
+@keyframes bp-sprite-punch-weighted {
+  0%,
+  7% {
+    background-position-x: 0%;
+  }
+  7.01%,
+  14% {
+    background-position-x: 20%;
+  }
+  14.01%,
+  24% {
+    background-position-x: 40%;
+  }
+  24.01%,
+  38% {
+    background-position-x: 60%;
+  }
+  38.01%,
+  55% {
+    background-position-x: 80%;
+  }
+  55.01%,
+  100% {
     background-position-x: 100%;
   }
 }
@@ -1777,6 +2032,117 @@
   letter-spacing: 0.2em;
 }
 
+.battle-poc__replay-options-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 16px;
+  z-index: 1200;
+  border: 1px solid var(--bp-border-strong);
+  background: rgba(10, 14, 22, 0.92);
+  color: var(--bp-text-strong);
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.battle-poc__replay-panel {
+  position: fixed;
+  width: min(540px, calc(100vw - 24px));
+  max-height: min(68vh, 560px);
+  z-index: 1250;
+  background: rgba(6, 9, 16, 0.96);
+  border: 1px solid var(--bp-border-strong);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+}
+
+.battle-poc__replay-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--bp-border);
+  background: rgba(10, 14, 22, 0.95);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: move;
+}
+
+.battle-poc__replay-panel-close {
+  border: 1px solid var(--bp-border);
+  background: transparent;
+  color: var(--bp-text);
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.battle-poc__replay-panel-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+}
+
+.battle-poc__replay-scrub-label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--bp-text);
+}
+
+.battle-poc__replay-scrubber {
+  width: 100%;
+}
+
+.battle-poc__replay-log summary {
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.battle-poc__replay-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 36vh;
+  overflow: auto;
+}
+
+.battle-poc__replay-log-item {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 8px;
+  text-align: left;
+  width: 100%;
+  border: 1px solid var(--bp-border);
+  background: rgba(10, 14, 22, 0.9);
+  color: var(--bp-text);
+  font-size: 11px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.battle-poc__replay-log-item.is-active {
+  border-color: var(--bp-ally);
+  box-shadow: 0 0 10px var(--bp-ally-glow);
+}
+
+.battle-poc__replay-log-idx {
+  color: var(--bp-text-dim);
+}
+
+.battle-poc__replay-log-text {
+  white-space: normal;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Victory / defeat banner                                                     */
 /* -------------------------------------------------------------------------- */
@@ -1944,7 +2310,8 @@
 .battle-poc__analysis-card {
   width: min(1120px, 96vw);
   max-height: min(82vh, 860px);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   background: linear-gradient(180deg, rgba(2, 6, 23, 0.96), rgba(15, 23, 42, 0.96));
@@ -1952,6 +2319,26 @@
   padding: 14px 16px 16px;
   display: grid;
   gap: 12px;
+  scrollbar-gutter: stable;
+}
+
+.battle-poc__analysis-card::-webkit-scrollbar {
+  width: 10px;
+}
+
+.battle-poc__analysis-card::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 8px;
+}
+
+.battle-poc__analysis-card::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 8px;
+  border: 2px solid rgba(15, 23, 42, 0.6);
+}
+
+.battle-poc__analysis-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(186, 198, 214, 0.65);
 }
 
 .battle-poc__analysis-head {
@@ -2065,4 +2452,221 @@
 .battle-poc__analysis-grid {
   stroke: rgba(148, 163, 184, 0.2);
   stroke-width: 0.35;
+}
+
+/* Fight statistics — Backpack Brawl–style category / by-card breakdown */
+.battle-poc__fight-stats {
+  display: grid;
+  gap: 10px;
+  max-height: min(72vh, 720px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+.battle-poc__fight-stats::-webkit-scrollbar,
+.battle-poc__fight-stat-rows::-webkit-scrollbar,
+.battle-poc__by-card-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.battle-poc__fight-stats::-webkit-scrollbar-track,
+.battle-poc__fight-stat-rows::-webkit-scrollbar-track,
+.battle-poc__by-card-list::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 8px;
+}
+
+.battle-poc__fight-stats::-webkit-scrollbar-thumb,
+.battle-poc__fight-stat-rows::-webkit-scrollbar-thumb,
+.battle-poc__by-card-list::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 8px;
+  border: 2px solid rgba(15, 23, 42, 0.6);
+}
+
+.battle-poc__fight-stat-cat {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.72);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.battle-poc__fight-stat-cat-head {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-align: left;
+}
+
+.battle-poc__fight-stat-cat-total {
+  font-variant-numeric: tabular-nums;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.battle-poc__fight-stat-cat-chev {
+  color: rgba(148, 163, 184, 0.9);
+  font-size: 12px;
+}
+
+.battle-poc__fight-stat-rows,
+.battle-poc__by-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.battle-poc__by-card-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(64vh, 640px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-gutter: stable;
+}
+
+.battle-poc__fight-stat-rows {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  max-height: min(36vh, 360px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.battle-poc__fight-stat-row,
+.battle-poc__by-card-row {
+  display: grid;
+  grid-template-columns: 36px minmax(90px, 1.1fr) minmax(120px, 2fr) 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+}
+
+.battle-poc__by-card-row {
+  grid-template-columns: 48px 1fr;
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.battle-poc__fight-stat-art,
+.battle-poc__by-card-art {
+  width: 36px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #0f172a;
+}
+
+.battle-poc__by-card-art {
+  width: 48px;
+  height: 64px;
+}
+
+.battle-poc__fight-stat-name {
+  font-size: 12px;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.battle-poc__fight-stat-bar-wrap {
+  position: relative;
+  height: 18px;
+  border-radius: 4px;
+  background: rgba(30, 41, 59, 0.9);
+  overflow: hidden;
+}
+
+.battle-poc__fight-stat-bar-wrap--bycard {
+  margin-top: 6px;
+  height: 16px;
+}
+
+.battle-poc__fight-stat-bar {
+  height: 100%;
+  border-radius: 4px;
+  opacity: 0.9;
+}
+
+.battle-poc__fight-stat-bar-val {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+  font-variant-numeric: tabular-nums;
+}
+
+.battle-poc__fight-stat-pct {
+  font-size: 11px;
+  color: rgba(226, 232, 240, 0.85);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.battle-poc__fight-stat-empty {
+  padding: 12px;
+  color: rgba(148, 163, 184, 0.9);
+  font-size: 12px;
+}
+
+.battle-poc__by-card-body {
+  min-width: 0;
+}
+
+.battle-poc__by-card-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: #f1f5f9;
+}
+
+.battle-poc__by-card-resolves {
+  font-size: 11px;
+  color: rgba(148, 163, 184, 0.95);
+  letter-spacing: 0.06em;
+}
+
+.battle-poc__by-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.battle-poc__by-card-chip {
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(2, 6, 23, 0.35);
 }

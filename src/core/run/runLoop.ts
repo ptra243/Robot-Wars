@@ -1,8 +1,12 @@
 import { SeededRandom, CardContentService, cardOfferStreamSeed } from '../content';
 import { COMBAT_RULES } from '../rules';
+import { getPilotById } from '../pilots';
 import type { RunState, TravelEventOutcome, TravelNodeType, TravelOffer } from '../types';
 import { activeQueueSlotsForAct, prepareEnemyForCombat } from './enemyRoll';
+import { resolveCardUpgradeId } from './cardUpgrade';
 import { grantRelic, rollRelicForSource } from './relics';
+
+const PAID_UPGRADE_COST = 25;
 
 const ACT_TRAVEL_DECK_TEMPLATE: TravelNodeType[] = [
   'shop',
@@ -40,6 +44,21 @@ const STARTING_RESHUFFLES = 2;
 const WIN_GOLD_BATTLE = 20;
 const WIN_GOLD_BOSS = 60;
 const WIN_GOLD_ELITE = 40;
+
+function syncPilotAwakeningTraits(run: RunState): void {
+  const pilot = getPilotById(run.spirit.id);
+  if (!pilot) return;
+  const add = (id: string | undefined): void => {
+    if (!id) return;
+    if (!run.loop.playerTraitIds.includes(id)) run.loop.playerTraitIds.push(id);
+  };
+  add(pilot.traitIds.base);
+  if (run.loop.awakening >= 1) add(pilot.traitIds.aw0);
+  if (run.loop.awakening >= 2) {
+    add(pilot.traitIds.aw1);
+    add(pilot.traitIds.aw2);
+  }
+}
 
 function shuffleTravelDeck(seed: number, act: number): TravelNodeType[] {
   const rng = new SeededRandom(seed + act * 1741);
@@ -110,9 +129,11 @@ export function initRunLoop(run: RunState): void {
   run.loop.travelDiscard = [];
   run.loop.travelOffers = [null, null, null];
   run.loop.pendingEncounterType = null;
+  run.loop.pendingRelicRewardSource = null;
   run.loop.enemyHpMultiplier = 1;
   run.loop.freeCardRerollsThisFight = 0;
   run.loop.relicIds = [];
+  run.loop.shopRelicPurchaseCount = 0;
   run.loop.playerTraitIds = [];
   run.loop.retryAvailable = false;
   run.loop.battleReplaySpeed = 1;
@@ -211,30 +232,19 @@ export function applyPostCombatRewards(run: RunState, playerWon: boolean): void 
   }
   if (run.loop.pendingEncounterType === 'battle') {
     run.loop.gold += WIN_GOLD_BATTLE;
+    run.loop.pendingRelicRewardSource = null;
   } else if (run.loop.pendingEncounterType === 'elite') {
     run.loop.gold += WIN_GOLD_ELITE;
-    const rolled = rollRelicForSource(
-      run,
-      'elite',
-      run.seed + run.loop.totalStepsResolved * 19 + run.encounterIndex * 7,
-    );
-    if (rolled) {
-      grantRelic(run, rolled.id);
-    }
+    /* Relic pick happens on the reward screen (3 offers); do not auto-grant. */
+    run.loop.pendingRelicRewardSource = 'elite';
   } else {
     run.loop.gold += WIN_GOLD_BOSS;
-    const rolled = rollRelicForSource(
-      run,
-      'boss',
-      run.seed + run.loop.totalStepsResolved * 23 + run.encounterIndex * 11,
-    );
-    if (rolled) {
-      grantRelic(run, rolled.id);
-    }
+    run.loop.pendingRelicRewardSource = 'boss';
     run.loop.act += 1;
     run.loop.stepsInAct = 0;
     run.loop.awakening = Math.min(2, run.loop.awakening + 1);
     run.spirit.awakening = run.loop.awakening;
+    syncPilotAwakeningTraits(run);
     if (run.loop.act === 4) {
       run.loop.infiniteMode = true;
       run.loop.travelDrawPile = [];
@@ -247,6 +257,7 @@ export function applyPostCombatRewards(run: RunState, playerWon: boolean): void 
     for (let i = 0; i < run.loop.travelOffers.length; i += 1) {
       refillOneOffer(run, i);
     }
+    run.sandboxActiveQueueSlots = activeQueueSlotsForAct(run.loop.act);
   }
   // Baron von Boar — wealth bonus: +50 gold per active baron trait after every won encounter
   const baronGold =
@@ -277,37 +288,18 @@ export interface TravelEventResolution {
 
 export function resolveRandomEvent(run: RunState, content: CardContentService): TravelEventResolution {
   const rng = new SeededRandom(run.seed + run.loop.totalStepsResolved * 41 + run.encounterIndex * 13);
-  const eventType = rng.nextInt(8);
+  const eventType = rng.nextInt(10);
   if (eventType === 0) {
     if (run.deck.length > 0) {
       const index = rng.nextInt(run.deck.length);
       const current = run.deck[index]!;
-      try {
-        const def = content.get(current);
-        if (def.merge_to) {
-          content.get(def.merge_to);
-          const afterId = def.merge_to;
-          run.deck[index] = afterId;
-          return {
-            message: 'Random event: upgraded a random deck card tier.',
-            outcome: { kind: 'upgrade', beforeId: current, afterId },
-          };
-        }
-      } catch {
-        /* fall through */
-      }
-      if (current.includes('_t1')) {
-        const upgraded = current.replace('_t1', '_t2');
-        try {
-          content.get(upgraded);
-          run.deck[index] = upgraded;
-          return {
-            message: 'Random event: upgraded a random deck card tier.',
-            outcome: { kind: 'upgrade', beforeId: current, afterId: upgraded },
-          };
-        } catch {
-          /* noop */
-        }
+      const afterId = resolveCardUpgradeId(current, content);
+      if (afterId) {
+        run.deck[index] = afterId;
+        return {
+          message: 'Random event: upgraded a random deck card.',
+          outcome: { kind: 'upgrade', beforeId: current, afterId, context: 'deck' },
+        };
       }
     }
     return {
@@ -316,21 +308,13 @@ export function resolveRandomEvent(run: RunState, content: CardContentService): 
     };
   }
   if (eventType === 1) {
-    if (run.loop.gold >= 20) {
-      run.loop.gold -= 20;
-      const paidDraw = CardContentService.loadDefault(
-        cardOfferStreamSeed(run.seed, run.loop.totalStepsResolved * 79 + 2),
-      );
-      const cardId = paidDraw.drawWeighted(run.faction, run.loop.awakening).id;
-      run.deck.push(cardId);
-      return {
-        message: 'Random event: spent 20 gold to add a weighted card.',
-        outcome: { kind: 'paid_card', goldSpent: 20, cardId },
-      };
-    }
+    const paidDraw = CardContentService.loadDefault(
+      cardOfferStreamSeed(run.seed, run.loop.totalStepsResolved * 79 + 2),
+    );
+    const cardId = paidDraw.drawWeighted(run.faction, run.loop.awakening).id;
     return {
-      message: 'Random event: not enough gold for paid draft.',
-      outcome: { kind: 'noop', reason: 'not_enough_gold' },
+      message: 'Random event: card offer — accept to add it, or refuse for gold.',
+      outcome: { kind: 'card_offer', cardId, acceptCost: 20, refuseGold: 20 },
     };
   }
   if (eventType === 2) {
@@ -402,11 +386,64 @@ export function resolveRandomEvent(run: RunState, content: CardContentService): 
       outcome: { kind: 'heart_loss', heartsRemaining: run.loop.hearts },
     };
   }
-  const lost = Math.min(20, run.loop.gold);
-  run.loop.gold = Math.max(0, run.loop.gold - 20);
+  if (eventType === 7) {
+    const lost = Math.min(20, run.loop.gold);
+    run.loop.gold = Math.max(0, run.loop.gold - 20);
+    return {
+      message: 'Random event: lost 20 gold.',
+      outcome: { kind: 'gold_loss', amount: lost, totalGold: run.loop.gold },
+    };
+  }
+  if (eventType === 8) {
+    const upgradable = run.deck
+      .map((id, index) => ({ id, index, afterId: resolveCardUpgradeId(id, content) }))
+      .filter((row): row is { id: string; index: number; afterId: string } => row.afterId != null);
+    if (upgradable.length === 0) {
+      return {
+        message: 'Random event: no card could be upgraded for gold.',
+        outcome: { kind: 'noop', reason: 'no_upgrade' },
+      };
+    }
+    const pick = upgradable[rng.nextInt(upgradable.length)]!;
+    return {
+      message: `Random event: pay ${String(PAID_UPGRADE_COST)}g to upgrade a card, or refuse for gold.`,
+      outcome: {
+        kind: 'upgrade_offer',
+        beforeId: pick.id,
+        afterId: pick.afterId,
+        acceptCost: PAID_UPGRADE_COST,
+        refuseGold: 15,
+      },
+    };
+  }
+  /* eventType === 9 — upgrade a random card currently slotted in the program */
+  const slotted = run.plannedQueue
+    .map((id, index) => (id ? { id, index, afterId: resolveCardUpgradeId(id, content) } : null))
+    .filter((row): row is { id: string; index: number; afterId: string } => row != null && row.afterId != null);
+  if (slotted.length === 0) {
+    return {
+      message: 'Random event: no program slot card could be upgraded.',
+      outcome: { kind: 'noop', reason: 'no_queue_upgrade' },
+    };
+  }
+  const slotPick = slotted[rng.nextInt(slotted.length)]!;
+  run.plannedQueue[slotPick.index] = slotPick.afterId;
+  const deckIdx = run.deck.indexOf(slotPick.id);
+  if (deckIdx >= 0) {
+    run.deck[deckIdx] = slotPick.afterId;
+  }
+  const handIdx = run.hand.indexOf(slotPick.id);
+  if (handIdx >= 0) {
+    run.hand[handIdx] = slotPick.afterId;
+  }
   return {
-    message: 'Random event: lost 20 gold.',
-    outcome: { kind: 'gold_loss', amount: lost, totalGold: run.loop.gold },
+    message: 'Random event: upgraded a random card in your program.',
+    outcome: {
+      kind: 'upgrade',
+      beforeId: slotPick.id,
+      afterId: slotPick.afterId,
+      context: 'queue_slot',
+    },
   };
 }
 

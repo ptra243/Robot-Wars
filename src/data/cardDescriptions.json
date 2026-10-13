@@ -1,6 +1,106 @@
 {
   "schemaVersion": 1,
   "byCardId": {
+    "clockwork_canticle_interleave_chorus_t1": {
+      "full": "**Strike** 1.\n**Sequence** Start: **Strike** 2, +1 **Potency**.\n**Sequence** 2: **Strike** 3, +1 **Potency**.\n**Sequence** 3: **Strike** 4, +2 **Potency**.\nTags: Strike, Potency.",
+      "compact": "**Strike** 1.\n**Sequence** Start: **Strike** 2, +1 **Potency**.\n**Sequence** 2: **Strike** 3, +1 **Potency**.\n**Sequence** 3: **Strike** 4, +2 **Potency**."
+    },
+    "clockwork_canticle_interleave_verse_t1": {
+      "full": "**Strike** 1.\n**Sequence** 2: **Strike** 3.\n**Prime**: Deal 3 **direct** damage.\nTags: Strike, Direct.",
+      "compact": "**Strike** 1.\n**Sequence** 2: **Strike** 3.\n**Prime**: Deal 3 **direct** damage."
+    },
+    "clockwork_capacitor_canticle_t1": {
+      "full": "**Energy** 1.\n**Sequence** Start: **Energy** 1, **Strike** 2, +1 **Potency**.\nTags: Energy, Strike, Potency.",
+      "compact": "**Energy** 1.\n**Sequence** Start: **Energy** 1, **Strike** 2, +1 **Potency**."
+    },
+    "clockwork_hymn_invigoration_t1": {
+      "full": "**Faith** 1.\n**Prime**: **Energy** 3.\nTags: Energy, Potency.",
+      "compact": "**Faith** 1.\n**Prime**: **Energy** 3."
+    },
+    "clockwork_hymn_shelter_t1": {
+      "full": "**Shield** 2.\n**Prime**: Heal 2.\nTags: Shield.",
+      "compact": "**Shield** 2.\n**Prime**: Heal 2."
+    },
+    "clockwork_hymn_warmth_t1": {
+      "full": "Heal 2.\n**Prime**: Deal 5 **direct** damage.\nTags: Direct.",
+      "compact": "Heal 2.\n**Prime**: Deal 5 **direct** damage."
+    },
+    "clockwork_judgment_measure_t1": {
+      "full": "Deal 4 **direct** damage.\n**Faith** 3: Weaken 1.\nTags: Direct.",
+      "compact": "Deal 4 **direct** damage.\n**Faith** 3: Weaken 1."
+    },
+    "clockwork_mercy_lattice_t1": {
+      "full": "Deal 3 **direct** damage.\n**Faith** 4: Heal 4.\nTags: Direct.",
+      "compact": "Deal 3 **direct** damage.\n**Faith** 4: Heal 4."
+    },
+    "clockwork_ordinance_silence_t1": {
+      "full": "Deal 3 **direct** damage.\n**Faith** 5: Weaken 2.\nTags: Direct.",
+      "compact": "Deal 3 **direct** damage.\n**Faith** 5: Weaken 2."
+    },
+    "clockwork_prime_benediction_t1": {
+      "full": "**Faith** 1.\n**Prime**: **Faith** 1, **Energy** 1.\nTags: Energy, Potency.",
+      "compact": "**Faith** 1.\n**Prime**: **Faith** 1, **Energy** 1."
+    },
+    "clockwork_prime_bulwark_t1": {
+      "full": "**Shield** 3.\n**Prime**: **Shield** 4.\nTags: Shield.",
+      "compact": "**Shield** 3.\n**Prime**: **Shield** 4."
+    },
+    "clockwork_prime_cataclysm_t1": {
+      "full": "Deal 5 **direct** damage.\n**Prime**: **Energy** 1.\n**Faith** 6: Deal 12 **direct** damage.\nTags: Direct.",
+      "compact": "Deal 5 **direct** damage.\n**Prime**: **Energy** 1.\n**Faith** 6: Deal 12 **direct** damage."
+    },
+    "clockwork_prime_consecration_t1": {
+      "full": "Deal 2 **direct** damage.\nTemporary **Prime** ×2.\nTags: Direct.",
+      "compact": "Deal 2 **direct** damage.\nTemporary **Prime** ×2."
+    },
+    "clockwork_prime_faith_t1": {
+      "full": "Deal 1 **direct** damage.\n**Prime**: **Faith** 1.\nTags: Direct, Potency.",
+      "compact": "Deal 1 **direct** damage.\n**Prime**: **Faith** 1."
+    },
+    "clockwork_prime_interdict_t1": {
+      "full": "Deal 1 **direct** damage.\n**Prime**: Deal 5 **direct** damage.\nTags: Direct.",
+      "compact": "Deal 1 **direct** damage.\n**Prime**: Deal 5 **direct** damage."
+    },
+    "clockwork_prime_purification_t1": {
+      "full": "Heal 3.\n**Prime**: Deal 4 **direct** damage.\nTags: Direct.",
+      "compact": "Heal 3.\n**Prime**: Deal 4 **direct** damage."
+    },
+    "clockwork_prime_spark_t1": {
+      "full": "**Faith** 1.\n**Prime**: **Energy** 1.\nTags: Energy, Potency.",
+      "compact": "**Faith** 1.\n**Prime**: **Energy** 1."
+    },
+    "clockwork_prime_tithe_t1": {
+      "full": "**Faith** 2.\n**Prime**: **Faith** 1, **Energy** 1.\nTags: Energy, Potency.",
+      "compact": "**Faith** 2.\n**Prime**: **Faith** 1, **Energy** 1."
+    },
+    "clockwork_song_iron_bridge_t1": {
+      "full": "+1 **Potency**.\n**Sequence** 3: **Strike** 3, **Shield** 3.\n**Prime**: Delayed 1 → **Strike** 5, **Shield** 5.\nTags: Strike, Shield, Potency.",
+      "compact": "+1 **Potency**.\n**Sequence** 3: **Strike** 3, **Shield** 3.\n**Prime**: Delayed **Strike** 5 + **Shield** 5."
+    },
+    "clockwork_song_iron_chorus_t1": {
+      "full": "**Strike** 1.\n**Sequence** 4: **Strike** 7, +2 **Potency**.\nTags: Strike, Potency.",
+      "compact": "**Strike** 1.\n**Sequence** 4: **Strike** 7, +2 **Potency**."
+    },
+    "clockwork_song_iron_coda_t1": {
+      "full": "**Strike** 1.\n**Sequence** 5: **Strike** 8, +2 **Potency**.\nTags: Strike, Potency.",
+      "compact": "**Strike** 1.\n**Sequence** 5: **Strike** 8, +2 **Potency**."
+    },
+    "clockwork_song_iron_intro_t1": {
+      "full": "**Strike** 1.\n**Sequence** Start: **Strike** 2, +1 **Potency**.\nTags: Strike, Potency.",
+      "compact": "**Strike** 1.\n**Sequence** Start: **Strike** 2, +1 **Potency**."
+    },
+    "clockwork_song_iron_verse_t1": {
+      "full": "**Strike** 1.\n**Sequence** 2: **Strike** 4, +1 **Potency**.\nTags: Strike, Potency.",
+      "compact": "**Strike** 1.\n**Sequence** 2: **Strike** 4, +1 **Potency**."
+    },
+    "clockwork_song_sanctuary_intro_t1": {
+      "full": "**Shield** 3.\n**Sequence** Start: **Shield** 6.\nTags: Shield.",
+      "compact": "**Shield** 3.\n**Sequence** Start: **Shield** 6."
+    },
+    "clockwork_song_sanctuary_verse_t1": {
+      "full": "**Shield** 2.\n**Sequence** 2: cards on **Prime** slots gain +2 **Potency**.\nTags: Shield, Potency.",
+      "compact": "**Shield** 2.\n**Sequence** 2: **Prime**-slot cards gain +2 **Potency**."
+    },
     "core_rebirth_t1": {
       "full": "+1 Junk.\nFactory Reset\nReplace next 1 Neutral Basic Strike slot with random Core-parts cards (same tier).\nEmergency Protocol 1\nTags: Junk.",
       "compact": "+1 Junk.\nFactory Reset\nReplace next 1 Neutral Basic Strike slot with random Core-parts cards (same tier).\nEmergency Protocol 1"
@@ -90,12 +190,12 @@
       "compact": "Energy 1 · Shield 3\nJunk ≥ 5: Bulk 2\nJunk ≥ 10: Shield from bulk + potency"
     },
     "junk_bulwark_t2": {
-      "full": "Grants 4 block (shield absorbs incoming damage before HP).\nTags: Shield, Junk.",
-      "compact": "Grants 4 block (shield absorbs incoming damage before HP)."
+      "full": "Gain 4 **Shield**.\nTags: Shield, Junk.",
+      "compact": "Gain 4 **Shield**."
     },
     "junk_bulwark_t3": {
-      "full": "Grants 5 block (shield absorbs incoming damage before HP).\nTags: Shield, Junk.",
-      "compact": "Grants 5 block (shield absorbs incoming damage before HP)."
+      "full": "Gain 5 **Shield**.\nTags: Shield, Junk.",
+      "compact": "Gain 5 **Shield**."
     },
     "junk_coil_t1": {
       "full": "Baseline: +1 Energy\nJunk ≥ 4: Gain Junk equal to your Energy (after the baseline +1)\nJunk ≥ 12: If you can pay 4 Energy — +potency, floor(junk at snapshot ÷ 4)\nTags: Junk, Energy.",
@@ -143,7 +243,7 @@
     },
     "junk_generator_t3": {
       "full": "Continuous 1: while this slot keeps resolving, every 1 rounds you gain +1 Junk and +1 Energy from it.\nTags: Energy.",
-      "compact": "Continuous 1."
+      "compact": "**Continuous** 1."
     },
     "junk_ladder_t1": {
       "full": "5 non-Strike damage\nJunk ≥ 8: Overclock (once)\nTags: Direct, Junk.",
@@ -186,12 +286,12 @@
       "compact": "Energy 1 · Strike 4\nJunk ≥ 5: Expose from pile\nJunk ≥ 10: +2 Strike damage\nJunk ≥ 12: +5 Strike damage"
     },
     "junk_rivet_t2": {
-      "full": "Deals 5 base damage.\nTags: Strike, Expose, Junk.",
-      "compact": "Deals 5 base damage."
+      "full": "Deal 5 **Strike** damage.\nTags: Strike, Expose, Junk.",
+      "compact": "Deal 5 **Strike** damage."
     },
     "junk_rivet_t3": {
-      "full": "Deals 6 base damage.\nTags: Strike, Expose, Junk.",
-      "compact": "Deals 6 base damage."
+      "full": "Deal 6 **Strike** damage.\nTags: Strike, Expose, Junk.",
+      "compact": "Deal 6 **Strike** damage."
     },
     "junk_spigot_t1": {
       "full": "Baseline: +1 Energy, +1 Junk\nJunk ≥ 4: +2 Energy, +2 Junk\nJunk ≥ 10: +Energy — floor(junk at snapshot ÷ 4)\nTags: Junk, Energy.",
@@ -207,51 +307,51 @@
     },
     "needle_driver_t1": {
       "full": "Strike 3 (potency applies).\nIf you have at least 3 junk: spend 3 junk, then Strike 7 (no potency).\nPierce: damage from this card ignores block.\nTags: Strike, Junk.",
-      "compact": "Strike 3 (potency applies).\nIf you have at least 3 junk: spend 3 junk, then Strike 7 (no potency).\nPierce 1."
+      "compact": "Strike 3 (potency applies).\nIf you have at least 3 junk: spend 3 junk, then Strike 7 (no potency).\n**Pierce** 1."
     },
     "needle_driver_t2": {
       "full": "Strike 5 (potency applies).\nIf you have at least 3 junk: spend 3 junk, then Strike 9 (no potency).\nPierce: damage from this card ignores block.\nTags: Strike, Junk.",
-      "compact": "Strike 5 (potency applies).\nIf you have at least 3 junk: spend 3 junk, then Strike 9 (no potency).\nPierce 1."
+      "compact": "Strike 5 (potency applies).\nIf you have at least 3 junk: spend 3 junk, then Strike 9 (no potency).\n**Pierce** 1."
     },
     "needle_driver_t3": {
       "full": "Strike 7 (potency applies).\nIf you have at least 3 junk: spend 3 junk, then Strike 11 (no potency).\nPierce: damage from this card ignores block.\nTags: Strike, Junk.",
-      "compact": "Strike 7 (potency applies).\nIf you have at least 3 junk: spend 3 junk, then Strike 11 (no potency).\nPierce 1."
+      "compact": "Strike 7 (potency applies).\nIf you have at least 3 junk: spend 3 junk, then Strike 11 (no potency).\n**Pierce** 1."
     },
     "neutral_barrier_t1": {
-      "full": "Grants 3 block (shield absorbs incoming damage before HP).\nTags: Shield.",
-      "compact": "Grants 3 block (shield absorbs incoming damage before HP)."
+      "full": "Gain 3 **Shield**.\nTags: Shield.",
+      "compact": "Gain 3 **Shield**."
     },
     "neutral_barrier_t2": {
-      "full": "Grants 5 block (shield absorbs incoming damage before HP).\nTags: Shield.",
-      "compact": "Grants 5 block (shield absorbs incoming damage before HP)."
+      "full": "Gain 5 **Shield**.\nTags: Shield.",
+      "compact": "Gain 5 **Shield**."
     },
     "neutral_barrier_t3": {
-      "full": "Grants 7 block (shield absorbs incoming damage before HP).\nTags: Shield.",
-      "compact": "Grants 7 block (shield absorbs incoming damage before HP)."
+      "full": "Gain 7 **Shield**.\nTags: Shield.",
+      "compact": "Gain 7 **Shield**."
     },
     "neutral_basic_strike_t1": {
-      "full": "Deals 2 base damage.\nTags: Strike.",
-      "compact": "Deals 2 base damage."
+      "full": "Deal 2 **Strike** damage.\nTags: Strike.",
+      "compact": "Deal 2 **Strike** damage."
     },
     "neutral_basic_strike_t2": {
-      "full": "Deals 3 base damage.\nTags: Strike.",
-      "compact": "Deals 3 base damage."
+      "full": "Deal 3 **Strike** damage.\nTags: Strike.",
+      "compact": "Deal 3 **Strike** damage."
     },
     "neutral_basic_strike_t3": {
-      "full": "Deals 4 base damage.\nTags: Strike.",
-      "compact": "Deals 4 base damage."
+      "full": "Deal 4 **Strike** damage.\nTags: Strike.",
+      "compact": "Deal 4 **Strike** damage."
     },
     "neutral_bulk_up_t1": {
       "full": "Bulk 2: gain up to 2 bulk stack(s) (cap 3). Each stack mitigates 1 incoming strike damage to HP.\nTags: Bulk.",
-      "compact": "Bulk 2."
+      "compact": "**Bulk** 2."
     },
     "neutral_bulk_up_t2": {
       "full": "Bulk 3: gain up to 3 bulk stack(s) (cap 3). Each stack mitigates 1 incoming strike damage to HP.\nTags: Bulk.",
-      "compact": "Bulk 3."
+      "compact": "**Bulk** 3."
     },
     "neutral_bulk_up_t3": {
       "full": "Bulk 4: gain up to 4 bulk stack(s) (cap 3). Each stack mitigates 1 incoming strike damage to HP.\nTags: Bulk.",
-      "compact": "Bulk 4."
+      "compact": "**Bulk** 4."
     },
     "neutral_capacitor_feed_t1": {
       "full": "Gains 2 Energy.\nTags: Energy.",
@@ -311,19 +411,19 @@
     },
     "neutral_expose_drone_uplink_t3": {
       "full": "Continuous 1: while this slot keeps resolving, every 1 rounds you gain +1 Junk and +1 Energy from it.\nTags: Expose, Energy.",
-      "compact": "Continuous 1."
+      "compact": "**Continuous** 1."
     },
     "neutral_expose_wiring_t1": {
       "full": "Expose 3: apply 3 Expose to the target. The next Strike that hits that target gains +3 damage, then Expose clears.",
-      "compact": "Expose 3."
+      "compact": "**Expose** 3."
     },
     "neutral_expose_wiring_t2": {
       "full": "Expose 5: apply 5 Expose to the target. The next Strike that hits that target gains +5 damage, then Expose clears.",
-      "compact": "Expose 5."
+      "compact": "**Expose** 5."
     },
     "neutral_expose_wiring_t3": {
       "full": "Expose 7: apply 7 Expose to the target. The next Strike that hits that target gains +7 damage, then Expose clears.",
-      "compact": "Expose 7."
+      "compact": "**Expose** 7."
     },
     "neutral_feint_t1": {
       "full": "Strike 3 (potency applies)\nNext Strike: Pierce\nTags: Strike.",
@@ -339,27 +439,27 @@
     },
     "neutral_gathering_strike_t1": {
       "full": "Strike: +bonus damage per strike you have already resolved this combat before this hit (each StrikeDamage step on Multi-strike counts). UniqueDeck: at most one UniqueDeck card in your deck.\nUniqueDeck: your deck may include at most one copy of any card with this keyword (hand + fatigue deck combined).\nTags: Strike.",
-      "compact": "Strike: +bonus damage per strike you have already resolved this combat before this hit (each StrikeDamage step on Multi-strike counts). UniqueDeck: at most one UniqueDeck card in your deck.\nUniqueDeck 1."
+      "compact": "Strike: +bonus damage per strike you have already resolved this combat before this hit (each StrikeDamage step on Multi-strike counts). UniqueDeck: at most one UniqueDeck card in your deck.\n**UniqueDeck** 1."
     },
     "neutral_gathering_strike_t2": {
       "full": "Strike: +bonus damage per strike you have already resolved this combat before this hit (each StrikeDamage step on Multi-strike counts). UniqueDeck: at most one UniqueDeck card in your deck.\nUniqueDeck: your deck may include at most one copy of any card with this keyword (hand + fatigue deck combined).\nTags: Strike.",
-      "compact": "Strike: +bonus damage per strike you have already resolved this combat before this hit (each StrikeDamage step on Multi-strike counts). UniqueDeck: at most one UniqueDeck card in your deck.\nUniqueDeck 1."
+      "compact": "Strike: +bonus damage per strike you have already resolved this combat before this hit (each StrikeDamage step on Multi-strike counts). UniqueDeck: at most one UniqueDeck card in your deck.\n**UniqueDeck** 1."
     },
     "neutral_gathering_strike_t3": {
       "full": "Strike: +bonus damage per strike you have already resolved this combat before this hit (each StrikeDamage step on Multi-strike counts). UniqueDeck: at most one UniqueDeck card in your deck.\nUniqueDeck: your deck may include at most one copy of any card with this keyword (hand + fatigue deck combined).\nTags: Strike.",
-      "compact": "Strike: +bonus damage per strike you have already resolved this combat before this hit (each StrikeDamage step on Multi-strike counts). UniqueDeck: at most one UniqueDeck card in your deck.\nUniqueDeck 1."
+      "compact": "Strike: +bonus damage per strike you have already resolved this combat before this hit (each StrikeDamage step on Multi-strike counts). UniqueDeck: at most one UniqueDeck card in your deck.\n**UniqueDeck** 1."
     },
     "neutral_harassing_strike_t1": {
-      "full": "Deals 1 base damage.\nOverclock 1: bonus-resolves the next card in your queue once per your turn (first eligible Overclock on that turn; no energy cost on Overclock carriers).\nTags: Strike.",
-      "compact": "Deals 1 base damage.\nOverclock 1."
+      "full": "Deal 1 **Strike** damage.\nOverclock 1: bonus-resolves the next card in your queue once per your turn (first eligible Overclock on that turn; no energy cost on Overclock carriers).\nTags: Strike.",
+      "compact": "Deal 1 **Strike** damage.\n**Overclock** 1."
     },
     "neutral_harassing_strike_t2": {
-      "full": "Deals 2 base damage.\nOverclock 1: bonus-resolves the next card in your queue once per your turn (first eligible Overclock on that turn; no energy cost on Overclock carriers).\nTags: Strike.",
-      "compact": "Deals 2 base damage.\nOverclock 1."
+      "full": "Deal 2 **Strike** damage.\nOverclock 1: bonus-resolves the next card in your queue once per your turn (first eligible Overclock on that turn; no energy cost on Overclock carriers).\nTags: Strike.",
+      "compact": "Deal 2 **Strike** damage.\n**Overclock** 1."
     },
     "neutral_harassing_strike_t3": {
-      "full": "Deals 2 base damage.\nOverclock 2: bonus-resolves the next card in your queue once per your turn (first eligible Overclock on that turn; no energy cost on Overclock carriers).\nTags: Strike.",
-      "compact": "Deals 2 base damage.\nOverclock 2."
+      "full": "Deal 2 **Strike** damage.\nOverclock 2: bonus-resolves the next card in your queue once per your turn (first eligible Overclock on that turn; no energy cost on Overclock carriers).\nTags: Strike.",
+      "compact": "Deal 2 **Strike** damage.\n**Overclock** 2."
     },
     "neutral_multi_strike_t1": {
       "full": "Strike 1\nStrike 1\nTags: Strike.",
@@ -375,15 +475,15 @@
     },
     "neutral_overclock_t1": {
       "full": "Overclock 1: bonus-resolves the next card in your queue once per your turn (first eligible Overclock on that turn; no energy cost on Overclock carriers).",
-      "compact": "Overclock 1."
+      "compact": "**Overclock** 1."
     },
     "neutral_overclock_t2": {
       "full": "Overclock 2: bonus-resolves the next card in your queue once per your turn (first eligible Overclock on that turn; no energy cost on Overclock carriers).",
-      "compact": "Overclock 2."
+      "compact": "**Overclock** 2."
     },
     "neutral_overclock_t3": {
       "full": "Overclock 2: bonus-resolves the next card in your queue once per your turn (first eligible Overclock on that turn; no energy cost on Overclock carriers).",
-      "compact": "Overclock 2."
+      "compact": "**Overclock** 2."
     },
     "neutral_overdrive_slam_t1": {
       "full": "Strike 8.\nSelf-stun 1 turn after resolving (forced stall on your next activation).\nTags: Strike.",
@@ -606,8 +706,8 @@
       "compact": "Evade 1."
     },
     "ninja_switch_harmony_kernel_t1": {
-      "full": "Gain 1 Energy.\nHeal 2.\nPersistent payoff shell for stance-switch decks.\nTags: Energy, Stance.",
-      "compact": "Energy 1.\nHeal 2.\nPersistent switch payoff."
+      "full": "**Persistent**\nPersistent marker card for stance-switch decks.\nGain 1 Energy.\nHeal 2.\nTags: Energy, Stance.",
+      "compact": "**Persistent**\nPersistent marker for switch decks.\nEnergy 1.\nHeal 2."
     },
     "ninja_taiji_formation_t1": {
       "full": "**Dragon**: 6 **Direct** damage.\n**Tiger**: **Weaken** 3.\n**Tortoise**: **Shield** 6.\n**Bird**: **Evade** 1.\nEach line activates only if that stance has been activated this battle.\nTags: Stance, Direct, Shield.",
@@ -766,28 +866,28 @@
       "compact": "+4 Junk.\n+2 Energy."
     },
     "salvage_mantle_t1": {
-      "full": "Grants 4 block (shield absorbs incoming damage before HP).\nTags: Shield.",
-      "compact": "Grants 4 block (shield absorbs incoming damage before HP)."
+      "full": "Gain 4 **Shield**.\nTags: Shield.",
+      "compact": "Gain 4 **Shield**."
     },
     "salvage_mantle_t2": {
-      "full": "Grants 5 block (shield absorbs incoming damage before HP).\nTags: Shield.",
-      "compact": "Grants 5 block (shield absorbs incoming damage before HP)."
+      "full": "Gain 5 **Shield**.\nTags: Shield.",
+      "compact": "Gain 5 **Shield**."
     },
     "salvage_mantle_t3": {
-      "full": "Grants 6 block (shield absorbs incoming damage before HP).\nTags: Shield.",
-      "compact": "Grants 6 block (shield absorbs incoming damage before HP)."
+      "full": "Gain 6 **Shield**.\nTags: Shield.",
+      "compact": "Gain 6 **Shield**."
     },
     "salvage_strike_t1": {
-      "full": "Deals 3 base damage.\nGains 1 junk.\nTags: Strike, Junk.",
-      "compact": "Deals 3 base damage.\nGains 1 junk."
+      "full": "Deal 3 **Strike** damage.\nGains 1 junk.\nTags: Strike, Junk.",
+      "compact": "Deal 3 **Strike** damage.\nGains 1 junk."
     },
     "salvage_strike_t2": {
-      "full": "Deals 4 base damage.\nGains 1 junk.\nTags: Strike, Junk.",
-      "compact": "Deals 4 base damage.\nGains 1 junk."
+      "full": "Deal 4 **Strike** damage.\nGains 1 junk.\nTags: Strike, Junk.",
+      "compact": "Deal 4 **Strike** damage.\nGains 1 junk."
     },
     "salvage_strike_t3": {
-      "full": "Deals 5 base damage.\nGains 2 junk.\nTags: Strike, Junk.",
-      "compact": "Deals 5 base damage.\nGains 2 junk."
+      "full": "Deal 5 **Strike** damage.\nGains 2 junk.\nTags: Strike, Junk.",
+      "compact": "Deal 5 **Strike** damage.\nGains 2 junk."
     },
     "strip_mine_t1": {
       "full": "Spend 2 Junk: mitigate 3 from next enemy Strike to you\nTags: Junk.",

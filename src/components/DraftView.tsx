@@ -33,7 +33,13 @@ export function DraftView() {
       setHover(null);
       return;
     }
-    setHover({ card, x: ev.clientX, y: ev.clientY });
+    setHover({
+      card,
+      x: ev.clientX,
+      y: ev.clientY,
+      clientX: ev.clientX,
+      clientY: ev.clientY,
+    });
   }, []);
 
   const currentOffers = draftOffers[draftStep] ?? [];

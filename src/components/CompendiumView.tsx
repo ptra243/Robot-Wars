@@ -18,13 +18,30 @@ interface CompendiumHover {
   clientY: number;
 }
 
-type FactionScopedTag = 'dragon' | 'tiger' | 'bird' | 'turtle' | 'core' | 'junk';
-type CompendiumTag = CardTag | 'Core' | FactionScopedTag;
+type FactionScopedTag =
+  | 'dragon'
+  | 'tiger'
+  | 'bird'
+  | 'turtle'
+  | 'core'
+  | 'junk'
+  | 'prime'
+  | 'sequence';
+type CompendiumTag = CardTag | 'Core' | 'Prime' | 'Sequence' | FactionScopedTag;
 
 const FACTION_TAGS: Record<string, FactionScopedTag[]> = {
   CYBERPUNK: ['dragon', 'tiger', 'bird', 'turtle'],
   SCAVENGERS: ['core', 'junk'],
+  CLOCKWORK: ['prime', 'sequence'],
 };
+
+function hasPrimeMarker(card: ForgeCard & { awakeningMin?: number }): boolean {
+  return card.keywords.some((k) => k.type === 'Prime');
+}
+
+function hasSequenceMarker(card: ForgeCard & { awakeningMin?: number }): boolean {
+  return card.keywords.some((k) => k.type === 'Sequence');
+}
 
 export function CompendiumView({ onExit }: CompendiumViewProps) {
   const content = useMemo(() => CardContentService.loadDefault(1), []);
@@ -73,6 +90,12 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
       if (card.keywords.some((k) => k.type === 'CoreParts')) {
         tagSet.add('Core');
       }
+      if (hasPrimeMarker(card)) {
+        tagSet.add('Prime');
+      }
+      if (hasSequenceMarker(card)) {
+        tagSet.add('Sequence');
+      }
     }
     return [...tagSet].sort((a, b) => a.localeCompare(b));
   }, [cards]);
@@ -102,6 +125,10 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
       if (card.faction === 'scavengers') {
         if (card.keywords.some((k) => k.type === 'CoreParts')) s.add('core');
         if (card.tags.includes('Junk')) s.add('junk');
+      }
+      if (card.faction === 'clockwork') {
+        if (hasPrimeMarker(card)) s.add('prime');
+        if (hasSequenceMarker(card)) s.add('sequence');
       }
     }
     return [...s];
@@ -135,6 +162,10 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
             return card.faction === 'scavengers' && card.keywords.some((k) => k.type === 'CoreParts');
           }
           if (tag === 'junk') return card.faction === 'scavengers' && card.tags.includes('Junk');
+          if (tag === 'Prime' || tag === 'prime') return hasPrimeMarker(card);
+          if (tag === 'Sequence' || tag === 'sequence') {
+            return hasSequenceMarker(card);
+          }
           return card.tags.includes(tag);
         });
       const factionOk =
@@ -165,7 +196,7 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
     if (isHoveringCard || isHoveringPopover) {
       return undefined;
     }
-    const timeoutMs = hoverPinnedPosition ? 2000 : 1000;
+    const timeoutMs = 5000;
     const id = window.setTimeout(() => {
       setHover(null);
       setHoverPinnedPosition(false);
@@ -185,10 +216,11 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
         if (!prev || prev.card.id !== targetCardId) {
           return prev;
         }
-        return prev;
+        /* Freeze coordinates so the popover stays put for scrolling tags. */
+        return { ...prev, x: prev.x, y: prev.y, clientX: prev.clientX, clientY: prev.clientY };
       });
       setHoverPinnedPosition(true);
-    }, 1000);
+    }, 2000);
     return () => {
       window.clearTimeout(timer);
     };

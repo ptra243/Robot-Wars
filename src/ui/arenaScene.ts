@@ -21,6 +21,7 @@ const EMPTY_SNAPSHOT: ArenaSnapshot = {
   player: {
     name: 'Player',
     hp: 0,
+    maxHp: 0,
     block: 0,
     charge: 0,
     junk: 0,
@@ -42,6 +43,7 @@ const EMPTY_SNAPSHOT: ArenaSnapshot = {
     auras: [],
     continuousTicksByQueueIndex: {},
     continuousNextTickRoundByQueueIndex: {},
+    persistentResolvedByQueueIndex: {},
     strikeResolutionsThisCombat: 0,
     traitIds: [],
     tempUpgrade: null,
@@ -53,6 +55,7 @@ const EMPTY_SNAPSHOT: ArenaSnapshot = {
   enemy: {
     name: 'Enemy',
     hp: 0,
+    maxHp: 0,
     block: 0,
     charge: 0,
     junk: 0,
@@ -74,6 +77,7 @@ const EMPTY_SNAPSHOT: ArenaSnapshot = {
     auras: [],
     continuousTicksByQueueIndex: {},
     continuousNextTickRoundByQueueIndex: {},
+    persistentResolvedByQueueIndex: {},
     strikeResolutionsThisCombat: 0,
     traitIds: [],
     tempUpgrade: null,

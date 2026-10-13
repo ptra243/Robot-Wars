@@ -7,6 +7,7 @@ export type LibraryFilterId =
   | 'neutral'
   | 'scavenger'
   | 'cyberpunk'
+  | 'clockwork'
   | 'strike'
   | 'shield'
   | 'expose'
@@ -25,6 +26,7 @@ export const LIBRARY_FILTER_ORDER: LibraryFilterId[] = [
   'neutral',
   'scavenger',
   'cyberpunk',
+  'clockwork',
   'strike',
   'shield',
   'expose',
@@ -40,12 +42,15 @@ export const LIBRARY_FILTER_ORDER: LibraryFilterId[] = [
 ];
 
 /** Faction chips (deck builder library toolbar — first group). */
-export const LIBRARY_FACTION_IDS = ['neutral', 'scavenger', 'cyberpunk'] as const;
+export const LIBRARY_FACTION_IDS = ['neutral', 'scavenger', 'cyberpunk', 'clockwork'] as const;
 export type LibraryFactionId = (typeof LIBRARY_FACTION_IDS)[number];
 export type LibraryFactionFilter = null | LibraryFactionId;
 
 /** Tag / mechanic chips — everything except faction ids (second group). */
-export type LibraryTagFilterId = Exclude<LibraryFilterId, 'neutral' | 'scavenger' | 'cyberpunk'>;
+export type LibraryTagFilterId = Exclude<
+  LibraryFilterId,
+  'neutral' | 'scavenger' | 'cyberpunk' | 'clockwork'
+>;
 
 export const LIBRARY_TAG_FILTER_ORDER: LibraryTagFilterId[] = [
   'strike',
@@ -68,6 +73,7 @@ export const LIBRARY_FILTER_LABELS: Record<LibraryFilterId, string> = {
   neutral: 'Neutral',
   scavenger: 'Scavenger',
   cyberpunk: 'Cyberpunk Ninja',
+  clockwork: 'Clockwork Collective',
   strike: 'Strike',
   shield: 'Shield',
   expose: 'Expose',
@@ -90,6 +96,8 @@ export function cardMatchesLibraryFilter(card: CardDef, filter: LibraryFilterId)
       return card.neutral === false && card.faction === 'scavengers';
     case 'cyberpunk':
       return card.neutral === false && card.faction === 'cyberpunk';
+    case 'clockwork':
+      return card.neutral === false && card.faction === 'clockwork';
     case 'strike':
       return card.tags.includes('Strike');
     case 'shield':

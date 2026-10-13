@@ -38,6 +38,8 @@ export {
   buildCombatSetupFromRun,
   buildDeckSummary,
   syncRunFromCombatResult,
+  resolvePlayerCombatTraitIds,
+  RELIC_TRAIT_MAP,
 } from './lifecycle';
 
 export {
@@ -81,9 +83,12 @@ export {
   getRelicDef,
   listRelicsForSource,
   rollRelicForSource,
+  rollRelicOffers,
   grantRelic,
   getRelicDescription,
 } from './relics';
+
+export { resolveCardUpgradeId } from './cardUpgrade';
 
 export {
   buildEncounterSnapshot,

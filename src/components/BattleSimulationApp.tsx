@@ -15,6 +15,7 @@ export function BattleSimulationApp() {
   const playback = useGameStore((s) => s.playback);
   const lastResult = useGameStore((s) => s.lastResult);
   const handleSetBattleReplaySpeed = useGameStore((s) => s.handleSetBattleReplaySpeed);
+  const handleSkipBattleReplay = useGameStore((s) => s.handleSkipBattleReplay);
   const handleReset = useGameStore((s) => s.handleReset);
   const handleStartBattleFromDeck = useGameStore((s) => s.handleStartBattleFromDeck);
   const handleSimulateEncounter = useGameStore((s) => s.handleSimulateEncounter);
@@ -51,6 +52,7 @@ export function BattleSimulationApp() {
               onReplaySpeedChange={(s) => {
                 handleSetBattleReplaySpeed(s);
               }}
+              onSkipBattle={handleSkipBattleReplay}
               onExit={handleOpenDeckBuilder}
               onRunEncounter={handleSimulateEncounter}
             />

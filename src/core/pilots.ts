@@ -16,6 +16,7 @@ export interface PilotDef {
     base: string;
     aw0: string;
     aw1: string;
+    aw2?: string;
   };
 }
 
@@ -51,6 +52,40 @@ export const PILOT_DEFS: PilotDef[] = [
       base: 'rust_ranger_base',
       aw0: 'rust_ranger_aw0',
       aw1: 'rust_ranger_aw1',
+    },
+  },
+  {
+    id: 'father_time',
+    name: 'Father Time',
+    flavor: 'Cantor of sequence and mercy between verses.',
+    faction: 'clockwork',
+    traitIds: {
+      base: 'clockwork_father_time_base',
+      aw0: 'clockwork_father_time_aw0',
+      aw1: 'clockwork_father_time_aw1',
+    },
+  },
+  {
+    id: 'theorem_rook',
+    name: 'Theorem Rook',
+    flavor: 'Sacred geometry is not ornament. It is law.',
+    faction: 'clockwork',
+    traitIds: {
+      base: 'clockwork_rook_base',
+      aw0: 'clockwork_rook_aw0',
+      aw1: 'clockwork_rook_aw1',
+    },
+  },
+  {
+    id: 'canon_verity',
+    name: 'Canon Verity',
+    flavor: 'The riders come in sequence; closure follows.',
+    faction: 'clockwork',
+    traitIds: {
+      base: 'clockwork_verity_base',
+      aw0: 'clockwork_verity_aw0',
+      aw1: 'clockwork_verity_aw1',
+      aw2: 'clockwork_verity_aw2',
     },
   },
   {
@@ -112,6 +147,9 @@ export const PILOT_PORTRAITS: Record<string, string> = {
   suzaku: '/poc/poc-card-cyberpunk-bird.png',
   byakko: '/poc/poc-card-cyberpunk-tiger.png',
   genbu: '/poc/poc-card-cyberpunk-tortoise.png',
+  father_time: '/placeholder-clockwork-pilot-select.webp',
+  theorem_rook: '/placeholder-clockwork-pilot-select.webp',
+  canon_verity: '/placeholder-clockwork-pilot-select.webp',
 };
 
 export function getPilotPortraitUrl(pilotId: string): string {
@@ -127,6 +165,9 @@ export const PILOT_SELECT_BACKGROUNDS: Record<string, string> = {
   suzaku: '/pilot-select-bg.png',
   byakko: '/pilot-select-bg.png',
   genbu: '/pilot-select-bg.png',
+  father_time: '/placeholder-clockwork-pilot-select.webp',
+  theorem_rook: '/placeholder-clockwork-pilot-select.webp',
+  canon_verity: '/placeholder-clockwork-pilot-select.webp',
 };
 
 export function getPilotSelectBackgroundUrl(pilotId: string): string {
@@ -143,6 +184,9 @@ export const PILOT_MECH_SPRITES: Record<string, string> = {
   suzaku: '/poc/poc-mech-enemy-sprite.png',
   byakko: '/poc/poc-mech-enemy-sprite.png',
   genbu: '/poc/poc-mech-enemy-sprite.png',
+  father_time: '/poc/poc-mech-glint-sprite.png',
+  theorem_rook: '/poc/poc-mech-glint-sprite.png',
+  canon_verity: '/poc/poc-mech-glint-sprite.png',
 };
 
 export function getPilotMechSpriteUrl(pilotId: string): string {

@@ -15,6 +15,7 @@ import {
   buildDeployDeckFromQueueAndHand,
   grantRelic,
   rollRelicForSource,
+  rollRelicOffers,
   setEnemyPlannedSlot,
   setPlayerPlannedSlot,
   type DeckCycleReport,
@@ -70,7 +71,9 @@ interface GameStore {
   rewardGold: number;
   /** Up to 3 card IDs offered as a post-battle reward pick. */
   rewardCardOffers: string[];
-  /** Relic ID gained from the last encounter (elite/boss), or null. */
+  /** Up to 3 relic IDs offered after elite/boss (pick one). */
+  rewardRelicOffers: string[];
+  /** Relic ID chosen on the reward screen, or null if none / not yet picked. */
   rewardRelic: string | null;
   /** Travel shop / event / draft overlay; null when closed. */
   travelModal: TravelModalState | null;
@@ -99,6 +102,9 @@ interface GameStore {
   handleGoToRetry: () => void;
   handleGoToReward: () => void;
   handlePickRewardCard: (cardId: string) => void;
+  handlePickRewardRelic: (relicId: string) => void;
+  handleRerollRewardCards: () => void;
+  handleRerollRewardRelics: () => void;
   handleSkipReward: () => void;
   handleRerollTravelOffers: () => void;
   handleChooseRetryAssist: (choice: 'enemy_hp_down' | 'free_rerolls') => void;
@@ -121,6 +127,8 @@ interface GameStore {
   handleSetSandboxEnemyCoreScrap: (value: number) => void;
   handleRerollHandCard: (cardId: string) => void;
   handleExitBattleToDeck: () => void;
+  /** End battle replay immediately (combat already simulated). */
+  handleSkipBattleReplay: () => void;
   handleSimulateDeckCycle: () => void;
   handleSeedStep: (delta: number) => void;
   dismissDeckCycleReport: () => void;
@@ -130,6 +138,10 @@ interface GameStore {
   handleShopBuyRerollToken: () => void;
   handleShopBuyCommonRelic: () => void;
   handleTravelDraftPick: (cardId: string) => void;
+  handleAcceptEventCardOffer: () => void;
+  handleRefuseEventCardOffer: () => void;
+  handleAcceptEventUpgradeOffer: () => void;
+  handleRefuseEventUpgradeOffer: () => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -146,6 +158,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   draftStep: 0,
   rewardGold: 0,
   rewardCardOffers: [],
+  rewardRelicOffers: [],
   rewardRelic: null,
   travelModal: null,
 
@@ -161,6 +174,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       deckCycleReport: null,
       draftOffers: [],
       draftStep: 0,
+      rewardGold: 0,
+      rewardCardOffers: [],
+      rewardRelicOffers: [],
+      rewardRelic: null,
       travelModal: null,
       statusMessage: 'Choose your pilot to begin.',
     });
@@ -175,8 +192,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const unlockAllAwakenings = options?.unlockAllAwakenings === true;
     if (pilot) {
       nextRun.faction = pilot.faction;
+      const allTraits = [pilot.traitIds.base, pilot.traitIds.aw0, pilot.traitIds.aw1];
+      if (pilot.traitIds.aw2) allTraits.push(pilot.traitIds.aw2);
       nextRun.loop.playerTraitIds = unlockAllAwakenings
-        ? [pilot.traitIds.base, pilot.traitIds.aw0, pilot.traitIds.aw1]
+        ? allTraits
         : [pilot.traitIds.base];
     } else {
       nextRun.loop.playerTraitIds = [];
@@ -313,6 +332,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
         });
         return;
       }
+      if (res.outcome.kind === 'card_offer') {
+        set({
+          run: nextRun,
+          appPhase: 'travel',
+          travelModal: {
+            kind: 'event_card_offer',
+            message: res.message,
+            cardId: res.outcome.cardId,
+            acceptCost: res.outcome.acceptCost,
+            refuseGold: res.outcome.refuseGold,
+          },
+          statusMessage: res.message,
+        });
+        return;
+      }
+      if (res.outcome.kind === 'upgrade_offer') {
+        set({
+          run: nextRun,
+          appPhase: 'travel',
+          travelModal: {
+            kind: 'event_upgrade_offer',
+            message: res.message,
+            beforeId: res.outcome.beforeId,
+            afterId: res.outcome.afterId,
+            acceptCost: res.outcome.acceptCost,
+            refuseGold: res.outcome.refuseGold,
+          },
+          statusMessage: res.message,
+        });
+        return;
+      }
       set({
         run: nextRun,
         appPhase: 'travel',
@@ -361,9 +411,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // so `run.deck` stayed stale and post-combat sync reverted merges.
     nextRun.deck = buildDeployDeckFromQueueAndHand(queueIds, handCardIds);
 
-    // Snapshot pre-combat gold and relics so we can show deltas in the reward screen.
+    // Snapshot pre-combat gold so we can show the delta on the reward screen.
     const goldBefore = nextRun.loop.gold;
-    const relicsBefore = new Set(nextRun.loop.relicIds);
 
     // Full encounter lifecycle: deck fill, combat sim, encounter index, deck sync,
     // post-combat rewards (gold/hearts/awakening), and fresh hand draw.
@@ -378,7 +427,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     const goldGained = nextRun.loop.gold - goldBefore;
-    const newRelic = nextRun.loop.relicIds.find((r) => !relicsBefore.has(r)) ?? null;
 
     // Always show the battle animation first. Victory/defeat actions live inside BattlePOC.
     set({
@@ -389,7 +437,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       playbackPaused: false,
       appPhase: 'battle',
       rewardGold: goldGained,
-      rewardRelic: newRelic,
+      rewardRelic: null,
+      rewardRelicOffers: [],
       statusMessage: result.playerWon
         ? `Victory! (${result.events.length} events)`
         : `Defeat. Hearts left: ${String(nextRun.loop.hearts)}.`,
@@ -408,17 +457,104 @@ export const useGameStore = create<GameStore>((set, get) => ({
       content.getAll(),
       run.loop.playerTraitIds.includes('baron_base'),
     );
-    set({ appPhase: 'reward', rewardCardOffers: offers });
+    const relicSource = run.loop.pendingRelicRewardSource;
+    const relicOffers = relicSource
+      ? rollRelicOffers(
+          run,
+          relicSource,
+          run.seed + run.encounterIndex * 47 + run.loop.totalStepsResolved * 3,
+          3,
+        )
+      : [];
+    set({
+      appPhase: 'reward',
+      rewardCardOffers: offers,
+      rewardRelicOffers: relicOffers,
+      rewardRelic: null,
+    });
+  },
+
+  handlePickRewardRelic: (relicId) => {
+    const nextRun = cloneRun(get().run);
+    if (!grantRelic(nextRun, relicId)) {
+      set({ statusMessage: 'Could not grant that relic.' });
+      return;
+    }
+    nextRun.loop.pendingRelicRewardSource = null;
+    set({
+      run: nextRun,
+      rewardRelic: relicId,
+      rewardRelicOffers: [],
+      statusMessage: 'Relic acquired. Choose a card reward or skip.',
+    });
+  },
+
+  handleRerollRewardCards: () => {
+    const { run, rewardCardOffers } = get();
+    if (run.loop.rerolls <= 0) {
+      set({ statusMessage: 'No rerolls left.' });
+      return;
+    }
+    const nextRun = cloneRun(run);
+    nextRun.loop.rerolls -= 1;
+    const stream = cardOfferStreamSeed(
+      nextRun.seed,
+      nextRun.encounterIndex * 1000 + (3 - nextRun.loop.rerolls) * 17 + 9001,
+    );
+    const content = CardContentService.loadDefault(stream);
+    const offers = generateRewardOffers(
+      stream,
+      nextRun.faction,
+      nextRun.loop.awakening,
+      content.getAll(),
+      nextRun.loop.playerTraitIds.includes('baron_base'),
+      rewardCardOffers,
+    );
+    set({ run: nextRun, rewardCardOffers: offers, statusMessage: 'Rerolled card rewards.' });
+  },
+
+  handleRerollRewardRelics: () => {
+    const { run, rewardRelicOffers, rewardRelic } = get();
+    if (rewardRelic || rewardRelicOffers.length === 0) return;
+    if (run.loop.rerolls <= 0) {
+      set({ statusMessage: 'No rerolls left.' });
+      return;
+    }
+    const source = run.loop.pendingRelicRewardSource;
+    if (!source) return;
+    const nextRun = cloneRun(run);
+    nextRun.loop.rerolls -= 1;
+    const stream = cardOfferStreamSeed(
+      nextRun.seed,
+      nextRun.encounterIndex * 1000 + (3 - nextRun.loop.rerolls) * 19 + 7001,
+    );
+    const offers = rollRelicOffers(nextRun, source, stream, 3).filter(
+      (id) => !rewardRelicOffers.includes(id),
+    );
+    const filled =
+      offers.length >= 3
+        ? offers.slice(0, 3)
+        : [
+            ...offers,
+            ...rollRelicOffers(nextRun, source, stream + 1, 3).filter((id) => !offers.includes(id)),
+          ].slice(0, 3);
+    set({
+      run: nextRun,
+      rewardRelicOffers: filled.length > 0 ? filled : rollRelicOffers(nextRun, source, stream + 2, 3),
+      statusMessage: 'Rerolled relic rewards.',
+    });
   },
 
   handlePickRewardCard: (cardId) => {
     const nextRun = cloneRun(get().run);
     nextRun.deck = [...nextRun.deck, cardId];
     nextRun.hand = [...nextRun.deck];
+    nextRun.loop.pendingRelicRewardSource = null;
     set({
       run: nextRun,
       appPhase: 'travel',
       rewardCardOffers: [],
+      rewardRelicOffers: [],
       rewardGold: 0,
       rewardRelic: null,
       travelModal: null,
@@ -426,15 +562,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  handleSkipReward: () =>
+  handleSkipReward: () => {
+    const nextRun = cloneRun(get().run);
+    nextRun.loop.pendingRelicRewardSource = null;
     set({
+      run: nextRun,
       appPhase: 'travel',
       rewardCardOffers: [],
+      rewardRelicOffers: [],
       rewardGold: 0,
       rewardRelic: null,
       travelModal: null,
       statusMessage: 'Reward skipped. Choose your next travel node.',
-    }),
+    });
+  },
 
   handleRerollTravelOffers: () => {
     const nextRun = cloneRun(get().run);
@@ -569,13 +710,45 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ statusMessage: 'No rerolls available.' });
       return;
     }
-    const content = CardContentService.loadDefault(nextRun.seed);
-    nextRun.hand[index] = content.drawWeighted(nextRun.faction, nextRun.loop.awakening).id;
+    const stream = cardOfferStreamSeed(
+      nextRun.seed,
+      nextRun.encounterIndex * 500 + nextRun.loop.rerolls * 31 + index * 13 + 4242,
+    );
+    const content = CardContentService.loadDefault(stream);
+    let tierCard;
+    try {
+      tierCard = content.get(cardId);
+    } catch {
+      tierCard = null;
+    }
+    nextRun.hand[index] = tierCard
+      ? content.drawWeightedSameTier(
+          nextRun.faction,
+          nextRun.loop.awakening,
+          tierCard,
+          cardId,
+        ).id
+      : content.drawWeighted(nextRun.faction, nextRun.loop.awakening).id;
     set({ run: nextRun, statusMessage: 'Rerolled hand card.' });
   },
 
   handleExitBattleToDeck: () => {
     set({ appPhase: 'travel' });
+  },
+
+  handleSkipBattleReplay: () => {
+    const { playback } = get();
+    if (!playback) {
+      return;
+    }
+    const lastIdx = Math.max(0, playback.events.length - 1);
+    set({
+      lastResult: playback,
+      playback: null,
+      playbackPaused: true,
+      eventStep: lastIdx,
+      statusMessage: `Encounter complete: ${playback.playerWon ? 'WIN' : 'LOSS'} in ${String(playback.rounds)} rounds.`,
+    });
   },
 
   handleSimulateDeckCycle: () => {
@@ -664,12 +837,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const modal = get().travelModal;
     if (!modal || modal.kind !== 'shop') return;
     const nextRun = cloneRun(get().run);
-    const price = 50 + 50 * modal.nonCardPurchases;
+    const price = 100 * 2 ** nextRun.loop.shopRelicPurchaseCount;
     if (nextRun.loop.gold < price) return;
     const rolled = rollRelicForSource(
       nextRun,
       'shop',
-      nextRun.seed + nextRun.loop.totalStepsResolved * 97 + modal.nonCardPurchases * 13,
+      nextRun.seed +
+        nextRun.loop.totalStepsResolved * 97 +
+        nextRun.loop.shopRelicPurchaseCount * 13,
     );
     if (!rolled) {
       set({ statusMessage: 'No common relic available in the shop pool.' });
@@ -680,12 +855,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     nextRun.loop.gold -= price;
+    nextRun.loop.shopRelicPurchaseCount += 1;
     set({
       run: nextRun,
       travelModal: {
         kind: 'shop',
         offers: modal.offers,
-        nonCardPurchases: modal.nonCardPurchases + 1,
+        nonCardPurchases: modal.nonCardPurchases,
       },
       statusMessage: `${rolled.name} bought.`,
     });
@@ -701,6 +877,91 @@ export const useGameStore = create<GameStore>((set, get) => ({
       run: nextRun,
       travelModal: null,
       statusMessage: 'Card added to deck.',
+    });
+  },
+
+  handleAcceptEventCardOffer: () => {
+    const modal = get().travelModal;
+    if (!modal || modal.kind !== 'event_card_offer') return;
+    const nextRun = cloneRun(get().run);
+    const { cardId, acceptCost } = modal;
+    if (nextRun.loop.gold < acceptCost) {
+      set({ statusMessage: 'Not enough gold to accept the card offer.' });
+      return;
+    }
+    let cardName = 'Card';
+    try {
+      cardName = CardContentService.loadDefault(nextRun.seed).get(cardId).name;
+    } catch {
+      /* ignore */
+    }
+    nextRun.loop.gold -= acceptCost;
+    nextRun.deck.push(cardId);
+    drawStartingHand(nextRun);
+    set({
+      run: nextRun,
+      travelModal: null,
+      statusMessage: `${cardName} added for ${String(acceptCost)}g.`,
+    });
+  },
+
+  handleRefuseEventCardOffer: () => {
+    const modal = get().travelModal;
+    if (!modal || modal.kind !== 'event_card_offer') return;
+    const nextRun = cloneRun(get().run);
+    nextRun.loop.gold += modal.refuseGold;
+    set({
+      run: nextRun,
+      travelModal: null,
+      statusMessage: `Card offer refused. +${String(modal.refuseGold)}g.`,
+    });
+  },
+
+  handleAcceptEventUpgradeOffer: () => {
+    const modal = get().travelModal;
+    if (!modal || modal.kind !== 'event_upgrade_offer') return;
+    const nextRun = cloneRun(get().run);
+    const { beforeId, afterId, acceptCost } = modal;
+    if (nextRun.loop.gold < acceptCost) {
+      set({ statusMessage: 'Not enough gold to upgrade.' });
+      return;
+    }
+    const deckIdx = nextRun.deck.indexOf(beforeId);
+    if (deckIdx < 0) {
+      set({ statusMessage: 'That card is no longer in your deck.' });
+      return;
+    }
+    nextRun.loop.gold -= acceptCost;
+    nextRun.deck[deckIdx] = afterId;
+    const handIdx = nextRun.hand.indexOf(beforeId);
+    if (handIdx >= 0) nextRun.hand[handIdx] = afterId;
+    for (let i = 0; i < nextRun.plannedQueue.length; i += 1) {
+      if (nextRun.plannedQueue[i] === beforeId) {
+        nextRun.plannedQueue[i] = afterId;
+      }
+    }
+    let afterName = afterId;
+    try {
+      afterName = CardContentService.loadDefault(nextRun.seed).get(afterId).name;
+    } catch {
+      /* ignore */
+    }
+    set({
+      run: nextRun,
+      travelModal: null,
+      statusMessage: `Upgraded to ${afterName} for ${String(acceptCost)}g.`,
+    });
+  },
+
+  handleRefuseEventUpgradeOffer: () => {
+    const modal = get().travelModal;
+    if (!modal || modal.kind !== 'event_upgrade_offer') return;
+    const nextRun = cloneRun(get().run);
+    nextRun.loop.gold += modal.refuseGold;
+    set({
+      run: nextRun,
+      travelModal: null,
+      statusMessage: `Upgrade refused. +${String(modal.refuseGold)}g.`,
     });
   },
 }));

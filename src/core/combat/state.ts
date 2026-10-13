@@ -55,6 +55,7 @@ export function cloneFighter(fighter: FighterState): FighterState {
     continuousNextTickRoundByQueueIndex: {
       ...fighter.continuousNextTickRoundByQueueIndex,
     },
+    persistentResolvedByQueueIndex: { ...fighter.persistentResolvedByQueueIndex },
     traitIds: [...(fighter.traitIds ?? [])],
     tempUpgrade: fighter.tempUpgrade ? { ...fighter.tempUpgrade } : null,
     scheduledEffects: (fighter.scheduledEffects ?? []).map((entry) => ({
@@ -92,6 +93,7 @@ function fighterToSnapshot(fighter: FighterState): CombatFighterSnapshot {
   const stun = fighter.auras.find((a): a is { type: 'Stunned'; turnsLeft: number } => a.type === 'Stunned');
   return {
     hp: fighter.hp,
+    maxHp: fighter.maxHp,
     block: fighter.block,
     charge: fighter.charge,
     shuriken: fighter.shuriken && fighter.shuriken > 0 ? fighter.shuriken : undefined,

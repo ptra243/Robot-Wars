@@ -16,6 +16,7 @@ import './pilot-select.css';
 function factionLabel(faction: string): string {
   if (faction === 'cyberpunk') return 'Cyberpunk Ninjas';
   if (faction === 'scavengers') return 'Scavengers';
+  if (faction === 'clockwork') return 'Clockwork Collective';
   return faction;
 }
 

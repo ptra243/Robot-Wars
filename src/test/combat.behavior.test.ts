@@ -38,6 +38,24 @@ describe('CombatSimulator', () => {
     expect(roundStarts[1]!.snapshot?.player.block).toBe(Math.floor(3 * 0.5));
   });
 
+  it('Persistent cards skip on later program visits after the first resolve', () => {
+    const q = Array.from({ length: COMBAT_RULES.queueSize }, () => 'neutral_basic_strike_t1' as string | null);
+    q[0] = 'neutral_shield_conditioning_t1';
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], q);
+    player.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    enemy.charge = 99;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 12 });
+    const conditioningResolves = result.events.filter(
+      (e) => e.type === 'resolve' && e.text.includes('Shield Conditioning'),
+    );
+    expect(conditioningResolves.length).toBe(1);
+    expect(
+      result.events.some((e) => e.type === 'persistent_skip' && e.text.includes('Shield Conditioning')),
+    ).toBe(true);
+  });
+
   it('Shield Conditioning uses 25% Shield decay (75% retained) for the rest of battle', () => {
     const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], [
       'neutral_shield_conditioning_t1',
@@ -206,7 +224,7 @@ describe('CombatSimulator', () => {
     expect(armed).toBe(true);
   });
 
-  it('FactoryReset replaces the resolved slot with Neutral Basic Strike tier and replay snapshots restore queue', () => {
+  it('FactoryReset clears the slot as a blank (empty rematerialize) and replay snapshots restore queue', () => {
     const base = content.get('neutral_basic_strike_t1');
     const { effects: _omitEffects, ...baseWithoutEffects } = base;
     const spec: Omit<CardDef, 'effects'> = {
@@ -237,7 +255,7 @@ describe('CombatSimulator', () => {
     );
     expect(firstPlayerResolveIdx).toBeGreaterThanOrEqual(0);
     const afterResolve = result.events[firstPlayerResolveIdx];
-    expect(afterResolve.snapshot?.playerQueue?.[0]).toBe('neutral_basic_strike_t3');
+    expect(afterResolve.snapshot?.playerQueue?.[0]).toBe('neutral_basic_strike_t1');
 
     const before = buildArenaFromReplaySlice(result, result.initialSnapshot, []);
     expect(before.player.queue[0]).toBe(testCard.id);
@@ -247,7 +265,49 @@ describe('CombatSimulator', () => {
       afterResolve.snapshot!,
       result.events.slice(0, firstPlayerResolveIdx + 1),
     );
-    expect(after.player.queue[0]).toBe('neutral_basic_strike_t3');
+    expect(after.player.queue[0]).toBe('neutral_basic_strike_t1');
+  });
+
+  it('FactoryReset rematerializes Tempered Blanks / Multistrike Protocol blank upgrades', () => {
+    const base = content.get('neutral_basic_strike_t1');
+    const { effects: _omitEffects, ...baseWithoutEffects } = base;
+    const spec: Omit<CardDef, 'effects'> = {
+      ...baseWithoutEffects,
+      id: 'test_factory_reset_blank_relic',
+      name: 'Factory Reset Blank Relic',
+      merge_to: undefined,
+      keywords: [{ type: 'FactoryReset', value: 1 }],
+    };
+    const testCard: CardDef = normalizeCard({
+      ...spec,
+      effects: compileLegacyToEffects(normalizeCard({ ...spec, effects: undefined } as CardDef)),
+    });
+    const map = new Map(content.getAll().map((c) => [c.id, c]));
+    map.set(testCard.id, testCard);
+    const testContent = new CardContentService(map, 1);
+
+    const tempered = makeTestFighter('Player', ['neutral_basic_strike_t1'], [testCard.id]);
+    tempered.traitIds = ['relic_tempered_blanks'];
+    tempered.charge = 99;
+    const multi = makeTestFighter('Player', ['neutral_basic_strike_t1'], [testCard.id]);
+    multi.traitIds = ['relic_multistrike_protocol'];
+    multi.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    const sim = new CombatSimulator(testContent, 1);
+
+    const temperedResult = sim.run({ seed: 1, player: tempered, enemy: { ...enemy } });
+    const temperedIdx = temperedResult.events.findIndex(
+      (e) => e.type === 'resolve' && e.actor === 'Player',
+    );
+    expect(temperedResult.events[temperedIdx]?.snapshot?.playerQueue?.[0]).toBe(
+      'neutral_basic_strike_t2',
+    );
+
+    const multiResult = sim.run({ seed: 1, player: multi, enemy: { ...enemy } });
+    const multiIdx = multiResult.events.findIndex(
+      (e) => e.type === 'resolve' && e.actor === 'Player',
+    );
+    expect(multiResult.events[multiIdx]?.snapshot?.playerQueue?.[0]).toBe('neutral_multi_strike_t1');
   });
 
   it('Perpetual Motion grants round-start charge ticks for several rounds', () => {
@@ -306,6 +366,31 @@ describe('CombatSimulator', () => {
     );
     expect(cap?.text).toMatch(/dealt=10/);
     expect(result.finalState.enemy.exposeDamage).toBe(0);
+  });
+
+  it('Overclock bonus resolve keeps damage and self-damage on the follow-up card', () => {
+    const player = makeTestFighter(
+      'Player',
+      ['neutral_overclock_t1', 'core_refactoring_t1'],
+      ['neutral_overclock_t1', 'core_refactoring_t1'],
+    );
+    player.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    enemy.charge = 99;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 1 });
+    const playerResolves = result.events.filter((e) => e.type === 'resolve' && e.actor === 'Player');
+    expect(playerResolves.length).toBeGreaterThanOrEqual(2);
+    const overclock = playerResolves.find((e) => e.cardId === 'neutral_overclock_t1');
+    const core = playerResolves.find((e) => e.cardId === 'core_refactoring_t1');
+    expect(overclock).toBeTruthy();
+    expect(core).toBeTruthy();
+    expect(overclock!.text).toMatch(/selfDmg=0/);
+    expect(core!.text).toMatch(/selfDmg=5/);
+    const overclockDealt = Number(/dealt=(\d+)/.exec(overclock!.text)?.[1] ?? '0');
+    const coreDealt = Number(/dealt=(\d+)/.exec(core!.text)?.[1] ?? '0');
+    expect(overclockDealt).toBe(0);
+    expect(coreDealt).toBeGreaterThanOrEqual(0);
   });
 
   it('Harassing Strike does not clear Expose; Overclock bonus strike clears stacks', () => {
@@ -378,9 +463,13 @@ describe('CombatSimulator', () => {
     const r = result.events.find(
       (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Junk Crown'),
     );
-    // Includes Overclock bonus resolve damage; no pile line without +4 spare Energy after the 2 play cost.
-    expect(r?.text).toMatch(/dealt=7/);
-    expect(r?.text).toMatch(/Enemy HP=33/);
+    // Crown metrics only — Overclock follow-up is a separate resolve (Basic Strike +2).
+    expect(r?.text).toMatch(/dealt=5/);
+    expect(r?.text).toMatch(/Enemy HP=35/);
+    const bonus = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Player' && e.cardId === 'neutral_basic_strike_t1',
+    );
+    expect(bonus?.text).toMatch(/dealt=2/);
   });
 
   it('Junk Crown >15 line deals snapshot junk damage when optional Energy is paid', () => {
@@ -393,8 +482,12 @@ describe('CombatSimulator', () => {
     const r = result.events.find(
       (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Junk Crown'),
     );
-    expect(r?.text).toMatch(/dealt=23/);
-    expect(r?.text).toMatch(/Enemy HP=17/);
+    expect(r?.text).toMatch(/dealt=21/);
+    expect(r?.text).toMatch(/Enemy HP=19/);
+    const bonus = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Player' && e.cardId === 'neutral_basic_strike_t1',
+    );
+    expect(bonus?.text).toMatch(/dealt=2/);
   });
 
   it('Rust Ranger Aw0 converts Basic Strike with junk and forces a stall next activation', () => {
@@ -520,6 +613,61 @@ describe('CombatSimulator', () => {
     expect(ev?.text).toMatch(/dealt=6/);
     expect(ev?.snapshot?.player.block).toBe(6);
   });
+
+  it('Masterful Form switches to the next queued card stance (Plague Shell applies Virus)', () => {
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], [
+      'ninja_masterful_form_t1',
+      'ninja_tortoise_virus_t1',
+    ]);
+    player.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    enemy.charge = 0;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 2 });
+    const plague = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Plague Shell'),
+    );
+    expect(plague).toBeDefined();
+    expect(plague?.snapshot?.enemy.virusStacks).toBeGreaterThanOrEqual(2);
+  });
+
+  it('Clockwork Sequence 2 only triggers after Sequence 1 and breaks on non-clockwork cards', () => {
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], [
+      'clockwork_song_iron_intro_t1',
+      'clockwork_song_iron_verse_t1',
+      'neutral_basic_strike_t1',
+      'clockwork_song_iron_verse_t1',
+    ]);
+    player.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    enemy.charge = 99;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 4 });
+    const resolves = result.events.filter((e) => e.type === 'resolve' && e.actor === 'Player');
+    expect(resolves[1]?.text).toMatch(/dealt=7/);
+    expect(resolves[3]?.text).toMatch(/dealt=3/);
+  });
+
+  it('Clockwork Prime Faith buffs direct damage on prime slots only', () => {
+    const q = Array.from({ length: COMBAT_RULES.queueSize }, () => null as string | null);
+    q[2] = 'clockwork_prime_faith_t1';
+    q[4] = 'clockwork_prime_interdict_t1';
+    const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], q);
+    player.queueCursor = 2;
+    player.charge = 99;
+    const enemy = makeTestFighter('Enemy', ['neutral_basic_strike_t1'], [null]);
+    enemy.charge = 99;
+    const sim = new CombatSimulator(content, 1);
+    const result = sim.run({ seed: 1, player, enemy }, { stopAfterRounds: 3 });
+    const primeFaithResolve = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Prime Faith'),
+    );
+    const interdictResolve = result.events.find(
+      (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Prime Interdict'),
+    );
+    expect(result.finalState.player.faithStacks).toBe(1);
+    expect(interdictResolve?.text).toMatch(/dealt=8/);
+  });
 });
 
 describe('CardContentService (new card ids)', () => {
@@ -537,5 +685,7 @@ describe('CardContentService (new card ids)', () => {
     expect(content.get('neutral_static_clamp_t1').name).toBe('Static Clamp');
     expect(content.get('neutral_delayed_burst_t1').name).toBe('Delayed Burst');
     expect(content.get('neutral_overdrive_slam_t1').name).toBe('Overdrive Slam');
+    expect(content.get('clockwork_song_iron_intro_t1').faction).toBe('clockwork');
+    expect(content.get('clockwork_prime_consecration_t1').awakening_min).toBe(1);
   });
 });

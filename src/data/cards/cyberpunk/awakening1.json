@@ -1,0 +1,325 @@
+{
+  "cards": [
+    {
+      "id": "ninja_switch_harmony_kernel_t1",
+      "name": "Harmony Kernel",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "tags": ["Energy", "Stance"],
+      "keywords": [{ "type": "Persistent", "value": 1 }],
+      "effects": [
+        { "type": "GainCharge", "amount": 1 },
+        { "type": "HealSelf", "amount": 2 }
+      ]
+    },
+    {
+      "id": "ninja_dragon_ambush_t1",
+      "name": "Dragon Ambush",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "tags": ["Stance", "Expose"],
+      "merge_to": "ninja_dragon_ambush_t2",
+      "effects": [
+        { "type": "SetNextTigerCardExposePerEnergy", "amountPerEnergy": 1, "cap": 4 }
+      ]
+    },
+    {
+      "id": "ninja_dragon_ambush_t2",
+      "name": "Dragon Ambush+",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 2,
+      "charge_cost": 1,
+      "tags": ["Stance", "Expose"],
+      "merge_to": "ninja_dragon_ambush_t3",
+      "effects": [
+        { "type": "SetNextTigerCardExposePerEnergy", "amountPerEnergy": 1, "cap": 5 }
+      ]
+    },
+    {
+      "id": "ninja_dragon_ambush_t3",
+      "name": "Dragon Ambush++",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 3,
+      "charge_cost": 1,
+      "tags": ["Stance", "Expose"],
+      "effects": [
+        { "type": "SetNextTigerCardExposePerEnergy", "amountPerEnergy": 1, "cap": 6 }
+      ]
+    },
+    {
+      "id": "ninja_tiger_ambush_t1",
+      "name": "Tiger Ambush",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "tags": ["Stance", "Strike", "Potency"],
+      "merge_to": "ninja_tiger_ambush_t2",
+      "effects": [
+        { "type": "SetNextTigerCardPiercePotency", "pierce": true, "potencyGain": 3, "potencyAfterCardLoss": 3 }
+      ]
+    },
+    {
+      "id": "ninja_tiger_ambush_t2",
+      "name": "Tiger Ambush+",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 2,
+      "charge_cost": 1,
+      "tags": ["Stance", "Strike", "Potency"],
+      "merge_to": "ninja_tiger_ambush_t3",
+      "effects": [
+        { "type": "SetNextTigerCardPiercePotency", "pierce": true, "potencyGain": 4, "potencyAfterCardLoss": 3 }
+      ]
+    },
+    {
+      "id": "ninja_tiger_ambush_t3",
+      "name": "Tiger Ambush++",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 3,
+      "charge_cost": 1,
+      "tags": ["Stance", "Strike", "Potency"],
+      "effects": [
+        { "type": "SetNextTigerCardPiercePotency", "pierce": true, "potencyGain": 5, "potencyAfterCardLoss": 3 }
+      ]
+    },
+    {
+      "id": "ninja_bird_overclock_t1",
+      "name": "Skyline Surge",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "tags": ["Stance", "Shuriken"],
+      "effects": [
+        { "type": "GainShuriken", "amount": 2 },
+        { "type": "SetNextTigerCardOverclock", "active": true }
+      ]
+    },
+    {
+      "id": "ninja_tortoise_virus_pulse_t1",
+      "name": "Blackwater Pulse",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "tags": ["Virus", "Shield", "Stance"],
+      "effects": [
+        { "type": "ShieldBlock", "baseBlock": 4 },
+        { "type": "ApplyVirus", "stacks": 3 }
+      ]
+    },
+    {
+      "id": "ninja_mono_dragon_focus_t1",
+      "name": "Dragon Focus",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "tags": ["Stance", "Energy", "Direct"],
+      "effects": [
+        { "type": "GainCharge", "amount": 1 },
+        {
+          "type": "BranchIfActorStance",
+          "stance": "dragon",
+          "thenSteps": [{ "type": "DirectHpDamage", "baseDamage": 8, "pierce": false }],
+          "elseSteps": []
+        }
+      ]
+    },
+    {
+      "id": "ninja_mono_tiger_focus_t1",
+      "name": "Tiger Focus",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "tags": ["Stance", "Strike", "Expose"],
+      "effects": [
+        { "type": "StrikeDamage", "baseDamage": 4, "pierce": false, "useStrikePotency": true },
+        {
+          "type": "BranchIfActorStance",
+          "stance": "tiger",
+          "thenSteps": [
+            { "type": "Keyword", "spec": { "type": "Expose", "value": 2 } },
+            { "type": "StrikeDamage", "baseDamage": 4, "pierce": false, "useStrikePotency": true }
+          ],
+          "elseSteps": []
+        }
+      ]
+    },
+    {
+      "id": "ninja_mono_bird_focus_t1",
+      "name": "Bird Focus",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "tags": ["Stance", "Shuriken", "Direct"],
+      "effects": [
+        { "type": "GainShuriken", "amount": 2 },
+        {
+          "type": "BranchIfActorStance",
+          "stance": "bird",
+          "thenSteps": [{ "type": "DirectHpDamagePerShurikenSpent", "damagePerShuriken": 4, "pierce": false }],
+          "elseSteps": []
+        }
+      ]
+    },
+    {
+      "id": "ninja_mono_tortoise_focus_t1",
+      "name": "Tortoise Focus",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 1,
+      "tags": ["Stance", "Shield", "Virus"],
+      "effects": [
+        { "type": "ShieldBlock", "baseBlock": 5 },
+        {
+          "type": "BranchIfActorStance",
+          "stance": "tortoise",
+          "thenSteps": [
+            { "type": "ApplyVirus", "stacks": 3 },
+            { "type": "GainVirulentRetribution", "amount": 1 }
+          ],
+          "elseSteps": []
+        }
+      ]
+    },
+    {
+      "id": "ninja_compass_release_t1",
+      "name": "Compass Release",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 2,
+      "tags": ["Direct", "Stance"],
+      "effects": [
+        { "type": "DirectHpDamage", "baseDamage": 8, "pierce": false },
+        { "type": "GainCharge", "amount": 1 }
+      ]
+    },
+    {
+      "id": "ninja_celestial_formation_t1",
+      "name": "Celestial Formation",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 2,
+      "tags": ["Direct", "Stance"],
+      "effects": [
+        { "type": "DirectHpDamagePerActivatedStance", "damagePerStance": 5, "pierce": false }
+      ]
+    },
+    {
+      "id": "ninja_taiji_formation_t1",
+      "name": "Taiji Formation",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 2,
+      "tags": ["Stance", "Direct", "Shield"],
+      "effects": [
+        {
+          "type": "BranchIfActorActivatedStance",
+          "stance": "dragon",
+          "thenSteps": [{ "type": "DirectHpDamage", "baseDamage": 6, "pierce": false }],
+          "elseSteps": []
+        },
+        {
+          "type": "BranchIfActorActivatedStance",
+          "stance": "tiger",
+          "thenSteps": [{ "type": "ApplyWeaken", "stacks": 3 }],
+          "elseSteps": []
+        },
+        {
+          "type": "BranchIfActorActivatedStance",
+          "stance": "tortoise",
+          "thenSteps": [{ "type": "ShieldBlock", "baseBlock": 6 }],
+          "elseSteps": []
+        },
+        {
+          "type": "BranchIfActorActivatedStance",
+          "stance": "bird",
+          "thenSteps": [{ "type": "GainEvade", "amount": 1 }],
+          "elseSteps": []
+        }
+      ]
+    },
+    {
+      "id": "ninja_all_out_attack_t1",
+      "name": "All Out Attack",
+      "faction": "cyberpunk",
+      "neutral": false,
+      "awakening_min": 1,
+      "card_tier": 1,
+      "charge_cost": 2,
+      "tags": ["Stance", "Strike", "Virus", "Potency"],
+      "effects": [
+        {
+          "type": "BranchIfActorActivatedStance",
+          "stance": "dragon",
+          "thenSteps": [{ "type": "AddStrikePotency", "amount": 2 }],
+          "elseSteps": []
+        },
+        {
+          "type": "BranchIfActorActivatedStance",
+          "stance": "tortoise",
+          "thenSteps": [{ "type": "ApplyVirus", "stacks": 5 }],
+          "elseSteps": []
+        },
+        {
+          "type": "BranchIfActorActivatedStance",
+          "stance": "tiger",
+          "thenSteps": [{ "type": "StrikeDamage", "baseDamage": 8, "pierce": false, "useStrikePotency": true }],
+          "elseSteps": []
+        },
+        {
+          "type": "BranchIfActorActivatedStance",
+          "stance": "bird",
+          "thenSteps": [{ "type": "Keyword", "spec": { "type": "Overclock", "value": 1 } }],
+          "elseSteps": []
+        }
+      ]
+    },
+
+    { "id": "ninja_duo_dragon_tiger_t1", "name": "Storm Verdict", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Direct", "Expose"], "effects": [{ "type": "DirectHpDamage", "baseDamage": 3, "pierce": false }, { "type": "BranchIfActorStance", "stance": "dragon", "thenSteps": [{ "type": "SetNextTigerCardExposePerEnergy", "amountPerEnergy": 1, "cap": 4 }], "elseSteps": [] }, { "type": "SetStance", "stance": "tiger" }] },
+    { "id": "ninja_duo_tiger_dragon_t1", "name": "Counter Spiral", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Energy", "Potency"], "effects": [{ "type": "Keyword", "spec": { "type": "Expose", "value": 1 } }, { "type": "BranchIfActorStance", "stance": "tiger", "thenSteps": [{ "type": "GainCharge", "amount": 1 }, { "type": "AddStrikePotency", "amount": 1 }], "elseSteps": [] }, { "type": "SetStance", "stance": "dragon" }] },
+    { "id": "ninja_duo_dragon_bird_t1", "name": "Ion Plume", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Shuriken", "Energy"], "effects": [{ "type": "GainCharge", "amount": 1 }, { "type": "BranchIfActorStance", "stance": "dragon", "thenSteps": [{ "type": "GainShuriken", "amount": 2 }], "elseSteps": [] }, { "type": "SetStance", "stance": "bird" }] },
+    { "id": "ninja_duo_bird_dragon_t1", "name": "Aerial Capacitor", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Direct", "Shuriken"], "effects": [{ "type": "DirectHpDamagePerShurikenSpent", "damagePerShuriken": 2 }, { "type": "BranchIfActorStance", "stance": "bird", "thenSteps": [{ "type": "GainCharge", "amount": 2 }], "elseSteps": [] }, { "type": "SetStance", "stance": "dragon" }] },
+    { "id": "ninja_duo_dragon_tortoise_t1", "name": "Capacitor Shell", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Shield", "Energy"], "effects": [{ "type": "ShieldBlock", "baseBlock": 3 }, { "type": "BranchIfActorStance", "stance": "dragon", "thenSteps": [{ "type": "ConditionalSpendCharge", "spend": 2, "thenSteps": [{ "type": "ShieldBlock", "baseBlock": 6 }, { "type": "ShieldBlockAfterRounds", "amount": 4, "delayRounds": 2 }] }], "elseSteps": [] }, { "type": "SetStance", "stance": "tortoise" }] },
+    { "id": "ninja_duo_tortoise_dragon_t1", "name": "Shell Discharge", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Direct", "Shield"], "effects": [{ "type": "ShieldBlock", "baseBlock": 4 }, { "type": "BranchIfActorStance", "stance": "tortoise", "thenSteps": [{ "type": "ConsumeShieldForDirectDamage", "shieldPerDamage": 2, "maxShieldSpend": 8 }], "elseSteps": [] }, { "type": "SetStance", "stance": "dragon" }] },
+    { "id": "ninja_duo_tiger_bird_t1", "name": "Crimson Vector", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Shuriken", "Expose"], "effects": [{ "type": "GainShuriken", "amount": 1 }, { "type": "BranchIfActorStance", "stance": "tiger", "thenSteps": [{ "type": "Keyword", "spec": { "type": "Expose", "value": 2 } }, { "type": "SetNextTigerCardOverclock", "active": true }], "elseSteps": [] }, { "type": "SetStance", "stance": "bird" }] },
+    { "id": "ninja_duo_bird_tiger_t1", "name": "Marked Dive", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Evade"], "effects": [{ "type": "GainEvade", "amount": 1 }, { "type": "BranchIfActorStance", "stance": "bird", "thenSteps": [{ "type": "SetNextTigerCardOverclock", "active": true }], "elseSteps": [] }, { "type": "SetStance", "stance": "tiger" }] },
+    { "id": "ninja_duo_tiger_tortoise_t1", "name": "Fracture Guard", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Shield", "Potency"], "effects": [{ "type": "ShieldBlock", "baseBlock": 4 }, { "type": "BranchIfActorStance", "stance": "tiger", "thenSteps": [{ "type": "AddStrikePotency", "amount": 2 }, { "type": "GainVirulentRetribution", "amount": 1 }], "elseSteps": [] }, { "type": "SetStance", "stance": "tortoise" }] },
+    { "id": "ninja_duo_tortoise_tiger_t1", "name": "Contagion Breaker", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Strike", "Virus"], "effects": [{ "type": "ApplyVirus", "stacks": 2 }, { "type": "BranchIfActorStance", "stance": "tortoise", "thenSteps": [{ "type": "SetNextTigerCardExtraStrikeFromTargetVirus", "cap": 3 }], "elseSteps": [] }, { "type": "SetStance", "stance": "tiger" }] },
+    { "id": "ninja_duo_bird_tortoise_t1", "name": "Quarantine Mantle", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Shield", "Shuriken"], "effects": [{ "type": "GainShuriken", "amount": 1 }, { "type": "BranchIfActorStance", "stance": "bird", "thenSteps": [{ "type": "ConsumeAllShurikenGainShield", "shieldPerShuriken": 3, "gainVirulentRetributionIfAny": 1 }], "elseSteps": [] }, { "type": "SetStance", "stance": "tortoise" }] },
+    { "id": "ninja_duo_tortoise_bird_t1", "name": "Toxic Glide", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 1, "charge_cost": 1, "tags": ["Stance", "Shuriken", "Virus"], "merge_to": "ninja_duo_tortoise_bird_t2", "effects": [{ "type": "GainShuriken", "amount": 1 }, { "type": "BranchIfActorStance", "stance": "tortoise", "thenSteps": [{ "type": "SetNextShurikenUnloadImbueVirusPerHit", "stacksPerHit": 1 }], "elseSteps": [] }, { "type": "SetStance", "stance": "bird" }] },
+    { "id": "ninja_duo_tortoise_bird_t2", "name": "Toxic Glide+", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 2, "charge_cost": 1, "tags": ["Stance", "Shuriken", "Virus"], "merge_to": "ninja_duo_tortoise_bird_t3", "effects": [{ "type": "GainShuriken", "amount": 1 }, { "type": "BranchIfActorStance", "stance": "tortoise", "thenSteps": [{ "type": "SetNextShurikenUnloadImbueVirusPerHit", "stacksPerHit": 2 }], "elseSteps": [] }, { "type": "SetStance", "stance": "bird" }] },
+    { "id": "ninja_duo_tortoise_bird_t3", "name": "Toxic Glide++", "faction": "cyberpunk", "neutral": false, "awakening_min": 1, "card_tier": 3, "charge_cost": 1, "tags": ["Stance", "Shuriken", "Virus"], "effects": [{ "type": "GainShuriken", "amount": 2 }, { "type": "BranchIfActorStance", "stance": "tortoise", "thenSteps": [{ "type": "SetNextShurikenUnloadImbueVirusPerHit", "stacksPerHit": 2 }], "elseSteps": [] }, { "type": "SetStance", "stance": "bird" }] }
+  ]
+}

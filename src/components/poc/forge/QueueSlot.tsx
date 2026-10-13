@@ -1,4 +1,5 @@
 import type { DragEvent as ReactDragEvent, MouseEvent as ReactMouseEvent } from 'react';
+import { PrimeSlotMark } from '../../../ui/PrimeSlotMark';
 import type { ForgeCard } from './types';
 
 interface QueueSlotProps {
@@ -6,6 +7,9 @@ interface QueueSlotProps {
   card: ForgeCard | null;
   /** Inactive program slot (e.g. act 1 = first 5 active, rest locked). */
   locked?: boolean;
+  isPrime?: boolean;
+  primeTraitIds?: readonly string[];
+  faction?: string;
   isDragOver: boolean;
   onHover: (c: ForgeCard | null, ev?: { clientX: number; clientY: number }) => void;
   onClear: () => void;
@@ -21,6 +25,9 @@ export function QueueSlot({
   index,
   card,
   locked = false,
+  isPrime = false,
+  primeTraitIds = [],
+  faction,
   isDragOver,
   onHover,
   onClear,
@@ -33,17 +40,26 @@ export function QueueSlot({
 }: QueueSlotProps) {
   const dropClass = isDragOver ? ' forge-poc__slot--drop-target' : '';
   const lockedClass = locked ? ' forge-poc__slot--locked' : '';
+  const primeClass = isPrime && !locked ? ' forge-poc__slot--prime' : '';
 
   if (!card) {
     return (
       <div
-        className={`forge-poc__slot forge-poc__slot--empty${dropClass}${lockedClass}`}
+        className={`forge-poc__slot forge-poc__slot--empty${dropClass}${lockedClass}${primeClass}`}
         onContextMenu={onContextMenu}
         onDragOver={locked ? undefined : onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
       >
         <div className="forge-poc__slot-index">{String(index + 1).padStart(2, '0')}</div>
+        {isPrime && !locked ? (
+          <PrimeSlotMark
+            slotIndex={index}
+            traitIds={primeTraitIds}
+            faction={faction}
+            className="forge-poc__prime-mark"
+          />
+        ) : null}
         {locked ? (
           <>
             <div className="forge-poc__slot-hex" aria-hidden>
@@ -64,7 +80,7 @@ export function QueueSlot({
 
   return (
     <div
-      className={`forge-poc__slot forge-poc__slot--${card.faction}${dropClass}${lockedClass}${
+      className={`forge-poc__slot forge-poc__slot--${card.faction}${dropClass}${lockedClass}${primeClass}${
         locked ? ' forge-poc__slot--read-only' : ''
       }`}
       draggable={!locked}
@@ -79,6 +95,14 @@ export function QueueSlot({
       onDrop={onDrop}
     >
       <div className="forge-poc__slot-index">{String(index + 1).padStart(2, '0')}</div>
+      {isPrime && !locked ? (
+        <PrimeSlotMark
+          slotIndex={index}
+          traitIds={primeTraitIds}
+          faction={faction}
+          className="forge-poc__prime-mark"
+        />
+      ) : null}
       <div
         className={[
           'forge-poc__slot-cost-badge',
