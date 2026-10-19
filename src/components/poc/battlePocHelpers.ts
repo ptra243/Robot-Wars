@@ -1,5 +1,11 @@
+import { publicUrl } from '../../assetUrl';
 import type { CardContentService } from '../../core/content';
 import type { CombatFighterSnapshot } from '../../core/types';
+import {
+  SCRAP_ENGINE_ICON,
+  SCRAP_HOUND_ATTACK_ICON,
+  SCRAP_HOUND_SHIELD_ICON,
+} from '../../ui/scrapHoundIcons';
 import { ATTACK_DAMAGE, battleCardFromId, DECK_SIZE, type BattleCard } from './battlePocCardModel';
 import {
   BLANK_QUEUE_ID,
@@ -49,12 +55,57 @@ export function lockedProgramBattleCard(index: number): BattleCard {
   };
 }
 
-export function buffChipsFromSnapshot(s: CombatFighterSnapshot): { key: string; label: string }[] {
-  const out: { key: string; label: string }[] = [];
+export type AuraChip = {
+  key: string;
+  label: string;
+  iconSrc?: string;
+  title?: string;
+};
+
+export function buffChipsFromSnapshot(s: CombatFighterSnapshot): AuraChip[] {
+  const out: AuraChip[] = [];
   if (s.potency > 0) out.push({ key: 'pot', label: `POT +${String(s.potency)}` });
   if (s.bulkStacks > 0) out.push({ key: 'bulk', label: `BULK ${String(s.bulkStacks)}` });
   if (s.coreScrap > 0) out.push({ key: 'core', label: `CORE ${String(s.coreScrap)}` });
   if (s.junk > 0) out.push({ key: 'junk', label: `JNK ${String(s.junk)}` });
+  if ((s.scrapEngineCount ?? 0) > 0) {
+    out.push({
+      key: 'scrap-engine',
+      label: String(s.scrapEngineCount),
+      iconSrc: SCRAP_ENGINE_ICON,
+      title: `Scrap Engine ×${String(s.scrapEngineCount)} (+1 Junk each of your turns per engine)`,
+    });
+  }
+  if ((s.scrapHoundAttackStacks ?? 0) > 0) {
+    out.push({
+      key: 'scrap-hound-atk',
+      label: String(s.scrapHoundAttackStacks),
+      iconSrc: SCRAP_HOUND_ATTACK_ICON,
+      title: `Scrap Hound (attack) ×${String(s.scrapHoundAttackStacks)} (tick: stacks + potency)`,
+    });
+  }
+  if ((s.scrapHoundShieldStacks ?? 0) > 0) {
+    out.push({
+      key: 'scrap-hound-shd',
+      label: String(s.scrapHoundShieldStacks),
+      iconSrc: SCRAP_HOUND_SHIELD_ICON,
+      title: `Scrap Hound (shield) ×${String(s.scrapHoundShieldStacks)} (tick: stacks + potency)`,
+    });
+  }
+  if ((s.scrapEnergyEngineStacks ?? 0) > 0) {
+    out.push({
+      key: 'scrap-energy',
+      label: `EN×${String(s.scrapEnergyEngineStacks)}`,
+      title: `Energy Engine ×${String(s.scrapEnergyEngineStacks)} (+charge each of your turns)`,
+    });
+  }
+  if ((s.scrapExposeEngineStacks ?? 0) > 0) {
+    out.push({
+      key: 'scrap-expose',
+      label: `EX×${String(s.scrapExposeEngineStacks)}`,
+      title: `Expose Engine ×${String(s.scrapExposeEngineStacks)} (Expose each of your turns)`,
+    });
+  }
   return out;
 }
 
@@ -123,7 +174,7 @@ export const makeDeck = (prefix: string): BattleCard[] =>
     cost: 1,
     atk: ATTACK_DAMAGE,
     text: `Deal ${ATTACK_DAMAGE} damage.`,
-    art: '/poc/poc-card-attack.png',
+    art: publicUrl('/poc/poc-card-attack.png'),
     artFocus: 'default' as const,
     statKind: 'strike' as const,
   }));

@@ -359,6 +359,18 @@ button.accent {
   font-size: 10px;
 }
 
+.status-pill--icon {
+  padding-left: 2px;
+}
+
+.status-pill-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
 .status-pill strong {
   font-weight: 600;
 }

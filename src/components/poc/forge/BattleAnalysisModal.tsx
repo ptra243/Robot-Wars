@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { publicUrl } from '../../../assetUrl';
 import type { CardContentService } from '../../../core/content';
 import { getRelicDef, getRelicDescription } from '../../../core/run';
 import type {
@@ -6,7 +7,7 @@ import type {
   BattleCardContribution,
   BattleStatCategory,
 } from '../battlePocAnalysis';
-import { ForgeDeckSimChart, type ForgeDeckSimSeriesDef } from './ForgeDeckSimChart';
+import { ForgeDeckSimChart, type ForgeDeckSimRow, type ForgeDeckSimSeriesDef } from './ForgeDeckSimChart';
 import { CardHoverPopover } from './CardHoverPopover';
 import { cardArtUrlFromDef, forgeCardFromDefWithTraits } from './forgeCardModel';
 
@@ -84,20 +85,20 @@ function contributorLabel(
     const relicId = TRAIT_TO_RELIC_ID[id] ?? id;
     const def = getRelicDef(relicId);
     if (def) {
-      return { name: def.name, art: '/poc/poc-card-overclock.png', isRelic: true, relicId };
+      return { name: def.name, art: publicUrl('/poc/poc-card-overclock.png'), isRelic: true, relicId };
     }
     const pretty = id
       .replace(/^relic_/, '')
       .split('_')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
-    return { name: pretty, art: '/poc/poc-card-overclock.png', isRelic: true, relicId };
+    return { name: pretty, art: publicUrl('/poc/poc-card-overclock.png'), isRelic: true, relicId };
   }
   try {
     const def = content.get(id);
     return { name: def.name, art: cardArtUrlFromDef(def), isRelic: false };
   } catch {
-    return { name: id, art: '/poc/poc-card-strike.png', isRelic: false };
+    return { name: id, art: publicUrl('/poc/poc-card-strike.png'), isRelic: false };
   }
 }
 
@@ -409,7 +410,7 @@ export function BattleAnalysisModal({
           <ForgeDeckSimChart
             layout="large"
             data={{
-              rounds: rows,
+              rounds: rows as unknown as ForgeDeckSimRow[],
               initial: {
                 energy: initial.energy,
                 shields: initial.shields,
@@ -465,6 +466,8 @@ export function BattleAnalysisModal({
               : {}),
             x: (expandedHover ?? hoverCard)!.x,
             y: (expandedHover ?? hoverCard)!.y,
+            clientX: (expandedHover ?? hoverCard)!.x,
+            clientY: (expandedHover ?? hoverCard)!.y,
           }}
           zIndex={1600}
         />

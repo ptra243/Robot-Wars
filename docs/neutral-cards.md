@@ -14,6 +14,7 @@ Neutrals are the **shared staple pool** (drafts, starters). Design language come
 ## Design rules (plan)
 
 - **Hard rule for neutrals in the plan**: no junk / bulk / **core** in **card text** for this row set—only **charge**, **tags**, and neutral mechanics (Overclock, Expose, Potency). Strike/Shield still benefit from **global bulk-on-tag** and potency from rules.
+- **Exception (intentional):** `neutral_scrap_pickup` and `neutral_scrap_dump` may print **Junk** (thin cross-faction injector / spend utility). No other neutrals should gain this exception without a design note.
 - **Awakening tier** (`awakening_min`) is **spirit/run** pool gating; **card tier** (`card_tier` 1–3) is **same-name merge** in the salvage yard.
 
 ---
@@ -30,6 +31,8 @@ Neutrals are the **shared staple pool** (drafts, starters). Design language come
 | Capacitor Feed  | 0              | +2 / +3 / +4 charge (t1–t3)                  | **t1–t3** in data.                                           |
 | Expose Wiring   | 0              | Expose 3 / 5 / 7                             | **t1–t3** in data.                                           |
 | Urgent Repairs  | -1             | Heal 2 / 4 / 6                               | Fully implemented (`t1`/`t2`/`t3`) in data with merge chain. |
+| Scrap Pickup    | 0              | +1 / +2 / +2 Junk                            | **Junk exception** — thin cross-faction injector.            |
+| Scrap Dump      | 0              | Spend 2 Junk → +1 EN / +2 EN / +2 EN +1 pot  | **Junk exception** — small spend utility.                    |
 
 
 ---
@@ -46,9 +49,11 @@ Neutrals are the **shared staple pool** (drafts, starters). Design language come
 | Capacitor Feed  | cost 1, +2 charge                   | cost 1, +3 charge                   | cost 1, +4 charge                   | Implemented |
 | Expose Wiring   | cost 1, Expose 3                    | cost 1, Expose 5                    | cost 1, Expose 7                    | Implemented |
 | Urgent Repairs  | cost -1, heal 2                     | cost -1, heal 4                     | cost -1, heal 6                     | Implemented |
+| Scrap Pickup    | cost 0, +1 Junk                     | cost 0, +2 Junk                     | cost 0, +2 Junk                     | Implemented (junk exception) |
+| Scrap Dump      | spend 2 Junk → +1 charge            | spend 2 Junk → +2 charge            | spend 2 Junk → +2 charge +1 potency | Implemented (junk exception) |
 
 
-**Robot Wars:** Basic Strike, Barrier, Urgent Repairs, Servo, Overclock, Capacitor, and Expose match tier ladders in `neutral/awakening0.json`. Awakening 1 pool started in `neutral/awakening1.json` (see § Planned Awakening 1 additions below).
+**Robot Wars:** Basic Strike, Barrier, Urgent Repairs, Servo, Overclock, Capacitor, Expose, and the Scrap Pickup/Dump junk exception match tier ladders in `neutral/awakening0.json`. Awakening 1 pool started in `neutral/awakening1.json` (see § Planned Awakening 1 additions below).
 
 ---
 

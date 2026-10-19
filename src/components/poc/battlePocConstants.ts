@@ -1,6 +1,11 @@
+import { publicUrl } from '../../assetUrl';
 import { COMBAT_RULES } from '../../core/rules';
 
 export const BLANK_QUEUE_ID = COMBAT_RULES.blankQueueSlotCardId;
+
+/** Scrap Hound companion sprites (summon idle + attack). */
+export const SCRAP_HOUND_IDLE_SRC = publicUrl('/poc/poc-scrap-hound-idle.jpg');
+export const SCRAP_HOUND_ATTACK_SRC = publicUrl('/poc/poc-scrap-hound-attack.jpg');
 
 export const PLAYER_MAX_HP = 50;
 export const ENEMY_MAX_HP = 50;
@@ -81,14 +86,14 @@ export const PHASE_DURATIONS: Record<Phase, number> = {
 };
 
 export const ENEMY_MECH_POSES: MechPoseSet = {
-  idle: '/poc/poc-mech-enemy-sprite.png',
-  attackWindup: '/poc/poc-mech-enemy-sprite.png',
-  attackContact: '/poc/poc-mech-enemy-sprite.png',
-  hurt: '/poc/poc-mech-enemy-sprite.png',
-  defeat: '/poc/poc-mech-enemy-sprite.png',
+  idle: publicUrl('/poc/poc-mech-enemy-sprite.png'),
+  attackWindup: publicUrl('/poc/poc-mech-enemy-sprite.png'),
+  attackContact: publicUrl('/poc/poc-mech-enemy-sprite.png'),
+  hurt: publicUrl('/poc/poc-mech-enemy-sprite.png'),
+  defeat: publicUrl('/poc/poc-mech-enemy-sprite.png'),
 };
 
-export const GLINT_PUNCH_STRIP = '/poc/poc-mech-glint-punch-strip.png';
+export const GLINT_PUNCH_STRIP = publicUrl('/poc/poc-mech-glint-punch-strip.png');
 
 export const GLINT_POSES: MechPoseSet = {
   idle: GLINT_PUNCH_STRIP,
@@ -99,11 +104,11 @@ export const GLINT_POSES: MechPoseSet = {
 };
 
 export const BARON_POSES: MechPoseSet = {
-  idle: '/poc/poc-mech-baron-von-boar-sprite.png',
-  attackWindup: '/poc/poc-mech-baron-von-boar-sprite.png',
-  attackContact: '/poc/poc-mech-baron-von-boar-sprite.png',
-  hurt: '/poc/poc-mech-baron-von-boar-sprite.png',
-  defeat: '/poc/poc-mech-baron-von-boar-sprite.png',
+  idle: publicUrl('/poc/poc-mech-baron-von-boar-sprite.png'),
+  attackWindup: publicUrl('/poc/poc-mech-baron-von-boar-sprite.png'),
+  attackContact: publicUrl('/poc/poc-mech-baron-von-boar-sprite.png'),
+  hurt: publicUrl('/poc/poc-mech-baron-von-boar-sprite.png'),
+  defeat: publicUrl('/poc/poc-mech-baron-von-boar-sprite.png'),
 };
 
 /**
@@ -115,8 +120,8 @@ export const BARON_POSES: MechPoseSet = {
  * Replay dwell for a player resolve is exactly strike + hold (no unbounded wait).
  */
 export const MECH_SPRITE_SHEETS: Record<string, SpriteSheetSpec | undefined> = {
-  // Source: 1746×376 sliced into 6 equal columns of 291×376 each (frame
-  // aspect ≈ 0.77 — closer to square than the original 0.54 portrait).
+  // Source: 2016×395 sliced into 6 equal columns of 336×395 each (frame
+  // aspect ≈ 0.85 — closer to square than the original 0.54 portrait).
   // Each frame is independently bbox-cropped from the AI source then
   // pasted centered into a uniform column wide enough to contain the
   // widest pose (the fully-extended punch + impact burst). See
@@ -129,6 +134,6 @@ export const MECH_SPRITE_SHEETS: Record<string, SpriteSheetSpec | undefined> = {
     fps: 14,
     attackDurationMs: 340,
     weightedPunchTiming: true,
-    frameAspect: 291 / 376,
+    frameAspect: 336 / 395,
   },
 };

@@ -23,17 +23,22 @@ type FactionScopedTag =
   | 'tiger'
   | 'bird'
   | 'turtle'
-  | 'core'
+  | 'factoryReset'
   | 'junk'
   | 'prime'
   | 'sequence';
-type CompendiumTag = CardTag | 'Core' | 'Prime' | 'Sequence' | FactionScopedTag;
+type CompendiumTag = CardTag | 'Factory Reset' | 'Prime' | 'Sequence' | FactionScopedTag;
 
 const FACTION_TAGS: Record<string, FactionScopedTag[]> = {
   CYBERPUNK: ['dragon', 'tiger', 'bird', 'turtle'],
-  SCAVENGERS: ['core', 'junk'],
+  SCAVENGERS: ['factoryReset', 'junk'],
   CLOCKWORK: ['prime', 'sequence'],
 };
+
+function formatCompendiumTagLabel(tag: CompendiumTag): string {
+  if (tag === 'factoryReset') return 'Factory Reset';
+  return tag;
+}
 
 function hasPrimeMarker(card: ForgeCard & { awakeningMin?: number }): boolean {
   return card.keywords.some((k) => k.type === 'Prime');
@@ -87,8 +92,8 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
       for (const tag of card.tags) {
         tagSet.add(tag);
       }
-      if (card.keywords.some((k) => k.type === 'CoreParts')) {
-        tagSet.add('Core');
+      if (card.keywords.some((k) => k.type === 'FactoryReset')) {
+        tagSet.add('Factory Reset');
       }
       if (hasPrimeMarker(card)) {
         tagSet.add('Prime');
@@ -123,7 +128,7 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
         if (card.id.includes('tortoise')) s.add('turtle');
       }
       if (card.faction === 'scavengers') {
-        if (card.keywords.some((k) => k.type === 'CoreParts')) s.add('core');
+        if (card.keywords.some((k) => k.type === 'FactoryReset')) s.add('factoryReset');
         if (card.tags.includes('Junk')) s.add('junk');
       }
       if (card.faction === 'clockwork') {
@@ -153,14 +158,13 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
       const tagOk =
         activeTags.length === 0 ||
         activeTags.every((tag) => {
-          if (tag === 'Core') return card.keywords.some((k) => k.type === 'CoreParts');
+          if (tag === 'Factory Reset' || tag === 'factoryReset') {
+            return card.keywords.some((k) => k.type === 'FactoryReset');
+          }
           if (tag === 'dragon') return card.faction === 'cyberpunk' && card.id.includes('dragon');
           if (tag === 'tiger') return card.faction === 'cyberpunk' && card.id.includes('tiger');
           if (tag === 'bird') return card.faction === 'cyberpunk' && card.id.includes('bird');
           if (tag === 'turtle') return card.faction === 'cyberpunk' && card.id.includes('tortoise');
-          if (tag === 'core') {
-            return card.faction === 'scavengers' && card.keywords.some((k) => k.type === 'CoreParts');
-          }
           if (tag === 'junk') return card.faction === 'scavengers' && card.tags.includes('Junk');
           if (tag === 'Prime' || tag === 'prime') return hasPrimeMarker(card);
           if (tag === 'Sequence' || tag === 'sequence') {
@@ -361,7 +365,7 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
                       toggleTag(tag);
                     }}
                   >
-                    {tag}
+                    {formatCompendiumTagLabel(tag)}
                   </button>
                 );
               })}
@@ -415,7 +419,13 @@ export function CompendiumView({ onExit }: CompendiumViewProps) {
           }}
         >
           <CardHoverPopover
-            hover={{ card: effectiveHoverCard, x: hover.x, y: hover.y }}
+            hover={{
+              card: effectiveHoverCard,
+              x: hover.x,
+              y: hover.y,
+              clientX: hover.clientX,
+              clientY: hover.clientY,
+            }}
             canPrevTier={effectiveHoverIndex > 0}
             canNextTier={effectiveHoverIndex < hoverFamilyCards.length - 1}
             onPrevTier={() => {

@@ -1,3 +1,4 @@
+import { publicUrl } from '../../assetUrl';
 import type { BattlePocStage as Stage } from './BattlePocControls';
 import { BattlePocPilotHUD, BATTLE_POC_ENERGY_BAR_CAP, BATTLE_POC_SHIELD_BAR_CAP } from './BattlePocPilotHUD';
 import { ATTACK_DAMAGE } from './battlePocCardModel';
@@ -10,6 +11,7 @@ import {
   ImpactSpark,
   MechSprite,
   MuzzleFlash,
+  ScrapHoundCompanion,
   ShieldAura,
   SpeedLines,
   SystemLock,
@@ -70,7 +72,7 @@ export function BattlePocArena({
         side="right"
         name="ARES-01"
         subtitle="CORPORATE · AEGIS STRIKE"
-        portrait="/poc/poc-pilot-enemy.png"
+        portrait={publicUrl('/poc/poc-pilot-enemy.png')}
         hp={vm.uiEnemyHp}
         maxHp={vm.uiEnemyMaxHp}
         active={isEnemyPhase(vm.uiPhase)}
@@ -101,6 +103,7 @@ export function BattlePocArena({
           alt={pilotNameForAlt ? `${pilotNameForAlt}'s mech` : 'Player mech'}
           animState={vm.playerAnimState}
         />
+        <ScrapHoundCompanion visible={vm.scrapHoundVisible} anim={vm.scrapHoundAnim} />
         {vm.hasReplay && vm.rp ? (
           <AuraChipRow variant="debuff" chips={debuffChipsFromSnapshot(vm.rp)} a11y="Player debuffs" />
         ) : null}

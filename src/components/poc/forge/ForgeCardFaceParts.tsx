@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import { artCropCssVars } from '../../../ui/cardArtPlates';
 import type { ForgeCard } from './types';
 
 export type ForgeCardFaceArtVariant = 'library' | 'preview';
@@ -15,22 +16,42 @@ export function ForgeCardFaceArt({
   variant: ForgeCardFaceArtVariant;
 }) {
   const isPreview = variant === 'preview';
+  const cropped = Boolean(card.artFocus === 'cropped' && card.artCrop);
+  // Cropped faces must not keep a prior background-image; default faces must not
+  // keep crop CSS vars from a previous card identity on the same DOM node.
+  const artStyle = (
+    cropped
+      ? { backgroundImage: 'none', ...artCropCssVars(card.artCrop!) }
+      : {
+          backgroundImage: `url(${card.art})`,
+          '--bgi-px': undefined,
+          '--bgi-py': undefined,
+          '--bgi-zoom-base': undefined,
+        }
+  ) as CSSProperties;
   return (
     <div
       className={[
         'forge-poc__fc-art',
-        card.artFocus === 'core-reactor' ? 'forge-poc__fc-art--core-reactor' : '',
+        cropped ? 'forge-poc__fc-art--cropped' : '',
+        cropped && card.artKeyed ? 'forge-poc__fc-art--keyed' : '',
         isPreview ? 'forge-poc__fc-art--preview' : 'forge-poc__fc-art--library',
       ]
         .filter(Boolean)
         .join(' ')}
-      style={card.artFocus === 'core-reactor' ? undefined : { backgroundImage: `url(${card.art})` }}
+      style={artStyle}
     >
-      {card.artFocus === 'core-reactor' ? (
+      {cropped ? (
         <>
           <div className="forge-poc__fc-art-void" aria-hidden />
           <div className="forge-poc__fc-art-bgi">
-            <img className="forge-poc__fc-art-bgi-img" src={card.art} alt="" draggable={false} />
+            <img
+              key={card.art}
+              className="forge-poc__fc-art-bgi-img"
+              src={card.art}
+              alt=""
+              draggable={false}
+            />
           </div>
         </>
       ) : null}

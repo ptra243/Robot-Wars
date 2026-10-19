@@ -3,7 +3,7 @@ import { QueueCardFrame } from './QueueCardFrame';
 import { TradingCard } from './TradingCard';
 import type { PhaserSlotHoverPayload } from '../ui/arenaScene';
 import type { CardContentService } from '../core/content';
-import { CARD_TAG_HELP, KEYWORD_TYPE_HELP } from '../ui/keywordTagGlossary';
+import { CARD_TAG_HELP, KEYWORD_TYPE_HELP, formatKeywordTypeLabel } from '../ui/keywordTagGlossary';
 import type { DeckBuilderHoverPayload } from '../ui/deckBuilderScene';
 import { COMBAT_RULES } from '../core/rules';
 import type { CardDef } from '../core/types';
@@ -66,7 +66,7 @@ export function CardPreviewGlossary({ card }: { card: CardDef }) {
             {card.keywords.map((k, i) => (
               <li key={`${k.type}-${k.value}-${i}`} className="card-preview-glossary__item">
                 <div className="card-preview-glossary__label">
-                  {k.type} {k.value}
+                  {formatKeywordTypeLabel(k.type)} {k.value}
                 </div>
                 <p className="card-preview-glossary__text">{KEYWORD_TYPE_HELP[k.type]}</p>
               </li>

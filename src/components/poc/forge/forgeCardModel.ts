@@ -1,37 +1,29 @@
+import { publicUrl } from '../../../assetUrl';
 import type { CardContentService } from '../../../core/content';
 import { SeededRandom } from '../../../core/content';
 import type { CardDef } from '../../../core/types';
 import { buildCardDescription } from '../../../ui/cardText';
+import { plateArtForCardId, type CardArtCrop } from '../../../ui/cardArtPlates';
 import { hpPlayCostAmountForUi } from '../../../ui/hpPlayCost';
 import { QUEUE_SIZE } from './constants';
 import type { ForgeCard, ForgeFaction } from './types';
 
+export { isCoreSacrificeLineCardId } from '../../../ui/cardArtPlates';
+
 const ART = {
-  strike: '/poc/poc-card-strike.png',
-  shield: '/poc/poc-card-shield.png',
-  junk: '/poc/poc-card-junk.png',
-  overclock: '/poc/poc-card-overclock.png',
-  cyberDragon: '/poc/poc-card-cyberpunk-dragon.png',
-  cyberTiger: '/poc/poc-card-cyberpunk-tiger.png',
-  cyberBird: '/poc/poc-card-cyberpunk-bird.png',
-  cyberTortoise: '/poc/poc-card-cyberpunk-tortoise.png',
-  cyberDuo: '/poc/poc-card-cyberpunk-duo.png',
-  cyberGlue: '/poc/poc-card-cyberpunk-glue.png',
-  /** Core sacrifice / factory placeholder — use with `.forge-poc__*-art--core-reactor` crop. */
-  core: '/poc/poc-core-werewolf-mech-reactor-placeholder.png',
+  strike: publicUrl('/poc/poc-card-strike.png'),
+  shield: publicUrl('/poc/poc-card-shield.png'),
+  junk: publicUrl('/poc/poc-card-junk.png'),
+  overclock: publicUrl('/poc/poc-card-overclock.png'),
+  cyberDragon: publicUrl('/poc/poc-card-cyberpunk-dragon.png'),
+  cyberTiger: publicUrl('/poc/poc-card-cyberpunk-tiger.png'),
+  cyberBird: publicUrl('/poc/poc-card-cyberpunk-bird.png'),
+  cyberTortoise: publicUrl('/poc/poc-card-cyberpunk-tortoise.png'),
+  cyberDuo: publicUrl('/poc/poc-card-cyberpunk-duo.png'),
+  cyberGlue: publicUrl('/poc/poc-card-cyberpunk-glue.png'),
 } as const;
 
-/** Scavenger core retool + HP/sacrifice `sacrif_*` lines — shared reactor art + CSS crop. */
-export function isCoreSacrificeLineCardId(id: string): boolean {
-  return (
-    /^(core_tap|core_refactoring|core_rebirth|deep_core_tap)_/.test(id) || /^sacrif_/.test(id)
-  );
-}
-
-function artForCard(card: CardDef): string {
-  if (isCoreSacrificeLineCardId(card.id)) {
-    return ART.core;
-  }
+function tagFallbackArt(card: CardDef): string {
   if (card.faction === 'cyberpunk') {
     if (card.id.includes('_duo_')) return ART.cyberDuo;
     if (card.id.includes('masterful_form')) return ART.cyberGlue;
@@ -45,15 +37,26 @@ function artForCard(card: CardDef): string {
   if (card.keywords.some((k) => k.type === 'Overclock')) return ART.overclock;
   if (tags.includes('Strike')) return ART.strike;
   if (tags.includes('Shield')) return ART.shield;
+  // Junk-tagged cards only — do not use the scavenger junk PNG as a general default
+  // (Potency / Energy / support cards were incorrectly sharing Junk Gasket art).
   if (tags.includes('Junk')) return ART.junk;
   if (card.base_damage > 0) return ART.strike;
   if (card.base_block > 0) return ART.shield;
-  return ART.junk;
+  if (tags.includes('Potency') || tags.includes('Energy') || tags.includes('Bulk')) {
+    return ART.overclock;
+  }
+  return ART.overclock;
+}
+
+function resolveArt(card: CardDef): { url: string; crop?: CardArtCrop; keyed?: boolean } {
+  const plate = plateArtForCardId(card.id);
+  if (plate) return { url: plate.url, crop: plate.crop, keyed: plate.keyed };
+  return { url: tagFallbackArt(card) };
 }
 
 /** Public for Phaser mini cards / battle strip — same URLs as {@link forgeCardFromDef}. */
 export function cardArtUrlFromDef(card: CardDef): string {
-  return artForCard(card);
+  return resolveArt(card).url;
 }
 
 function factionClass(card: CardDef): ForgeFaction {
@@ -84,6 +87,7 @@ export function forgeCardFromDef(card: CardDef): ForgeCard {
   const atk = card.base_damage > 0 ? card.base_damage : undefined;
   const def = card.base_block > 0 ? card.base_block : undefined;
   const hpPlay = hpPlayCostAmountForUi(card);
+  const { url, crop, keyed } = resolveArt(card);
   return {
     id: card.id,
     name: card.name,
@@ -95,8 +99,10 @@ export function forgeCardFromDef(card: CardDef): ForgeCard {
     faction: factionClass(card),
     tags: [...card.tags],
     keywords: card.keywords.map((k) => ({ type: k.type, value: k.value })),
-    art: artForCard(card),
-    artFocus: isCoreSacrificeLineCardId(card.id) ? 'core-reactor' : 'default',
+    art: url,
+    artFocus: crop ? 'cropped' : 'default',
+    artCrop: crop,
+    artKeyed: keyed,
     blurb: buildCardDescription(card, { omitTagsAndKeywords: true }),
   };
 }

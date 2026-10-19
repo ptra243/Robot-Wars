@@ -7,7 +7,7 @@ export function makeTestFighter(
   name: string,
   deck: string[],
   queue: Array<string | null>,
-  activeQueueSlots = COMBAT_RULES.queueSize,
+  activeQueueSlots: number = COMBAT_RULES.queueSize,
 ): FighterState {
   const padded = Array.from({ length: COMBAT_RULES.queueSize }, (_, i) => queue[i] ?? null);
   return {
@@ -41,6 +41,11 @@ export function makeTestFighter(
     strikeResolutionsThisCombat: 0,
     traitIds: [],
     tempUpgrade: null,
+    scrapEngineCount: 0,
+    scrapHoundAttackStacks: 0,
+    scrapHoundShieldStacks: 0,
+    scrapEnergyEngineStacks: 0,
+    scrapExposeEngineStacks: 0,
     emergencyProtocolStacks: 0,
     mirrorCoreSelfDamage: false,
     overclockBonusUsedThisTurn: false,

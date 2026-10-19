@@ -1,0 +1,514 @@
+.battle-poc--phaser {
+  grid-template-rows: 168px 1fr 160px;
+}
+
+.phaser-battlefield-host {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.phaser-battlefield-host canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.battle-poc__stage--phaser .battle-poc__vs {
+  z-index: 4;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Cartridge rail — 3D carousel + center dock                                  */
+/* -------------------------------------------------------------------------- */
+
+.cartridge-rail {
+  min-height: 0;
+  --cartridge-w: 72px;
+  --cartridge-h: 96px;
+  --slot-accent: var(--bp-ally, #ffa040);
+  --slot-accent-soft: var(--bp-ally-soft, rgba(255, 160, 64, 0.22));
+  --slot-accent-glow: var(--bp-ally-glow, rgba(255, 160, 64, 0.55));
+}
+
+.cartridge-rail--enemy {
+  --slot-accent: var(--bp-enemy, #ff3ea5);
+  --slot-accent-soft: var(--bp-enemy-soft, rgba(255, 62, 165, 0.22));
+  --slot-accent-glow: var(--bp-enemy-glow, rgba(255, 62, 165, 0.55));
+}
+
+.cartridge-rail__stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: 0 12px 2px;
+  perspective: 1100px;
+  perspective-origin: 50% 45%;
+  overflow: visible;
+}
+
+/* Machined panel plate — clip-path on a backdrop so cartridges aren't cropped. */
+.cartridge-rail__stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 22%),
+    linear-gradient(180deg, #1a2030 0%, #121722 55%, #0c1018 100%);
+  border: 1px solid rgba(190, 210, 230, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+  clip-path: polygon(
+    12px 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px),
+    0 12px
+  );
+}
+
+.cartridge-rail--enemy .cartridge-rail__stage {
+  perspective-origin: 50% 55%;
+}
+
+.cartridge-rail--enemy .cartridge-rail__stage::before {
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04), transparent 22%),
+    linear-gradient(0deg, #2a1824 0%, #1a1218 55%, #100c10 100%);
+  clip-path: polygon(
+    8px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    0 calc(100% - 12px),
+    0 8px
+  );
+}
+
+/* Center dock / insert bay — cards plug into this. */
+.cartridge-slot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--cartridge-w) + 22px);
+  height: calc(var(--cartridge-h) + 18px);
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  pointer-events: none;
+  display: grid;
+  grid-template-columns: 10px 1fr 10px;
+  align-items: stretch;
+  gap: 0;
+}
+
+.cartridge-slot__rail {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.12),
+      transparent 30%,
+      transparent 70%,
+      rgba(0, 0, 0, 0.35)
+    ),
+    repeating-linear-gradient(
+      180deg,
+      #2a3142 0 3px,
+      #141a26 3px 6px
+    );
+  border: 1px solid rgba(190, 210, 230, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.cartridge-rail--enemy .cartridge-slot__rail {
+  background:
+    linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.1),
+      transparent 30%,
+      transparent 70%,
+      rgba(0, 0, 0, 0.35)
+    ),
+    repeating-linear-gradient(
+      0deg,
+      #3a2432 0 3px,
+      #1a1016 3px 6px
+    );
+}
+
+.cartridge-slot__bay {
+  position: relative;
+  margin: 4px 0;
+  background:
+    linear-gradient(180deg, #0a0d14 0%, #151b28 40%, #0a0d14 100%);
+  border: 1px solid rgba(190, 210, 230, 0.22);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.55),
+    inset 0 10px 18px rgba(0, 0, 0, 0.45);
+  clip-path: polygon(
+    8px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px),
+    0 8px
+  );
+}
+
+.cartridge-slot__teeth {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  height: 5px;
+  background: repeating-linear-gradient(
+    90deg,
+    #1a1208 0 4px,
+    #c4a574 4px 6px
+  );
+  opacity: 0.85;
+}
+
+.cartridge-slot--player .cartridge-slot__teeth {
+  top: 3px;
+}
+
+.cartridge-slot--enemy .cartridge-slot__teeth {
+  bottom: 3px;
+}
+
+.cartridge-slot__mouth {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  height: 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.75),
+    rgba(0, 0, 0, 0.35)
+  );
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8);
+}
+
+.cartridge-slot--player .cartridge-slot__mouth {
+  top: -1px;
+  clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+}
+
+.cartridge-slot--enemy .cartridge-slot__mouth {
+  bottom: -1px;
+  clip-path: polygon(0 0, 100% 0, 92% 100%, 8% 100%);
+}
+
+.cartridge-slot__led {
+  position: absolute;
+  left: 50%;
+  width: 18px;
+  height: 4px;
+  margin-left: -9px;
+  border-radius: 1px;
+  background: rgba(120, 140, 160, 0.35);
+  box-shadow: none;
+  transition: background 220ms ease, box-shadow 220ms ease;
+}
+
+.cartridge-slot--player .cartridge-slot__led {
+  bottom: 6px;
+}
+
+.cartridge-slot--enemy .cartridge-slot__led {
+  top: 6px;
+}
+
+.cartridge-slot.is-live .cartridge-slot__led {
+  background: var(--slot-accent);
+  box-shadow: 0 0 10px var(--slot-accent-glow);
+}
+
+.cartridge-slot.is-live .cartridge-slot__bay {
+  border-color: color-mix(in srgb, var(--slot-accent) 55%, rgba(190, 210, 230, 0.22));
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.55),
+    inset 0 0 18px color-mix(in srgb, var(--slot-accent) 22%, transparent),
+    0 0 16px color-mix(in srgb, var(--slot-accent) 18%, transparent);
+}
+
+/* Carousel ring — absolute cards orbit around center index. */
+.cartridge-belt {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.cartridge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--cartridge-w);
+  height: var(--cartridge-h);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 4px 8px;
+  pointer-events: auto;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 28%),
+    linear-gradient(180deg, #343b4c 0%, #1a2030 55%, #121722 100%);
+  border: 1px solid rgba(190, 210, 230, 0.22);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 6px 0 #090c12,
+    0 10px 18px rgba(0, 0, 0, 0.35);
+  clip-path: polygon(
+    6px 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    6px 100%,
+    0 calc(100% - 6px),
+    0 6px
+  );
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  transition:
+    transform 480ms cubic-bezier(0.2, 0.75, 0.2, 1),
+    opacity 280ms ease,
+    filter 200ms ease,
+    box-shadow 240ms ease,
+    border-color 200ms ease;
+  cursor: default;
+  will-change: transform, opacity;
+}
+
+.cartridge-rail--enemy .cartridge {
+  flex-direction: column-reverse;
+  padding: 8px 4px 4px;
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.08), transparent 28%),
+    linear-gradient(0deg, #4a2438 0%, #241620 55%, #140e14 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 -6px 0 #09060a,
+    0 -10px 18px rgba(0, 0, 0, 0.35);
+}
+
+.cartridge.is-active:not(.is-slotted) {
+  border-color: color-mix(in srgb, var(--slot-accent) 65%, rgba(190, 210, 230, 0.22));
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 0 0 1px color-mix(in srgb, var(--slot-accent) 40%, transparent),
+    0 6px 0 #090c12,
+    0 12px 22px rgba(0, 0, 0, 0.4);
+}
+
+.cartridge-rail--enemy .cartridge.is-active:not(.is-slotted) {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 0 0 1px color-mix(in srgb, var(--slot-accent) 40%, transparent),
+    0 -6px 0 #09060a,
+    0 -12px 22px rgba(0, 0, 0, 0.4);
+}
+
+.cartridge.is-spent {
+  filter: saturate(0.65) brightness(0.88);
+}
+
+.cartridge.is-locked,
+.cartridge.is-fog {
+  filter: saturate(0.45) brightness(0.75);
+}
+
+/* Mechanical insert — plug into the center dock toward the arena. */
+.cartridge.is-slotted {
+  filter: none;
+  opacity: 1 !important;
+  border-color: var(--slot-accent);
+  z-index: 12;
+  transition: opacity 200ms ease, filter 200ms ease, box-shadow 240ms ease, border-color 200ms ease;
+}
+
+.cartridge--player.is-slotted {
+  transform: translate(-50%, -50%) translateY(-42px) translateZ(56px) rotateX(-14deg) scale(1.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px color-mix(in srgb, var(--slot-accent) 70%, transparent),
+    0 0 22px color-mix(in srgb, var(--slot-accent) 35%, transparent),
+    0 14px 24px rgba(0, 0, 0, 0.5);
+  animation: cartridge-plug-player 520ms cubic-bezier(0.15, 0.85, 0.25, 1) both;
+}
+
+.cartridge--enemy.is-slotted {
+  transform: translate(-50%, -50%) translateY(42px) translateZ(56px) rotateX(14deg) scale(1.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 0 1px color-mix(in srgb, var(--slot-accent) 70%, transparent),
+    0 0 22px color-mix(in srgb, var(--slot-accent) 35%, transparent),
+    0 -14px 24px rgba(0, 0, 0, 0.5);
+  animation: cartridge-plug-enemy 520ms cubic-bezier(0.15, 0.85, 0.25, 1) both;
+}
+
+@keyframes cartridge-plug-player {
+  0% {
+    transform: translate(-50%, -50%) translateY(8px) translateZ(12px) rotateX(4deg) scale(1);
+  }
+  55% {
+    transform: translate(-50%, -50%) translateY(-48px) translateZ(62px) rotateX(-16deg) scale(1.08);
+  }
+  78% {
+    transform: translate(-50%, -50%) translateY(-38px) translateZ(50px) rotateX(-12deg) scale(1.04);
+  }
+  100% {
+    transform: translate(-50%, -50%) translateY(-42px) translateZ(56px) rotateX(-14deg) scale(1.06);
+  }
+}
+
+@keyframes cartridge-plug-enemy {
+  0% {
+    transform: translate(-50%, -50%) translateY(-8px) translateZ(12px) rotateX(-4deg) scale(1);
+  }
+  55% {
+    transform: translate(-50%, -50%) translateY(48px) translateZ(62px) rotateX(16deg) scale(1.08);
+  }
+  78% {
+    transform: translate(-50%, -50%) translateY(38px) translateZ(50px) rotateX(12deg) scale(1.04);
+  }
+  100% {
+    transform: translate(-50%, -50%) translateY(42px) translateZ(56px) rotateX(14deg) scale(1.06);
+  }
+}
+
+.cartridge.is-prime {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+    0 0 16px rgba(255, 255, 255, 0.35),
+    0 6px 0 #090c12;
+}
+
+.cartridge-rail--enemy .cartridge.is-prime {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+    0 0 16px rgba(255, 255, 255, 0.35),
+    0 -6px 0 #09060a;
+}
+
+.cartridge.is-reset {
+  animation: cartridge-reset 700ms ease;
+}
+
+.cartridge.is-slotted.is-reset {
+  animation:
+    cartridge-plug-player 520ms cubic-bezier(0.15, 0.85, 0.25, 1) both,
+    cartridge-reset 700ms ease;
+}
+
+.cartridge--enemy.is-slotted.is-reset {
+  animation:
+    cartridge-plug-enemy 520ms cubic-bezier(0.15, 0.85, 0.25, 1) both,
+    cartridge-reset 700ms ease;
+}
+
+@keyframes cartridge-reset {
+  0% { filter: none; }
+  40% { filter: brightness(2.2); }
+  100% { filter: none; }
+}
+
+.cartridge__index {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(232, 238, 246, 0.72);
+  padding: 0 2px;
+}
+
+.cartridge__label {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: 3px 1px;
+  overflow: hidden;
+  border-radius: 2px;
+  background-color: #0a0d14;
+  background-size: cover;
+  background-position: 50% 40%;
+}
+
+.cartridge__label--blank {
+  display: grid;
+  place-items: center;
+  color: rgba(232, 238, 246, 0.8);
+  font-size: 18px;
+  background-image: none;
+}
+
+.cartridge__label-bgi {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.cartridge__label--cropped {
+  --bgi-zoom: var(--bgi-zoom-base, 3.1);
+}
+
+.cartridge__name {
+  display: block;
+  padding: 0 2px;
+  font-size: 9px;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #e8eef6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cartridge__connector {
+  position: absolute;
+  left: 50%;
+  width: 32px;
+  height: 6px;
+  margin-left: -16px;
+  background: repeating-linear-gradient(
+    90deg,
+    #1a1208 0 3px,
+    #c4a574 3px 5px
+  );
+  border-radius: 1px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+
+.cartridge--player .cartridge__connector {
+  top: -4px;
+}
+
+.cartridge--enemy .cartridge__connector {
+  bottom: -4px;
+}
+
+.cartridge.is-slotted .cartridge__connector {
+  background: repeating-linear-gradient(
+    90deg,
+    #2a1808 0 3px,
+    var(--slot-accent) 3px 5px
+  );
+  box-shadow: 0 0 8px color-mix(in srgb, var(--slot-accent) 45%, transparent);
+}

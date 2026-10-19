@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { GameApp } from './components/GameApp';
 import { BattleSimulationApp } from './components/BattleSimulationApp';
 import { CompendiumView } from './components/CompendiumView';
-import { BattlePOC } from './components/poc/BattlePOC';
+import { BattleView } from './components/phaser-battle/BattleView';
 import { OpponentLoadoutLab } from './components/poc/OpponentLoadoutLab';
 import { useGameStore } from './stores/gameStore';
+import { readBattlePresentation, writeBattlePresentation, type BattlePresentation } from './ui/battlePresentation';
 import './components/landing.css';
+import './styles/ui-motion.css';
 
 type AppView = 'landing' | 'run' | 'simulation' | 'compendium' | 'battlePoc' | 'opponentLab';
 
@@ -26,6 +28,7 @@ function initialViewFromQuery(): AppView {
 
 export default function App() {
   const [view, setView] = useState<AppView>(initialViewFromQuery);
+  const [battlePresentation, setBattlePresentation] = useState<BattlePresentation>(readBattlePresentation);
   const handleResetRun = useGameStore((s) => s.handleReset);
   const run = useGameStore((s) => s.run);
 
@@ -54,7 +57,7 @@ export default function App() {
   }
 
   if (view === 'battlePoc') {
-    return <BattlePOC onExit={goHome} />;
+    return <BattleView onExit={goHome} />;
   }
 
   if (view === 'opponentLab') {
@@ -142,6 +145,32 @@ export default function App() {
             <span className="landing__btn-hint">dev</span>
           </button>
         </nav>
+
+        <div className="landing__option" role="group" aria-label="Battle presentation">
+          <span className="landing__option-label">Battle</span>
+          <button
+            type="button"
+            className={`landing__option-btn${battlePresentation === 'classic' ? ' is-selected' : ''}`}
+            aria-pressed={battlePresentation === 'classic'}
+            onClick={() => {
+              writeBattlePresentation('classic');
+              setBattlePresentation('classic');
+            }}
+          >
+            Classic
+          </button>
+          <button
+            type="button"
+            className={`landing__option-btn${battlePresentation === 'phaser' ? ' is-selected' : ''}`}
+            aria-pressed={battlePresentation === 'phaser'}
+            onClick={() => {
+              writeBattlePresentation('phaser');
+              setBattlePresentation('phaser');
+            }}
+          >
+            Phaser
+          </button>
+        </div>
 
         <footer className="landing__footer">
           <span className="landing__status-dot" />

@@ -1,5 +1,6 @@
 import type { DragEvent as ReactDragEvent, MouseEvent as ReactMouseEvent } from 'react';
 import type { CardTag, KeywordType } from '../../../core/types';
+import type { CardArtCrop } from '../../../ui/cardArtPlates';
 
 /** Faction token used for CSS modifiers (`.forge-poc__slot--${faction}`). */
 export type ForgeFaction =
@@ -32,8 +33,15 @@ export interface ForgeCard {
   tags: CardTag[];
   keywords: ForgeKeyword[];
   art: string;
-  /** Tighter background crop for core sacrifice line art (reactor + hand). */
-  artFocus: 'default' | 'core-reactor';
+  /**
+   * `cropped` = shared plate / reactor art with zoom via `artCrop` CSS vars.
+   * `default` = full `art` URL as cover background.
+   */
+  artFocus: 'default' | 'cropped';
+  /** Required when `artFocus === 'cropped'`. */
+  artCrop?: CardArtCrop;
+  /** Chroma-key knockout for legacy keyed PNGs only (not painted plates). */
+  artKeyed?: boolean;
   blurb: string;
 }
 

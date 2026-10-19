@@ -220,6 +220,8 @@ export function applyPostCombatRewards(run: RunState, playerWon: boolean): void 
     run.remainingLosses = run.loop.hearts;
     return;
   }
+  // Early-run discovery: one free card reroll after each won fight.
+  run.loop.rerolls += 1;
   run.loop.playerHpMax += 10;
   run.loop.playerHpBaseMax += 10;
   run.loop.playerHp = run.loop.playerHpMax;

@@ -62,6 +62,9 @@ export interface BattlePocViewModel {
   enemyAnimState: MechAnimState;
   playerAttackAnimKey: string;
   enemyAttackAnimKey: string;
+  /** Player Scrap Hound companion (visible while attack/shield stacks > 0). */
+  scrapHoundVisible: boolean;
+  scrapHoundAnim: 'hidden' | 'summon' | 'idle' | 'attack';
   statusText: string;
   analysisSeries: ReturnType<typeof buildBattleAnalysisSeries>;
 }
@@ -403,6 +406,17 @@ export function useBattlePocViewModel(input: {
 
   const analysisSeries = useMemo(() => buildBattleAnalysisSeries(combatResult), [combatResult]);
 
+  const houndStacks =
+    (rp?.scrapHoundAttackStacks ?? 0) + (rp?.scrapHoundShieldStacks ?? 0);
+  const scrapHoundVisible = hasReplay && houndStacks > 0;
+  const scrapHoundAnim: 'hidden' | 'summon' | 'idle' | 'attack' = !scrapHoundVisible
+    ? 'hidden'
+    : eventType === 'scrap_hound_summon'
+      ? 'summon'
+      : eventType === 'scrap_hound_attack'
+        ? 'attack'
+        : 'idle';
+
   return {
     hasReplay,
     replayEvents,
@@ -438,6 +452,8 @@ export function useBattlePocViewModel(input: {
     enemyAnimState,
     playerAttackAnimKey,
     enemyAttackAnimKey,
+    scrapHoundVisible,
+    scrapHoundAnim,
     statusText,
     analysisSeries,
   };

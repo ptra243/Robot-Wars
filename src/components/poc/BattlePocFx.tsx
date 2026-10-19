@@ -1,5 +1,30 @@
 import type { CSSProperties } from 'react';
-import { MECH_SPRITE_SHEETS } from './battlePocConstants';
+import {
+  MECH_SPRITE_SHEETS,
+  SCRAP_HOUND_ATTACK_SRC,
+  SCRAP_HOUND_IDLE_SRC,
+} from './battlePocConstants';
+
+export function ScrapHoundCompanion({
+  visible,
+  anim,
+}: {
+  visible: boolean;
+  anim: 'hidden' | 'summon' | 'idle' | 'attack';
+}) {
+  if (!visible || anim === 'hidden') {
+    return null;
+  }
+  const src = anim === 'attack' ? SCRAP_HOUND_ATTACK_SRC : SCRAP_HOUND_IDLE_SRC;
+  return (
+    <div
+      className={`battle-poc__scrap-hound battle-poc__scrap-hound--${anim}`}
+      aria-hidden
+    >
+      <img className="battle-poc__scrap-hound-img" src={src} alt="" />
+    </div>
+  );
+}
 
 export function AuraChipRow({
   variant,
@@ -7,7 +32,7 @@ export function AuraChipRow({
   a11y,
 }: {
   variant: 'buff' | 'debuff';
-  chips: { key: string; label: string }[];
+  chips: { key: string; label: string; iconSrc?: string; title?: string }[];
   a11y: string;
 }) {
   if (chips.length === 0) {
@@ -19,8 +44,15 @@ export function AuraChipRow({
       aria-label={a11y}
     >
       {chips.map((c) => (
-        <span key={`${variant}-${c.key}`} className="battle-poc__aura-chip">
-          {c.label}
+        <span
+          key={`${variant}-${c.key}`}
+          className={`battle-poc__aura-chip${c.iconSrc ? ' battle-poc__aura-chip--icon' : ''}`}
+          title={c.title ?? c.label}
+        >
+          {c.iconSrc ? (
+            <img className="battle-poc__aura-chip-icon" src={c.iconSrc} alt="" aria-hidden />
+          ) : null}
+          <span className="battle-poc__aura-chip-label">{c.label}</span>
         </span>
       ))}
     </div>

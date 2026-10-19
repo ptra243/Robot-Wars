@@ -2,7 +2,7 @@ import type { MutableRefObject } from 'react';
 import { useState } from 'react';
 import type { DragEvent as ReactDragEvent, MouseEvent as ReactMouseEvent } from 'react';
 import { LibraryCard } from './LibraryCard';
-import type { DragPayload, ForgeCard } from './types';
+import type { DragPayload, ForgeCard, HoverState } from './types';
 
 interface HandSectionProps {
   hand: ForgeCard[];
@@ -11,7 +11,7 @@ interface HandSectionProps {
   dragPayloadRef: MutableRefObject<DragPayload | null>;
   setDragging: (p: DragPayload | null) => void;
   setDragOverSlot: (n: number | null) => void;
-  setHover: (h: { card: ForgeCard; x: number; y: number } | null) => void;
+  setHover: (h: HoverState | null) => void;
   setHoverCardAt: (card: ForgeCard | null, ev?: { clientX: number; clientY: number }) => void;
   assignNextEmpty: (handIndex: number) => void;
   handleDropOnHand: (payload: DragPayload) => void;

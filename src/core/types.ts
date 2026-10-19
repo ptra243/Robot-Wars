@@ -59,6 +59,11 @@ export type EffectStep =
   | { type: 'AddStrikePotency'; amount: number }
   | { type: 'AddShieldPotency'; amount: number }
   | { type: 'HealSelf'; amount: number }
+  /**
+   * Raise max HP by `amount` without healing (Chassis Refinance).
+   * Current HP is unchanged — intentionally leaves you “taller but empty.”
+   */
+  | { type: 'GainMaxHp'; amount: number }
   /** Direct HP loss on the resolving fighter (bypasses block; not Strike damage). */
   | { type: 'SelfDamage'; amount: number }
   | {
@@ -202,7 +207,53 @@ export type EffectStep =
   | { type: 'ConsumeShieldForDirectDamage'; shieldPerDamage: number; maxShieldSpend?: number }
   | { type: 'GainVirulentRetribution'; amount: number }
   | { type: 'ConsumeAllShurikenGainShield'; shieldPerShuriken: number; gainVirulentRetributionIfAny?: number }
-  | { type: 'ShieldBlockAfterRounds'; amount: number; delayRounds: number };
+  | { type: 'ShieldBlockAfterRounds'; amount: number; delayRounds: number }
+  /** Rest-of-battle: when you take card self-damage, also gain this much junk per HP lost (Blood to Scrap). */
+  | { type: 'SetBloodToScrapJunkPerSelfDamage'; amount: number }
+  /** Rest-of-battle: while junk ≥ minJunk, reduce card self-damage by reduceBy (floor 1 HP left) — Heap Padding. */
+  | { type: 'SetHeapPadding'; minJunk: number; reduceBy: number }
+  /** Rest-of-battle: while junk ≥ minJunk, reduce incoming HP loss by reduceBy — Heap Ballast. */
+  | { type: 'SetHeapBallast'; minJunk: number; reduceBy: number }
+  /**
+   * Rest-of-battle: when you take card self-damage, gain block = min(capPerHit, loss × blockPerHpLost)
+   * — Scrap Anesthetic.
+   */
+  | { type: 'SetScrapAnesthetic'; blockPerHpLost: number; capPerHit: number }
+  /**
+   * Spend up to maxEngines Scrap Engines (and optional junk) into typed per-turn stacks.
+   * `into`: attack / shield / energy / expose.
+   */
+  | {
+      type: 'ConvertScrapEngines';
+      maxEngines: number;
+      into: 'attack' | 'shield' | 'energy' | 'expose';
+      spendJunk?: number;
+    }
+  /** Rest-of-battle: after each StrikeDamage step, gain this much junk (Scrap Dividend). */
+  | { type: 'SetStrikeResolveBonusJunk'; amount: number }
+  /**
+   * Rest-of-battle: after each StrikeDamage step, if HP ≤ maxHp * maxHpFraction, gain junk (Anemic Dividend).
+   * `maxHpFraction` is e.g. 0.5 for ≤50%.
+   */
+  | { type: 'SetStrikeResolveBonusJunkIfHpFractionAtMost'; maxHpFraction: number; amount: number }
+  /** Rest-of-battle: first card each program cycle gains this much charge before cost (Scrap Dynamo). */
+  | { type: 'SetFirstCardOfCycleBonusCharge'; amount: number }
+  /** Count toward Dynamo Peal / Mixed Scrap Choir engine tallies. */
+  | { type: 'GainScrapEngine'; amount: number }
+  /** Non-Strike damage = scrapEngineCount × damagePerEngine (+ optional potency). */
+  | {
+      type: 'DirectHpDamagePerScrapEngine';
+      damagePerEngine: number;
+      pierce?: boolean;
+      useStrikePotency?: boolean;
+    }
+  /** Branch on missing HP (maxHp − hp) at resolve time. */
+  | {
+      type: 'BranchIfMissingHpGte';
+      minMissing: number;
+      thenSteps: EffectStep[];
+      elseSteps: EffectStep[];
+    };
 
 export interface CardDef {
   id: string;
@@ -240,6 +291,12 @@ export interface CardDef {
   bonus_block_per_junk_held?: { cap?: number };
   /** Salvage Mantle–style: +floor(junk / divisor) block (no spend). */
   bonus_block_per_junk_every_n?: { divisor: number };
+  /** Heap Battery: Continuous ticks only while junk ≥ this. */
+  continuous_min_junk?: number;
+  /** Override Continuous tick charge (default 1). */
+  continuous_charge_per_tick?: number;
+  /** Override Continuous tick junk (default 1; use 0 for charge-only batteries). */
+  continuous_junk_per_tick?: number;
 }
 
 export interface CardCatalog {
@@ -262,6 +319,12 @@ export type FighterAura =
       nextTickRound: number;
       /** Expose Drone Uplink: each tick adds this much Expose to the opponent. */
       enemyExposePerTick?: number;
+      /** Heap Battery: only tick when junk ≥ this (default uncapped). */
+      minJunkToTick?: number;
+      /** Override default +1 charge on tick (Heap Battery). */
+      chargePerTick?: number;
+      /** Override default +1 junk on tick; 0 skips junk gain. */
+      junkPerTick?: number;
     }
   | {
       type: 'Expose';
@@ -287,6 +350,38 @@ export interface FighterState {
   hp: number;
   /** Combat HP ceiling for heals (run playerHpMax / encounter enemy max). */
   maxHp: number;
+  /** Blood to Scrap: junk gained per HP lost to card SelfDamage steps. */
+  bloodToScrapJunkPerSelfDamage?: number;
+  /** Heap Padding: soften self-damage while junk is tall. */
+  heapPadding?: { minJunk: number; reduceBy: number };
+  /** Heap Ballast: soften incoming HP loss while junk is tall. */
+  heapBallast?: { minJunk: number; reduceBy: number };
+  /** Scrap Anesthetic: self-damage grants block (capped per hit). */
+  scrapAnesthetic?: { blockPerHpLost: number; capPerHit: number };
+  /** Scrap Dividend: bonus junk after each StrikeDamage step. */
+  strikeResolveBonusJunk?: number;
+  /** Anemic Dividend: bonus junk after StrikeDamage while wounded. */
+  strikeResolveBonusJunkIfHpFractionAtMost?: { maxHpFraction: number; amount: number };
+  /** Scrap Dynamo: bonus charge on the first resolve of each program cycle. */
+  firstCardOfCycleBonusCharge?: number;
+  /** Resolves completed in the current program cycle (reset on queue wrap). */
+  cardsResolvedThisProgramCycle?: number;
+  /** Spend-engine tally for Dynamo Peal finishers / scrap-hound converts. */
+  scrapEngineCount?: number;
+  /**
+   * Scrap-hound attack stacks (auto-turret pet). Tick damage uses stacks + potency.
+   * Gained by converting Scrap Engines (design); shown on battle HUD when > 0.
+   */
+  scrapHoundAttackStacks?: number;
+  /**
+   * Scrap-hound shield stacks (auto-shield pet). Tick block uses stacks + potency.
+   * Gained by converting Scrap Engines; shown on battle HUD when > 0.
+   */
+  scrapHoundShieldStacks?: number;
+  /** Per-turn +charge stacks from converted Scrap Engines (flat per stack). */
+  scrapEnergyEngineStacks?: number;
+  /** Per-turn Expose applied to opponent from converted Scrap Engines (flat per stack). */
+  scrapExposeEngineStacks?: number;
   block: number;
   charge: number;
   junk: number;
@@ -334,9 +429,9 @@ export interface FighterState {
    */
   tempUpgrade: { slotIndex: number; originalId: string } | null;
   /**
-   * Emergency Protocol (B): stacks gained only from core-line factory cards in data.
-   * End of player turn: take self-damage equal to stacks (minimum 1). If that drops you to 0 HP,
-   * one stack is spent to survive at 1 HP (+1 strike potency), unless prevented this turn.
+   * Emergency Protocol: stacks from Factory Reset / core-line cards.
+   * End of your turn: backlash self-damage equal to stacks. Whenever HP would hit 0,
+   * spend 1 stack to survive at 1 HP (+1 potency), unless prevented this turn.
    */
   emergencyProtocolStacks: number;
   /**
@@ -407,6 +502,11 @@ export interface CombatFighterSnapshot {
   exposeDamage: number;
   virusStacks?: number;
   weakenStacks?: number;
+  scrapEngineCount?: number;
+  scrapHoundAttackStacks?: number;
+  scrapHoundShieldStacks?: number;
+  scrapEnergyEngineStacks?: number;
+  scrapExposeEngineStacks?: number;
   /** Times the fatigue deck has wrapped (player only; used for deck-cycle stats). */
   deckWraps?: number;
   /** Stunned aura: skips activations until cleared. */

@@ -47,6 +47,22 @@ describe('relic source gating', () => {
 });
 
 describe('post-combat relic rewards', () => {
+  it('grants +1 card reroll after a won fight', () => {
+    const run = createNewRun(200);
+    run.loop.pendingEncounterType = 'battle';
+    const before = run.loop.rerolls;
+    applyPostCombatRewards(run, true);
+    expect(run.loop.rerolls).toBe(before + 1);
+  });
+
+  it('does not grant a reroll on loss', () => {
+    const run = createNewRun(199);
+    run.loop.pendingEncounterType = 'battle';
+    const before = run.loop.rerolls;
+    applyPostCombatRewards(run, false);
+    expect(run.loop.rerolls).toBe(before);
+  });
+
   it('elite rewards queue a pending uncommon relic pick instead of auto-granting', () => {
     const run = createNewRun(201);
     run.loop.pendingEncounterType = 'elite';

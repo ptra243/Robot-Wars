@@ -53,7 +53,7 @@ describe('enemyRoll harness', () => {
         },
         seed: 22,
         expected:
-          'expose|neutral_harassing_strike_t2,field_diode_t1,neutral_multi_strike_t2,neutral_multi_strike_t2,neutral_expose_wiring_t2,neutral_expose_wiring_t1,neutral_multi_strike_t2|neutral_expose_wiring_t2,neutral_harassing_strike_t1,neutral_multi_strike_t2,field_diode_t1,neutral_harassing_strike_t1,neutral_harassing_strike_t1|-|charge_start_plus_2',
+          'expose|neutral_harassing_strike_t2,field_diode_t1,neutral_multi_strike_t2,neutral_multi_strike_t2,neutral_expose_wiring_t2,neutral_expose_wiring_t1,neutral_multi_strike_t2|neutral_expose_wiring_t2,neutral_harassing_strike_t1,neutral_multi_strike_t2,field_diode_t1,neutral_harassing_strike_t1,neutral_harassing_strike_t1|-|potency_start_plus_1',
       },
       {
         name: 'act3-battle-aw1-slotbands',
@@ -95,7 +95,7 @@ describe('enemyRoll harness', () => {
         },
         seed: 44,
         expected:
-          'core_factory|neutral_capacitor_feed_t1,core_tap_t1,core_rebirth_t2,core_rebirth_t2,core_refactoring_t2,core_refactoring_t2,core_refactoring_t2,neutral_urgent_repairs_t1,deep_core_tap_t1|core_tap_t1,neutral_urgent_repairs_t1,core_rebirth_t2,neutral_capacitor_feed_t1,core_refactoring_t2,gutter_offering_t1|-|charge_start_plus_2',
+          'core_factory|neutral_capacitor_feed_t1,core_tap_t1,core_rebirth_t2,core_rebirth_t2,core_refactoring_t2,core_refactoring_t2,core_refactoring_t2,neutral_urgent_repairs_t1,gutter_offering_t1|core_tap_t1,neutral_urgent_repairs_t1,core_rebirth_t2,neutral_capacitor_feed_t1,core_refactoring_t2,gutter_offering_t1|-|charge_start_plus_2',
       },
     ];
 

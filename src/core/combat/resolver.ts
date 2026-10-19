@@ -5,7 +5,7 @@ import { expandEffectSteps } from '../effects/expandEffects';
 import { getSpendPrerequisites, runEffectPipeline } from '../effects/runner';
 import { COMBAT_RULES } from '../rules';
 import { callTraitOnCardResolved } from '../traits';
-import type { CardDef, CombatEvent, CombatState, FighterState, KeywordSpec } from '../types';
+import type { AuraTrigger, CardDef, CombatEvent, CombatState, FighterState, KeywordSpec } from '../types';
 import { isPrimeSlotForActor } from '../clockwork';
 import { blankCardIdForTraits } from '../run/combatSetup';
 import { createAuraDispatchBudget, dispatchAuraTrigger } from './auras';
@@ -104,6 +104,17 @@ export function resolveFighter(
     return;
   }
 
+  const cycleBonus = actor.firstCardOfCycleBonusCharge ?? 0;
+  if (cycleBonus > 0 && (actor.cardsResolvedThisProgramCycle ?? 0) === 0) {
+    actor.charge += cycleBonus;
+    pushEv(state, events, {
+      type: 'scrap_dynamo_tick',
+      round: state.roundIndex,
+      actor: actor.name,
+      text: `${actor.name} gains +${String(cycleBonus)} energy (first card of cycle).`,
+    });
+  }
+
   const chargeCost = effectiveChargeCost(card, actor);
   if (actor.charge < chargeCost) {
     performStallOnCurrentQueuedCard(content, state, actor, events, 'charge');
@@ -114,6 +125,7 @@ export function resolveFighter(
   actor.charge -= chargeCost;
   resolveCard(content, state, actor, target, card, queueIndex, events, true, combatSeed);
   markPersistentResolved(actor, queueIndex, card);
+  actor.cardsResolvedThisProgramCycle = (actor.cardsResolvedThisProgramCycle ?? 0) + 1;
   state.globalResolutions += 1;
   advanceQueue(actor, state, events);
 }
@@ -272,7 +284,12 @@ function resolveCard(
         combatSeed,
       );
     },
-    dispatchAuraTrigger: (dispatchState, dispatchActor, dispatchTarget, trigger) =>
+    dispatchAuraTrigger: (
+      dispatchState: CombatState,
+      dispatchActor: FighterState,
+      dispatchTarget: FighterState,
+      trigger: AuraTrigger,
+    ) =>
       dispatchAuraTrigger(
         dispatchState,
         dispatchActor,
@@ -282,7 +299,7 @@ function resolveCard(
         auraBudget,
       ),
     auraBudget,
-    pushEv: (event) => pushEv(state, events, event),
+    pushEv: (event: Omit<CombatEvent, 'snapshot'>) => pushEv(state, events, event),
     resolvingCard: card,
     content,
     effectRngSeed,
@@ -388,7 +405,7 @@ function applyKeyword(
   keyword: KeywordSpec,
   events: CombatEvent[],
   allowBonusNext: boolean,
-  combatSeed: number,
+  _combatSeed: number,
 ): void {
   switch (keyword.type) {
     case 'Bulk': {
@@ -434,6 +451,15 @@ function applyKeyword(
           interval: keyword.value,
           nextTickRound: state.roundIndex + keyword.value,
           ...(enemyExposePerTick !== undefined ? { enemyExposePerTick } : {}),
+          ...(card.continuous_min_junk !== undefined
+            ? { minJunkToTick: card.continuous_min_junk }
+            : {}),
+          ...(card.continuous_charge_per_tick !== undefined
+            ? { chargePerTick: card.continuous_charge_per_tick }
+            : {}),
+          ...(card.continuous_junk_per_tick !== undefined
+            ? { junkPerTick: card.continuous_junk_per_tick }
+            : {}),
         });
         actor.continuousTicksByQueueIndex[queueIndex] = keyword.value;
         actor.continuousNextTickRoundByQueueIndex[queueIndex] = state.roundIndex + keyword.value;

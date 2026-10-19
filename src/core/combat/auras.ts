@@ -40,16 +40,26 @@ export function dispatchAuraTrigger(
     for (const aura of actor.auras) {
       if (aura.type === 'Continuous' && aura.trigger === 'OnTurnStart') {
         if (state.roundIndex >= aura.nextTickRound) {
-          gainJunkWithCap(actor, target, 1, state.roundIndex, (e) => pushEv(state, events, e));
-          actor.charge += 1;
+          const minJunk = aura.minJunkToTick;
+          const canTick = minJunk === undefined || actor.junk >= minJunk;
+          if (canTick) {
+            const junkGain = aura.junkPerTick ?? 1;
+            const chargeGain = aura.chargePerTick ?? 1;
+            if (junkGain > 0) {
+              gainJunkWithCap(actor, target, junkGain, state.roundIndex, (e) =>
+                pushEv(state, events, e),
+              );
+            }
+            if (chargeGain > 0) actor.charge += chargeGain;
+            pushEv(state, events, {
+              type: 'continuous_tick',
+              round: state.roundIndex,
+              actor: actor.name,
+              text: `${actor.name} gains +${String(junkGain)} junk/+${String(chargeGain)} energy from Continuous.`,
+            });
+          }
           aura.nextTickRound += aura.interval;
           actor.continuousNextTickRoundByQueueIndex[aura.sourceQueueIndex] = aura.nextTickRound;
-          pushEv(state, events, {
-            type: 'continuous_tick',
-            round: state.roundIndex,
-            actor: actor.name,
-            text: `${actor.name} gains +1 junk/+1 energy from Continuous.`,
-          });
           if (aura.enemyExposePerTick !== undefined && aura.enemyExposePerTick > 0) {
             const amt = aura.enemyExposePerTick;
             target.exposeDamage = Math.min(

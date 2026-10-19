@@ -1,6 +1,42 @@
 {
   "schemaVersion": 1,
   "byCardId": {
+    "anemic_dividend_t1": {
+      "full": "**Persistent**: while at ≤50% HP, Strikes grant +1 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: while at ≤50% HP, Strikes grant +1 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "anemic_dividend_t2": {
+      "full": "**Persistent**: while at ≤50% HP, Strikes grant +1 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: while at ≤50% HP, Strikes grant +1 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "anemic_dividend_t3": {
+      "full": "**Persistent**: while at ≤50% HP, Strikes grant +2 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: while at ≤50% HP, Strikes grant +2 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "blood_to_scrap_t1": {
+      "full": "**Persistent**: when you take card self-damage, gain 1 **Junk** per HP lost.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: when you take card self-damage, gain 1 **Junk** per HP lost.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "blood_to_scrap_t2": {
+      "full": "**Persistent**: when you take card self-damage, gain 1 **Junk** per HP lost.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: when you take card self-damage, gain 1 **Junk** per HP lost.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "blood_to_scrap_t3": {
+      "full": "**Persistent**: when you take card self-damage, gain 1 **Junk** per HP lost.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: when you take card self-damage, gain 1 **Junk** per HP lost.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "chassis_refinance_t1": {
+      "full": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Junk** ≥ 4: Spend 4 **Junk**, +4 max HP, Heal 4.\nTags: Junk.",
+      "compact": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Junk** ≥ 4: Spend 4 **Junk**, +4 max HP, Heal 4."
+    },
+    "chassis_refinance_t2": {
+      "full": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Junk** ≥ 4: Spend 4 **Junk**, +5 max HP, Heal 5.\nTags: Junk.",
+      "compact": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Junk** ≥ 4: Spend 4 **Junk**, +5 max HP, Heal 5."
+    },
+    "chassis_refinance_t3": {
+      "full": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Junk** ≥ 3: Spend 3 **Junk**, +6 max HP, Heal 6.\nTags: Junk.",
+      "compact": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Junk** ≥ 3: Spend 3 **Junk**, +6 max HP, Heal 6."
+    },
     "clockwork_canticle_interleave_chorus_t1": {
       "full": "**Strike** 1.\n**Sequence** Start: **Strike** 2, +1 **Potency**.\n**Sequence** 2: **Strike** 3, +1 **Potency**.\n**Sequence** 3: **Strike** 4, +2 **Potency**.\nTags: Strike, Potency.",
       "compact": "**Strike** 1.\n**Sequence** Start: **Strike** 2, +1 **Potency**.\n**Sequence** 2: **Strike** 3, +1 **Potency**.\n**Sequence** 3: **Strike** 4, +2 **Potency**."
@@ -102,52 +138,64 @@
       "compact": "**Shield** 2.\n**Sequence** 2: **Prime**-slot cards gain +2 **Potency**."
     },
     "core_rebirth_t1": {
-      "full": "+1 Junk.\nFactory Reset\nReplace next 1 Neutral Basic Strike slot with random Core-parts cards (same tier).\nEmergency Protocol 1\nTags: Junk.",
-      "compact": "+1 Junk.\nFactory Reset\nReplace next 1 Neutral Basic Strike slot with random Core-parts cards (same tier).\nEmergency Protocol 1"
+      "full": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nFactory Reset.\nReplace the next Neutral Basic Strike(s) in queue with a **Factory Reset** card of this card’s tier.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk.",
+      "compact": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nFactory Reset.\nReplace the next Neutral Basic Strike(s) in queue with a **Factory Reset** card of this card’s tier.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "core_rebirth_t2": {
-      "full": "+2 Junk.\nFactory Reset\nReplace next 2 Neutral Basic Strike slots with random Core-parts cards (same tier).\nEmergency Protocol 1\nTags: Junk.",
-      "compact": "+2 Junk.\nFactory Reset\nReplace next 2 Neutral Basic Strike slots with random Core-parts cards (same tier).\nEmergency Protocol 1"
+      "full": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nFactory Reset.\nReplace the next Neutral Basic Strike(s) in queue with a **Factory Reset** card of this card’s tier.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk.",
+      "compact": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nFactory Reset.\nReplace the next Neutral Basic Strike(s) in queue with a **Factory Reset** card of this card’s tier.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "core_rebirth_t3": {
-      "full": "+2 Junk.\nFactory Reset\nReplace next 3 Neutral Basic Strike slots with random Core-parts cards (same tier).\nEmergency Protocol 1\nTags: Junk.",
-      "compact": "+2 Junk.\nFactory Reset\nReplace next 3 Neutral Basic Strike slots with random Core-parts cards (same tier).\nEmergency Protocol 1"
+      "full": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nFactory Reset.\nReplace the next Neutral Basic Strike(s) in queue with a **Factory Reset** card of this card’s tier.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk.",
+      "compact": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nFactory Reset.\nReplace the next Neutral Basic Strike(s) in queue with a **Factory Reset** card of this card’s tier.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "core_refactoring_t1": {
-      "full": "+2 Junk.\nOverclock 1\nFactory Reset\nEmergency Protocol 1\nTags: Junk.",
-      "compact": "+2 Junk.\nOverclock 1\nFactory Reset\nEmergency Protocol 1"
+      "full": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Overclock**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk.",
+      "compact": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Overclock**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "core_refactoring_t2": {
-      "full": "+2 Junk.\nOverclock 2\nFactory Reset\nEmergency Protocol 1\nTags: Junk.",
-      "compact": "+2 Junk.\nOverclock 2\nFactory Reset\nEmergency Protocol 1"
+      "full": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Overclock**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk.",
+      "compact": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Overclock**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "core_refactoring_t3": {
-      "full": "+3 Junk.\nOverclock 2\nFactory Reset\nEmergency Protocol 1\nTags: Junk.",
-      "compact": "+3 Junk.\nOverclock 2\nFactory Reset\nEmergency Protocol 1"
+      "full": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Overclock**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk.",
+      "compact": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n**Overclock**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "core_tap_t1": {
-      "full": "+1 Junk.\nDeal 5 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1\nTags: Direct, Junk.",
-      "compact": "+1 Junk.\nDeal 5 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1"
+      "full": "Deal 6 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Direct.",
+      "compact": "Deal 6 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "core_tap_t2": {
-      "full": "+1 Junk.\nDeal 6 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1\nTags: Direct, Junk.",
-      "compact": "+1 Junk.\nDeal 6 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1"
+      "full": "Deal 7 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Direct.",
+      "compact": "Deal 7 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "core_tap_t3": {
-      "full": "+2 Junk.\nDeal 7 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1\nTags: Direct, Junk.",
-      "compact": "+2 Junk.\nDeal 7 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1"
+      "full": "Deal 9 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Direct.",
+      "compact": "Deal 9 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "deep_core_tap_t1": {
-      "full": "+1 Junk.\nBulk 1\nThis Strike deals 7 base damage (uses strike potency).\nFactory Reset\nEmergency Protocol 1\nTags: Strike, Junk.",
-      "compact": "+1 Junk.\nBulk 1\nThis Strike deals 7 base damage (uses strike potency).\nFactory Reset\nEmergency Protocol 1"
+      "full": "**Bulk** 1.\n**Strike** 8.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Strike.",
+      "compact": "**Bulk** 1.\n**Strike** 8.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "deep_core_tap_t2": {
-      "full": "+1 Junk.\nBulk 2\nThis Strike deals 9 base damage (uses strike potency).\nFactory Reset\nEmergency Protocol 1\nTags: Strike, Junk.",
-      "compact": "+1 Junk.\nBulk 2\nThis Strike deals 9 base damage (uses strike potency).\nFactory Reset\nEmergency Protocol 1"
+      "full": "**Bulk** 2.\n**Strike** 10.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Strike.",
+      "compact": "**Bulk** 2.\n**Strike** 10.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "deep_core_tap_t3": {
-      "full": "+2 Junk.\nBulk 3\nThis Strike deals 11 base damage (uses strike potency).\nFactory Reset\nEmergency Protocol 1\nTags: Strike, Junk.",
-      "compact": "+2 Junk.\nBulk 3\nThis Strike deals 11 base damage (uses strike potency).\nFactory Reset\nEmergency Protocol 1"
+      "full": "**Bulk** 3.\n**Strike** 13.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Strike.",
+      "compact": "**Bulk** 3.\n**Strike** 13.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "dynamo_peal_t1": {
+      "full": "Deal 2 **direct** damage per **Scrap Engine**.\nTags: Direct.",
+      "compact": "Deal 2 **direct** damage per **Scrap Engine**."
+    },
+    "dynamo_peal_t2": {
+      "full": "Deal 3 **direct** damage per **Scrap Engine**.\nTags: Direct.",
+      "compact": "Deal 3 **direct** damage per **Scrap Engine**."
+    },
+    "dynamo_peal_t3": {
+      "full": "Deal 4 **direct** damage per **Scrap Engine**.\nTags: Direct.",
+      "compact": "Deal 4 **direct** damage per **Scrap Engine**."
     },
     "field_diode_t1": {
       "full": "Energy 1\nSpend 1 Junk: Energy 1\nTags: Junk, Energy.",
@@ -161,17 +209,173 @@
       "full": "Gains 2 Energy.\nMay spend 1 Junk to gain +2 Energy.\nTags: Junk, Energy.",
       "compact": "Gains 2 Energy.\nMay spend 1 Junk to gain +2 Energy."
     },
+    "fr_dynamo_feed_t1": {
+      "full": "**Shield** 2.\nconvert up to 1 **Scrap Engine**(s) into **Energy Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Energy.",
+      "compact": "**Shield** 2.\nconvert up to 1 **Scrap Engine**(s) into **Energy Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "fr_dynamo_feed_t2": {
+      "full": "**Shield** 2.\nconvert up to 2 **Scrap Engine**(s) into **Energy Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Energy.",
+      "compact": "**Shield** 2.\nconvert up to 2 **Scrap Engine**(s) into **Energy Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "fr_dynamo_feed_t3": {
+      "full": "**Shield** 2.\nconvert up to 3 **Scrap Engine**(s) into **Energy Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Energy.",
+      "compact": "**Shield** 2.\nconvert up to 3 **Scrap Engine**(s) into **Energy Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "fr_hound_bulwark_t1": {
+      "full": "**Shield** 2.\nconvert up to 1 **Scrap Engine**(s) into **Scrap Hound (shield)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Shield.",
+      "compact": "**Shield** 2.\nconvert up to 1 **Scrap Engine**(s) into **Scrap Hound (shield)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "fr_hound_bulwark_t2": {
+      "full": "**Shield** 2.\nconvert up to 2 **Scrap Engine**(s) into **Scrap Hound (shield)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Shield.",
+      "compact": "**Shield** 2.\nconvert up to 2 **Scrap Engine**(s) into **Scrap Hound (shield)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "fr_hound_bulwark_t3": {
+      "full": "**Shield** 2.\nconvert up to 3 **Scrap Engine**(s) into **Scrap Hound (shield)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Shield.",
+      "compact": "**Shield** 2.\nconvert up to 3 **Scrap Engine**(s) into **Scrap Hound (shield)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "fr_hound_rifle_t1": {
+      "full": "**Shield** 2.\nconvert up to 1 **Scrap Engine**(s) into **Scrap Hound (attack)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Direct.",
+      "compact": "**Shield** 2.\nconvert up to 1 **Scrap Engine**(s) into **Scrap Hound (attack)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "fr_hound_rifle_t2": {
+      "full": "**Shield** 2.\nconvert up to 2 **Scrap Engine**(s) into **Scrap Hound (attack)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Direct.",
+      "compact": "**Shield** 2.\nconvert up to 2 **Scrap Engine**(s) into **Scrap Hound (attack)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "fr_hound_rifle_t3": {
+      "full": "**Shield** 2.\nconvert up to 3 **Scrap Engine**(s) into **Scrap Hound (attack)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Direct.",
+      "compact": "**Shield** 2.\nconvert up to 3 **Scrap Engine**(s) into **Scrap Hound (attack)**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "fr_paint_marker_t1": {
+      "full": "**Shield** 2.\nconvert up to 1 **Scrap Engine**(s) into **Expose Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Expose.",
+      "compact": "**Shield** 2.\nconvert up to 1 **Scrap Engine**(s) into **Expose Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "fr_paint_marker_t2": {
+      "full": "**Shield** 2.\nconvert up to 2 **Scrap Engine**(s) into **Expose Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Expose.",
+      "compact": "**Shield** 2.\nconvert up to 2 **Scrap Engine**(s) into **Expose Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "fr_paint_marker_t3": {
+      "full": "**Shield** 2.\nconvert up to 3 **Scrap Engine**(s) into **Expose Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Expose.",
+      "compact": "**Shield** 2.\nconvert up to 3 **Scrap Engine**(s) into **Expose Engine**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "graft_bonesaw_t1": {
+      "full": "**Shield** 3.\n**Strike** 6.\nTags: Strike, Shield.",
+      "compact": "**Shield** 3.\n**Strike** 6."
+    },
+    "graft_bonesaw_t2": {
+      "full": "**Shield** 3.\n**Strike** 8.\nTags: Strike, Shield.",
+      "compact": "**Shield** 3.\n**Strike** 8."
+    },
+    "graft_bonesaw_t3": {
+      "full": "**Shield** 4.\n**Strike** 10.\nTags: Strike, Shield.",
+      "compact": "**Shield** 4.\n**Strike** 10."
+    },
+    "graft_lancet_t1": {
+      "full": "**Shield** 2.\nDeal 4 **direct** damage.\n+1 **Junk**.\nTags: Direct, Shield, Junk.",
+      "compact": "**Shield** 2.\nDeal 4 **direct** damage.\n+1 **Junk**."
+    },
+    "graft_lancet_t2": {
+      "full": "**Shield** 2.\nDeal 5 **direct** damage.\n+1 **Junk**.\nTags: Direct, Shield, Junk.",
+      "compact": "**Shield** 2.\nDeal 5 **direct** damage.\n+1 **Junk**."
+    },
+    "graft_lancet_t3": {
+      "full": "**Shield** 3.\nDeal 6 **direct** damage.\n+2 **Junk**.\nTags: Direct, Shield, Junk.",
+      "compact": "**Shield** 3.\nDeal 6 **direct** damage.\n+2 **Junk**."
+    },
+    "graft_redline_t1": {
+      "full": "**Shield** 3.\nDeal 9 **direct** damage.\nTags: Direct, Shield.",
+      "compact": "**Shield** 3.\nDeal 9 **direct** damage."
+    },
+    "graft_redline_t2": {
+      "full": "**Shield** 3.\nDeal 11 **direct** damage.\nTags: Direct, Shield.",
+      "compact": "**Shield** 3.\nDeal 11 **direct** damage."
+    },
+    "graft_redline_t3": {
+      "full": "**Shield** 4.\nDeal 13 **direct** damage.\nTags: Direct, Shield.",
+      "compact": "**Shield** 4.\nDeal 13 **direct** damage."
+    },
+    "graft_spark_vein_t1": {
+      "full": "**Shield** 2.\n**Energy** 2.\nTags: Shield, Energy.",
+      "compact": "**Shield** 2.\n**Energy** 2."
+    },
+    "graft_spark_vein_t2": {
+      "full": "**Shield** 2.\n**Energy** 3.\nTags: Shield, Energy.",
+      "compact": "**Shield** 2.\n**Energy** 3."
+    },
+    "graft_spark_vein_t3": {
+      "full": "**Shield** 3.\n**Energy** 3.\n**Overclock**.\nTags: Shield, Energy.",
+      "compact": "**Shield** 3.\n**Energy** 3.\n**Overclock**."
+    },
     "gutter_offering_t1": {
-      "full": "Self damage 3 (floor 1 HP)\nGain 3 Junk\nTags: Junk.",
-      "compact": "Self damage 3 (floor 1 HP)\nGain 3 Junk"
+      "full": "**Shield** 2.\n+3 **Junk**.\nTags: Shield, Junk.",
+      "compact": "**Shield** 2.\n+3 **Junk**."
     },
     "gutter_offering_t2": {
-      "full": "Tags: Junk.",
-      "compact": "Tags: Junk."
+      "full": "**Shield** 2.\n+4 **Junk**.\nTags: Shield, Junk.",
+      "compact": "**Shield** 2.\n+4 **Junk**."
     },
     "gutter_offering_t3": {
-      "full": "Tags: Junk.",
-      "compact": "Tags: Junk."
+      "full": "**Shield** 3.\n+5 **Junk**.\nTags: Shield, Junk.",
+      "compact": "**Shield** 3.\n+5 **Junk**."
+    },
+    "heap_ballast_t1": {
+      "full": "**Persistent**: while **Junk** ≥ 4, reduce incoming damage by 1.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: while **Junk** ≥ 4, reduce incoming damage by 1.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "heap_ballast_t2": {
+      "full": "**Persistent**: while **Junk** ≥ 4, reduce incoming damage by 1.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: while **Junk** ≥ 4, reduce incoming damage by 1.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "heap_ballast_t3": {
+      "full": "**Persistent**: while **Junk** ≥ 3, reduce incoming damage by 2.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: while **Junk** ≥ 3, reduce incoming damage by 2.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "heap_battery_t1": {
+      "full": "**Continuous** 3: while **Junk** ≥ 6, **Energy** 1.\nTags: Energy, Junk.",
+      "compact": "**Continuous** 3: while **Junk** ≥ 6, **Energy** 1."
+    },
+    "heap_battery_t2": {
+      "full": "**Continuous** 3: while **Junk** ≥ 6, **Energy** 1.\nTags: Energy, Junk.",
+      "compact": "**Continuous** 3: while **Junk** ≥ 6, **Energy** 1."
+    },
+    "heap_battery_t3": {
+      "full": "**Continuous** 2: while **Junk** ≥ 6, **Energy** 1.\nTags: Energy, Junk.",
+      "compact": "**Continuous** 2: while **Junk** ≥ 6, **Energy** 1."
+    },
+    "heap_padding_t1": {
+      "full": "**Persistent**: while **Junk** ≥ 4, reduce card self-damage by 1.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: while **Junk** ≥ 4, reduce card self-damage by 1.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "heap_padding_t2": {
+      "full": "**Persistent**: while **Junk** ≥ 4, reduce card self-damage by 1.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: while **Junk** ≥ 4, reduce card self-damage by 1.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "heap_padding_t3": {
+      "full": "**Persistent**: while **Junk** ≥ 3, reduce card self-damage by 2.\nGain 2 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "**Persistent**: while **Junk** ≥ 3, reduce card self-damage by 2.\nGain 2 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "hollow_frame_t1": {
+      "full": "If missing ≥10 HP: Deal 6 **direct** damage; otherwise Deal 3 **direct** damage.\nTags: Direct.",
+      "compact": "If missing ≥10 HP: Deal 6 **direct** damage; otherwise Deal 3 **direct** damage."
+    },
+    "hollow_frame_t2": {
+      "full": "If missing ≥10 HP: Deal 8 **direct** damage; otherwise Deal 3 **direct** damage.\nTags: Direct.",
+      "compact": "If missing ≥10 HP: Deal 8 **direct** damage; otherwise Deal 3 **direct** damage."
+    },
+    "hollow_frame_t3": {
+      "full": "If missing ≥8 HP: Deal 10 **direct** damage; otherwise Deal 4 **direct** damage.\nTags: Direct.",
+      "compact": "If missing ≥8 HP: Deal 10 **direct** damage; otherwise Deal 4 **direct** damage."
+    },
+    "hot_swap_t1": {
+      "full": "**Shield** 1.\nDeal 4 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Direct, Shield.",
+      "compact": "**Shield** 1.\nDeal 4 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "hot_swap_t2": {
+      "full": "**Shield** 1.\nDeal 4 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Direct, Shield.",
+      "compact": "**Shield** 1.\nDeal 4 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
+    },
+    "hot_swap_t3": {
+      "full": "**Shield** 2.\nDeal 6 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Direct, Shield.",
+      "compact": "**Shield** 2.\nDeal 6 **direct** damage.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "junk_aegis_t1": {
       "full": "Energy 2\nBulk 1\nJunk ≥ 4: Shield — floor(junk at snapshot ÷ 4) + potency\nJunk ≥ 11: Deal non-Strike damage to enemy equal to your Shield (after the lines above)\nTags: Shield, Junk.",
@@ -509,6 +713,30 @@
       "full": "Anything above the Continuous line resolves once on card resolution. Everything after the colon on that line resolves on each continuous tick.\nContinuous 3: Energy 3.\nTags: Energy.",
       "compact": "Continuous 3: Energy 3."
     },
+    "neutral_scrap_dump_t1": {
+      "full": "Spend 2 **Junk**.\n**Energy** 1.\nTags: Junk, Energy.",
+      "compact": "Spend 2 **Junk**.\n**Energy** 1."
+    },
+    "neutral_scrap_dump_t2": {
+      "full": "Spend 2 **Junk**.\n**Energy** 2.\nTags: Junk, Energy.",
+      "compact": "Spend 2 **Junk**.\n**Energy** 2."
+    },
+    "neutral_scrap_dump_t3": {
+      "full": "Spend 2 **Junk**.\n**Energy** 2.\n+1 **Potency**.\nTags: Junk, Energy, Potency.",
+      "compact": "Spend 2 **Junk**.\n**Energy** 2.\n+1 **Potency**."
+    },
+    "neutral_scrap_pickup_t1": {
+      "full": "+1 **Junk**.\nTags: Junk.",
+      "compact": "+1 **Junk**."
+    },
+    "neutral_scrap_pickup_t2": {
+      "full": "+2 **Junk**.\nTags: Junk.",
+      "compact": "+2 **Junk**."
+    },
+    "neutral_scrap_pickup_t3": {
+      "full": "+2 **Junk**.\nTags: Junk.",
+      "compact": "+2 **Junk**."
+    },
     "neutral_servo_t1": {
       "full": "+1 damage on Strike skills; +1 block on Shield skills (potency).\nTags: Potency.",
       "compact": "+1 damage on Strike skills; +1 block on Shield skills (potency)."
@@ -745,125 +973,41 @@
       "full": "Shield 3.\nIf in Tortoise: apply Virus 2.\nTags: Shield, Virus, Stance.",
       "compact": "Shield 3.\n**Tortoise Stance**: **Virus** 2."
     },
-    "sacrif_cinder_t1": {
-      "full": "+1 Junk.\nBulk 1\nDeal 6 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1\nTags: Direct, Junk.",
-      "compact": "+1 Junk.\nBulk 1\nDeal 6 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1"
-    },
-    "sacrif_cinder_t2": {
-      "full": "+1 Junk.\nBulk 2\nDeal 7 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1\nTags: Direct, Junk.",
-      "compact": "+1 Junk.\nBulk 2\nDeal 7 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1"
-    },
-    "sacrif_cinder_t3": {
-      "full": "+2 Junk.\nBulk 3\nDeal 8 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1\nTags: Direct, Junk.",
-      "compact": "+2 Junk.\nBulk 3\nDeal 8 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1"
-    },
     "sacrif_echo_t1": {
-      "full": "+2 Junk.\nFactory Reset\nEmergency Protocol 1\nPersistent: for the rest of the fight, Core-parts self-damage you take also deals that much non-Strike damage to the enemy (after this card resolves).\nTags: Junk.",
-      "compact": "+2 Junk.\nFactory Reset\nEmergency Protocol 1\nPersistent: for the rest of the fight, Core-parts self-damage you take also deals that much non-Strike damage to the enemy (after this card resolves)."
+      "full": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n+1 **Potency**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Potency.",
+      "compact": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n+1 **Potency**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "sacrif_echo_t2": {
-      "full": "+3 Junk.\nFactory Reset\nEmergency Protocol 1\nPersistent: for the rest of the fight, Core-parts self-damage you take also deals that much non-Strike damage to the enemy (after this card resolves).\nTags: Junk.",
-      "compact": "+3 Junk.\nFactory Reset\nEmergency Protocol 1\nPersistent: for the rest of the fight, Core-parts self-damage you take also deals that much non-Strike damage to the enemy (after this card resolves)."
+      "full": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n+1 **Potency**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Potency.",
+      "compact": "Gain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n+1 **Potency**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "sacrif_echo_t3": {
-      "full": "+3 Junk.\n+1 strike potency.\nFactory Reset\nEmergency Protocol 1\nPersistent: for the rest of the fight, Core-parts self-damage you take also deals that much non-Strike damage to the enemy (after this card resolves).\nTags: Junk.",
-      "compact": "+3 Junk.\n+1 strike potency.\nFactory Reset\nEmergency Protocol 1\nPersistent: for the rest of the fight, Core-parts self-damage you take also deals that much non-Strike damage to the enemy (after this card resolves)."
-    },
-    "sacrif_forge_t1": {
-      "full": "+1 Junk.\nFactory Reset\nReplace next 1 Neutral Basic Strike slot with random Core-parts cards (same tier).\nEmergency Protocol 1\nTags: Junk.",
-      "compact": "+1 Junk.\nFactory Reset\nReplace next 1 Neutral Basic Strike slot with random Core-parts cards (same tier).\nEmergency Protocol 1"
-    },
-    "sacrif_forge_t2": {
-      "full": "+2 Junk.\nFactory Reset\nReplace next 1 Neutral Basic Strike slot with random Core-parts cards (same tier).\nEmergency Protocol 1\nTags: Junk.",
-      "compact": "+2 Junk.\nFactory Reset\nReplace next 1 Neutral Basic Strike slot with random Core-parts cards (same tier).\nEmergency Protocol 1"
-    },
-    "sacrif_forge_t3": {
-      "full": "+2 Junk.\nFactory Reset\nReplace next 2 Neutral Basic Strike slots with random Core-parts cards (same tier).\nEmergency Protocol 1\nTags: Junk.",
-      "compact": "+2 Junk.\nFactory Reset\nReplace next 2 Neutral Basic Strike slots with random Core-parts cards (same tier).\nEmergency Protocol 1"
-    },
-    "sacrif_lumen_t1": {
-      "full": "+2 Junk.\n+1 strike potency.\nTags: Junk.",
-      "compact": "+2 Junk.\n+1 strike potency."
-    },
-    "sacrif_lumen_t2": {
-      "full": "+2 Junk.\n+2 strike potency.\nTags: Junk.",
-      "compact": "+2 Junk.\n+2 strike potency."
-    },
-    "sacrif_lumen_t3": {
-      "full": "+3 Junk.\n+2 strike potency.\nTags: Junk.",
-      "compact": "+3 Junk.\n+2 strike potency."
+      "full": "Gain 2 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n+1 **Potency**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP).\nTags: Junk, Potency.",
+      "compact": "Gain 2 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\n+1 **Potency**.\nFactory Reset.\nGain 1 **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)."
     },
     "sacrif_plate_t1": {
-      "full": "+4 shield.\n+1 Junk.\nFactory Reset\nEmergency Protocol 1\nTags: Shield, Junk.",
-      "compact": "+4 shield.\n+1 Junk.\nFactory Reset\nEmergency Protocol 1"
+      "full": "+1 **Junk**.\n**Shield** 4.\nDeal 2 **direct** damage.\nTags: Shield, Junk.",
+      "compact": "+1 **Junk**.\n**Shield** 4.\nDeal 2 **direct** damage."
     },
     "sacrif_plate_t2": {
-      "full": "+5 shield.\n+1 Junk.\nFactory Reset\nEmergency Protocol 1\nTags: Shield, Junk.",
-      "compact": "+5 shield.\n+1 Junk.\nFactory Reset\nEmergency Protocol 1"
+      "full": "+1 **Junk**.\n**Shield** 5.\nDeal 2 **direct** damage.\nTags: Shield, Junk.",
+      "compact": "+1 **Junk**.\n**Shield** 5.\nDeal 2 **direct** damage."
     },
     "sacrif_plate_t3": {
-      "full": "+6 shield.\n+2 Junk.\nFactory Reset\nEmergency Protocol 1\nTags: Shield, Junk.",
-      "compact": "+6 shield.\n+2 Junk.\nFactory Reset\nEmergency Protocol 1"
-    },
-    "sacrif_probe_t1": {
-      "full": "+1 Energy.\nExpose 1\n+1 Junk\nTags: Junk, Expose, Energy.",
-      "compact": "+1 Energy.\nExpose 1\n+1 Junk"
-    },
-    "sacrif_probe_t2": {
-      "full": "+1 Energy.\nExpose 1\n+1 Junk.\nFactory Reset\nEmergency Protocol 1\nTags: Junk, Expose, Energy.",
-      "compact": "+1 Energy.\nExpose 1\n+1 Junk.\nFactory Reset\nEmergency Protocol 1"
-    },
-    "sacrif_probe_t3": {
-      "full": "+1 Energy.\nExpose 2\n+2 Junk.\nFactory Reset\nEmergency Protocol 1\nTags: Junk, Expose, Energy.",
-      "compact": "+1 Energy.\nExpose 2\n+2 Junk.\nFactory Reset\nEmergency Protocol 1"
+      "full": "+2 **Junk**.\n**Shield** 6.\nDeal 3 **direct** damage.\nTags: Shield, Junk.",
+      "compact": "+2 **Junk**.\n**Shield** 6.\nDeal 3 **direct** damage."
     },
     "sacrif_rift_t1": {
-      "full": "+2 Junk.\nDeal 7 direct damage to the enemy.\nTags: Direct, Junk.",
-      "compact": "+2 Junk.\nDeal 7 direct damage to the enemy."
+      "full": "**Shield** 2.\n+2 **Junk**.\nDeal 7 **direct** damage.\nTags: Direct, Shield, Junk.",
+      "compact": "**Shield** 2.\n+2 **Junk**.\nDeal 7 **direct** damage."
     },
     "sacrif_rift_t2": {
-      "full": "+2 Junk.\nDeal 9 direct damage to the enemy.\nTags: Direct, Junk.",
-      "compact": "+2 Junk.\nDeal 9 direct damage to the enemy."
+      "full": "**Shield** 2.\n+2 **Junk**.\nDeal 8 **direct** damage.\nTags: Direct, Shield, Junk.",
+      "compact": "**Shield** 2.\n+2 **Junk**.\nDeal 8 **direct** damage."
     },
     "sacrif_rift_t3": {
-      "full": "+3 Junk.\nDeal 11 direct damage to the enemy.\nTags: Direct, Junk.",
-      "compact": "+3 Junk.\nDeal 11 direct damage to the enemy."
-    },
-    "sacrif_spike_t1": {
-      "full": "+1 Junk.\nDeal 4 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1\nTags: Direct, Junk.",
-      "compact": "+1 Junk.\nDeal 4 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1"
-    },
-    "sacrif_spike_t2": {
-      "full": "+1 Junk.\nDeal 5 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1\nTags: Direct, Junk.",
-      "compact": "+1 Junk.\nDeal 5 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1"
-    },
-    "sacrif_spike_t3": {
-      "full": "+2 Junk.\nDeal 6 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1\nTags: Direct, Junk.",
-      "compact": "+2 Junk.\nDeal 6 direct damage to the enemy.\nFactory Reset\nEmergency Protocol 1"
-    },
-    "sacrif_suture_t1": {
-      "full": "+2 Junk.\nHeal 2 HP.\nTags: Junk.",
-      "compact": "+2 Junk.\nHeal 2 HP."
-    },
-    "sacrif_suture_t2": {
-      "full": "+2 Junk.\nHeal 3 HP.\nTags: Junk.",
-      "compact": "+2 Junk.\nHeal 3 HP."
-    },
-    "sacrif_suture_t3": {
-      "full": "+3 Junk.\nHeal 3 HP.\n+1 strike potency.\nTags: Junk.",
-      "compact": "+3 Junk.\nHeal 3 HP.\n+1 strike potency."
-    },
-    "sacrif_tether_t1": {
-      "full": "+3 Junk.\n+1 Energy.\nTags: Junk, Energy.",
-      "compact": "+3 Junk.\n+1 Energy."
-    },
-    "sacrif_tether_t2": {
-      "full": "+4 Junk.\n+1 Energy.\nTags: Junk, Energy.",
-      "compact": "+4 Junk.\n+1 Energy."
-    },
-    "sacrif_tether_t3": {
-      "full": "+4 Junk.\n+2 Energy.\nTags: Junk, Energy.",
-      "compact": "+4 Junk.\n+2 Energy."
+      "full": "**Shield** 3.\n+3 **Junk**.\nDeal 9 **direct** damage.\nTags: Direct, Shield, Junk.",
+      "compact": "**Shield** 3.\n+3 **Junk**.\nDeal 9 **direct** damage."
     },
     "salvage_mantle_t1": {
       "full": "Gain 4 **Shield**.\nTags: Shield.",
@@ -888,6 +1032,102 @@
     "salvage_strike_t3": {
       "full": "Deal 5 **Strike** damage.\nGains 2 junk.\nTags: Strike, Junk.",
       "compact": "Deal 5 **Strike** damage.\nGains 2 junk."
+    },
+    "scrap_anesthetic_t1": {
+      "full": "Spend 2 **Junk**.\n**Persistent**: when you take card self-damage, gain up to 3 Shield (1 per HP lost).\nTags: Junk, Shield.",
+      "compact": "Spend 2 **Junk**.\n**Persistent**: when you take card self-damage, gain up to 3 Shield (1 per HP lost)."
+    },
+    "scrap_anesthetic_t2": {
+      "full": "Spend 2 **Junk**.\n**Persistent**: when you take card self-damage, gain up to 4 Shield (1 per HP lost).\nTags: Junk, Shield.",
+      "compact": "Spend 2 **Junk**.\n**Persistent**: when you take card self-damage, gain up to 4 Shield (1 per HP lost)."
+    },
+    "scrap_anesthetic_t3": {
+      "full": "Spend 1 **Junk**.\n**Persistent**: when you take card self-damage, gain up to 5 Shield (1 per HP lost).\nTags: Junk, Shield.",
+      "compact": "Spend 1 **Junk**.\n**Persistent**: when you take card self-damage, gain up to 5 Shield (1 per HP lost)."
+    },
+    "scrap_dividend_t1": {
+      "full": "Spend 3 **Junk**.\n**Persistent**: Strikes grant +1 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "Spend 3 **Junk**.\n**Persistent**: Strikes grant +1 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "scrap_dividend_t2": {
+      "full": "Spend 3 **Junk**.\n**Persistent**: Strikes grant +1 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "Spend 3 **Junk**.\n**Persistent**: Strikes grant +1 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "scrap_dividend_t3": {
+      "full": "Spend 2 **Junk**.\n**Persistent**: Strikes grant +2 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Junk.",
+      "compact": "Spend 2 **Junk**.\n**Persistent**: Strikes grant +2 **Junk**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "scrap_dynamo_feed_t1": {
+      "full": "Spend 3 **Junk**, convert up to 1 **Scrap Engine**(s) into **Energy Engine**.\nTags: Junk, Energy.",
+      "compact": "Spend 3 **Junk**, convert up to 1 **Scrap Engine**(s) into **Energy Engine**."
+    },
+    "scrap_dynamo_feed_t2": {
+      "full": "Spend 3 **Junk**, convert up to 2 **Scrap Engine**(s) into **Energy Engine**.\nTags: Junk, Energy.",
+      "compact": "Spend 3 **Junk**, convert up to 2 **Scrap Engine**(s) into **Energy Engine**."
+    },
+    "scrap_dynamo_feed_t3": {
+      "full": "Spend 2 **Junk**, convert up to 3 **Scrap Engine**(s) into **Energy Engine**.\nTags: Junk, Energy.",
+      "compact": "Spend 2 **Junk**, convert up to 3 **Scrap Engine**(s) into **Energy Engine**."
+    },
+    "scrap_dynamo_t1": {
+      "full": "Spend 2 **Junk**.\n**Persistent**: first card each program cycle gains +1 **Energy**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Energy, Junk.",
+      "compact": "Spend 2 **Junk**.\n**Persistent**: first card each program cycle gains +1 **Energy**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "scrap_dynamo_t2": {
+      "full": "Spend 2 **Junk**.\n**Persistent**: first card each program cycle gains +1 **Energy**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Energy, Junk.",
+      "compact": "Spend 2 **Junk**.\n**Persistent**: first card each program cycle gains +1 **Energy**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "scrap_dynamo_t3": {
+      "full": "Spend 2 **Junk**.\n**Persistent**: first card each program cycle gains +2 **Energy**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine).\nTags: Energy, Junk.",
+      "compact": "Spend 2 **Junk**.\n**Persistent**: first card each program cycle gains +2 **Energy**.\nGain 1 **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)."
+    },
+    "scrap_hound_bulwark_t1": {
+      "full": "Spend 3 **Junk**, convert up to 1 **Scrap Engine**(s) into **Scrap Hound (shield)**.\nTags: Junk, Shield.",
+      "compact": "Spend 3 **Junk**, convert up to 1 **Scrap Engine**(s) into **Scrap Hound (shield)**."
+    },
+    "scrap_hound_bulwark_t2": {
+      "full": "Spend 3 **Junk**, convert up to 2 **Scrap Engine**(s) into **Scrap Hound (shield)**.\nTags: Junk, Shield.",
+      "compact": "Spend 3 **Junk**, convert up to 2 **Scrap Engine**(s) into **Scrap Hound (shield)**."
+    },
+    "scrap_hound_bulwark_t3": {
+      "full": "Spend 2 **Junk**, convert up to 3 **Scrap Engine**(s) into **Scrap Hound (shield)**.\nTags: Junk, Shield.",
+      "compact": "Spend 2 **Junk**, convert up to 3 **Scrap Engine**(s) into **Scrap Hound (shield)**."
+    },
+    "scrap_hound_rifle_t1": {
+      "full": "Spend 3 **Junk**, convert up to 1 **Scrap Engine**(s) into **Scrap Hound (attack)**.\nTags: Junk, Direct.",
+      "compact": "Spend 3 **Junk**, convert up to 1 **Scrap Engine**(s) into **Scrap Hound (attack)**."
+    },
+    "scrap_hound_rifle_t2": {
+      "full": "Spend 3 **Junk**, convert up to 2 **Scrap Engine**(s) into **Scrap Hound (attack)**.\nTags: Junk, Direct.",
+      "compact": "Spend 3 **Junk**, convert up to 2 **Scrap Engine**(s) into **Scrap Hound (attack)**."
+    },
+    "scrap_hound_rifle_t3": {
+      "full": "Spend 2 **Junk**, convert up to 3 **Scrap Engine**(s) into **Scrap Hound (attack)**.\nTags: Junk, Direct.",
+      "compact": "Spend 2 **Junk**, convert up to 3 **Scrap Engine**(s) into **Scrap Hound (attack)**."
+    },
+    "scrap_paint_marker_t1": {
+      "full": "Spend 3 **Junk**, convert up to 1 **Scrap Engine**(s) into **Expose Engine**.\nTags: Junk, Expose.",
+      "compact": "Spend 3 **Junk**, convert up to 1 **Scrap Engine**(s) into **Expose Engine**."
+    },
+    "scrap_paint_marker_t2": {
+      "full": "Spend 3 **Junk**, convert up to 2 **Scrap Engine**(s) into **Expose Engine**.\nTags: Junk, Expose.",
+      "compact": "Spend 3 **Junk**, convert up to 2 **Scrap Engine**(s) into **Expose Engine**."
+    },
+    "scrap_paint_marker_t3": {
+      "full": "Spend 2 **Junk**, convert up to 3 **Scrap Engine**(s) into **Expose Engine**.\nTags: Junk, Expose.",
+      "compact": "Spend 2 **Junk**, convert up to 3 **Scrap Engine**(s) into **Expose Engine**."
+    },
+    "scrap_transfusion_t1": {
+      "full": "Spend 3 **Junk**.\nHeal 6.\nTags: Junk.",
+      "compact": "Spend 3 **Junk**.\nHeal 6."
+    },
+    "scrap_transfusion_t2": {
+      "full": "Spend 3 **Junk**.\nHeal 7.\nTags: Junk.",
+      "compact": "Spend 3 **Junk**.\nHeal 7."
+    },
+    "scrap_transfusion_t3": {
+      "full": "Spend 3 **Junk**.\nHeal 8.\nTags: Junk.",
+      "compact": "Spend 3 **Junk**.\nHeal 8."
     },
     "strip_mine_t1": {
       "full": "Spend 2 Junk: mitigate 3 from next enemy Strike to you\nTags: Junk.",

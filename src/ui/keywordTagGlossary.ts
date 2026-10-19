@@ -28,10 +28,19 @@ export const CARD_TAG_HELP: Record<CardTag, string> = {
     'This card is tagged Stance: stance-gated effects only activate when you are in the required stance.',
 };
 
+/** Display label for keyword chips (camelCase types → spaced words where needed). */
+export function formatKeywordTypeLabel(type: KeywordType): string {
+  if (type === 'FactoryReset') return 'Factory Reset';
+  if (type === 'CoreParts') return 'Core Parts';
+  if (type === 'UniqueDeck') return 'Unique Deck';
+  if (type === 'TurboLink') return 'Turbo Link';
+  return type;
+}
+
 /** Rules text for keyword types (value is shown separately on the card). */
 export const KEYWORD_TYPE_HELP: Record<KeywordType, string> = {
   CoreParts:
-    'Tags a core-parts card (filter chip). Core Rebirth (and similar graft) upgrades the next Neutral Basic Strike(s) in queue order into one of these at the same tier.',
+    'Legacy marker (unused on current prints). Factory Reset cards are the rebirth pool.',
   Bulk:
     'Grants bulk stacks. Each stack reduces incoming strike damage to HP by 1 (consumed when mitigating).',
   Pierce:
@@ -47,7 +56,7 @@ export const KEYWORD_TYPE_HELP: Record<KeywordType, string> = {
   Continuous:
     'While this queue slot keeps resolving, every N rounds (the keyword value) you gain +1 junk and +1 energy from this slot.',
   FactoryReset:
-    'After this card resolves, destroy it: the program slot becomes empty and rematerializes as a blank (Neutral Basic Strike, or upgraded blanks from relics like Tempered Blanks / Multistrike Protocol).',
+    'After this card resolves, destroy it: the program slot becomes empty and rematerializes as a blank (Neutral Basic Strike, or upgraded blanks from relics like Tempered Blanks / Multistrike Protocol). Core Rebirth upgrades Basics into other Factory Reset cards.',
   UniqueDeck:
     'Deckbuilding only: at most one copy of any UniqueDeck card across your hand and fatigue deck (e.g. Gathering Strike).',
   Persistent:

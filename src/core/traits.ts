@@ -15,7 +15,7 @@
  *   onRoundStart, onRoundEnd, onTakeDamage, onDealDamage, onCardDrawn, …
  */
 
-import { syncExposeAuraFromField } from './combat/state';
+import { addStunnedTurns, syncExposeAuraFromField } from './combat/state';
 import { isPrimeSlotForActor } from './clockwork';
 import { COMBAT_RULES } from './rules';
 import type { CardContentService } from './content';
@@ -244,16 +244,16 @@ export const TRAIT_REGISTRY: Record<string, TraitDef> = {
   baron_aw0: {
     id: 'baron_aw0',
     label: 'Rich Get Even Richer',
-    text: 'Every time you play a card with the CoreParts keyword, gain 1 Refined Scrap. After every won encounter, gain an additional 50 Gold.',
+    text: 'Every time you play a Factory Reset card, gain 1 Refined Scrap. After every won encounter, gain an additional 50 Gold.',
     hooks: {
       onCardResolved(actor, _target, card, _queueIndex, ctx) {
-        if (!(card.tags as readonly string[]).includes('CoreParts')) return;
+        if (!card.keywords.some((k) => k.type === 'FactoryReset')) return;
         // Refined scrap is a run-layer resource; grant it when the system lands.
         ctx.push({
           type: 'trait_effect',
           round: ctx.state.roundIndex,
           actor: actor.name,
-          text: `Rich Get Even Richer: ${actor.name} played a CoreParts card — +1 Refined Scrap (pending resource system).`,
+          text: `Rich Get Even Richer: ${actor.name} played a Factory Reset card — +1 Refined Scrap (pending resource system).`,
         });
       },
     },

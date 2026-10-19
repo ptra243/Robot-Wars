@@ -5,10 +5,11 @@ import { getSpendPrerequisites, runEffectPipeline } from '../effects/runner';
 import { blankCardIdForTraits } from '../run/combatSetup';
 import { COMBAT_RULES } from '../rules';
 import { callTraitOnStall, callTraitOnTurnStart } from '../traits';
-import type { CardDef, CombatEvent, CombatState, FighterState } from '../types';
+import type { AuraTrigger, CardDef, CombatEvent, CombatState, FighterState } from '../types';
+import { applyHpLossWithEmergencyProtocol } from './emergencyProtocol';
 import { gainJunkWithCap } from './junkEconomy';
 import { createAuraDispatchBudget, dispatchAuraTrigger } from './auras';
-import { pushEv } from './state';
+import { pushEv, syncExposeAuraFromField } from './state';
 
 export { addStunnedTurns } from './state';
 
@@ -31,6 +32,7 @@ export function advanceQueue(
 
   if (prevQ === activeSlots - 1) {
     fighter.programCycleCount += 1;
+    fighter.cardsResolvedThisProgramCycle = 0;
     if (
       fighter.traitIds.includes('rust_ranger_aw1') &&
       Number.isFinite(fighter.junkCapacity)
@@ -85,6 +87,92 @@ export function applyTurnStartForFighter(
     actor: actor.name,
     text: `${actor.name} gains +1 junk (Me and My Revolver).`,
   });
+}
+
+/** Scrap Engines: +1 junk at the start of each of your activations per engine. */
+export function applyScrapEngineTurnStartJunk(
+  state: CombatState,
+  actor: FighterState,
+  opponent: FighterState,
+  events: CombatEvent[],
+): void {
+  const engines = actor.scrapEngineCount ?? 0;
+  if (engines <= 0) {
+    return;
+  }
+  gainJunkWithCap(actor, opponent, engines, state.roundIndex, (e) => pushEv(state, events, e));
+  pushEv(state, events, {
+    type: 'scrap_engine_tick',
+    round: state.roundIndex,
+    actor: actor.name,
+    text: `${actor.name} gains +${String(engines)} junk from Scrap Engine(s).`,
+  });
+}
+
+/**
+ * Converted Scrap Engine stacks: attack (stacks+potency direct), shield (stacks+potency block),
+ * energy (+stacks charge), expose (+stacks on opponent).
+ */
+export function applyTypedScrapEngineTurnStart(
+  state: CombatState,
+  actor: FighterState,
+  opponent: FighterState,
+  events: CombatEvent[],
+): void {
+  const atk = actor.scrapHoundAttackStacks ?? 0;
+  if (atk > 0) {
+    const damage = atk + actor.potency;
+    const absorbed = Math.min(opponent.block, damage);
+    opponent.block -= absorbed;
+    let hpLoss = damage - absorbed;
+    const bulkMit = Math.min(opponent.bulkStacks, hpLoss);
+    opponent.bulkStacks -= bulkMit;
+    hpLoss -= bulkMit;
+    applyHpLossWithEmergencyProtocol(opponent, hpLoss, state.roundIndex, (e) =>
+      pushEv(state, events, e),
+    );
+    pushEv(state, events, {
+      type: 'scrap_hound_attack',
+      round: state.roundIndex,
+      actor: actor.name,
+      text: `${actor.name}'s Scrap Hound deals ${String(damage)} damage (${String(atk)} stacks + potency).`,
+    });
+  }
+  const shd = actor.scrapHoundShieldStacks ?? 0;
+  if (shd > 0) {
+    const block = shd + actor.potency;
+    actor.block += block;
+    pushEv(state, events, {
+      type: 'scrap_hound_shield',
+      round: state.roundIndex,
+      actor: actor.name,
+      text: `${actor.name}'s Scrap Hound grants ${String(block)} Shield (${String(shd)} stacks + potency).`,
+    });
+  }
+  const eng = actor.scrapEnergyEngineStacks ?? 0;
+  if (eng > 0) {
+    actor.charge += eng;
+    pushEv(state, events, {
+      type: 'scrap_energy_engine_tick',
+      round: state.roundIndex,
+      actor: actor.name,
+      text: `${actor.name} gains +${String(eng)} Energy from converted Scrap Engine(s).`,
+    });
+  }
+  const exp = actor.scrapExposeEngineStacks ?? 0;
+  if (exp > 0) {
+    opponent.exposeDamage = Math.min(
+      COMBAT_RULES.maxExposeArm,
+      opponent.exposeDamage + exp,
+    );
+    syncExposeAuraFromField(opponent);
+    pushEv(state, events, {
+      type: 'scrap_expose_engine_tick',
+      round: state.roundIndex,
+      actor: actor.name,
+      text: `${actor.name} applies ${String(exp)} Expose from converted Scrap Engine(s).`,
+    });
+  }
 }
 
 export function decayWeakenAtTurnEnd(state: CombatState, fighter: FighterState, events: CombatEvent[]): void {
@@ -180,6 +268,8 @@ export function beginFighterTurn(
   resolveScheduledEffectsForTurn(content, state, actor, opponent, events);
   applyPendingRustRangerCircuitBonus(state, actor, events);
   applyContinuousTicks(state, actor, opponent, events);
+  applyScrapEngineTurnStartJunk(state, actor, opponent, events);
+  applyTypedScrapEngineTurnStart(state, actor, opponent, events);
   applyVirusTick(state, actor, events);
   const traitCtx = { state, content, push: (ev: CombatEvent) => pushEv(state, events, ev) };
   callTraitOnTurnStart(actor, opponent, traitCtx);
@@ -199,7 +289,7 @@ function applyVirusTick(state: CombatState, actor: FighterState, events: CombatE
   if (stacks <= 0) {
     return;
   }
-  actor.hp = Math.max(0, actor.hp - stacks);
+  applyHpLossWithEmergencyProtocol(actor, stacks, state.roundIndex, (e) => pushEv(state, events, e));
   pushEv(state, events, {
     type: 'virus_tick',
     round: state.roundIndex,
@@ -241,7 +331,12 @@ function resolveScheduledEffectsForTurn(
       steps,
       {
         applyKeyword: () => {},
-        dispatchAuraTrigger: (dispatchState, dispatchActor, dispatchTarget, trigger) =>
+        dispatchAuraTrigger: (
+          dispatchState: CombatState,
+          dispatchActor: FighterState,
+          dispatchTarget: FighterState,
+          trigger: AuraTrigger,
+        ) =>
           dispatchAuraTrigger(
             dispatchState,
             dispatchActor,
@@ -251,7 +346,7 @@ function resolveScheduledEffectsForTurn(
             auraBudget,
           ),
         auraBudget,
-        pushEv: (event) => pushEv(state, events, event),
+        pushEv: (event: Omit<CombatEvent, 'snapshot'>) => pushEv(state, events, event),
         content,
       },
       undefined,
@@ -267,51 +362,25 @@ function resolveScheduledEffectsForTurn(
 }
 
 /**
- * Emergency Protocol (B): at the end of the player's turn, EP stacks inflict self-damage
- * equal to the current stack count (minimum 1). If this drops HP to 0 or below and stacks remain,
- * spend 1 stack, +1 strike potency, and survive at 1 HP. If still 0 with no stacks, caller ends fight.
+ * Emergency Protocol EOT backlash: stacks inflict self-damage equal to stack count.
+ * Lethal saves (any source, including this drain) spend 1 stack via tryEmergencyProtocolLethalSave.
  */
 export function resolveEmergencyProtocolEndOfPlayerTurn(state: CombatState, events: CombatEvent[]): void {
   const p = state.player;
-  if (p.emergencyProtocolStacks > 0) {
-    const selfDamage = Math.max(1, p.emergencyProtocolStacks);
-    p.hp -= selfDamage;
-    pushEv(state, events, {
-      type: 'emergency_protocol_drain',
-      round: state.roundIndex,
-      actor: p.name,
-      text: `${p.name} Emergency Protocol backlash: takes ${selfDamage} self-damage (${String(
-        p.emergencyProtocolStacks,
-      )} stack(s)).`,
-    });
-  }
-  if (p.hp > 0) {
+  if (p.emergencyProtocolStacks <= 0) {
     return;
   }
-  if (p.preventEmergencyProtocolSpendThisTurn) {
-    p.hp = 1;
-    pushEv(state, events, {
-      type: 'emergency_protocol_hold',
-      round: state.roundIndex,
-      actor: p.name,
-      text: `${p.name} Emergency Protocol stack is preserved this turn.`,
-    });
-    p.preventEmergencyProtocolSpendThisTurn = false;
-    return;
-  }
-  if (p.emergencyProtocolStacks > 0) {
-    p.emergencyProtocolStacks -= 1;
-    p.potency += 1;
-    p.hp = 1;
-    pushEv(state, events, {
-      type: 'emergency_protocol',
-      round: state.roundIndex,
-      actor: p.name,
-      text: `${p.name} Emergency Protocol — spend 1 stack, +1 strike potency, survive at 1 HP (${String(
-        p.emergencyProtocolStacks,
-      )} stack(s) left).`,
-    });
-  }
+  const stacksBefore = p.emergencyProtocolStacks;
+  const selfDamage = Math.max(1, stacksBefore);
+  pushEv(state, events, {
+    type: 'emergency_protocol_drain',
+    round: state.roundIndex,
+    actor: p.name,
+    text: `${p.name} Emergency Protocol backlash: takes ${selfDamage} self-damage (${String(
+      stacksBefore,
+    )} stack(s)).`,
+  });
+  applyHpLossWithEmergencyProtocol(p, selfDamage, state.roundIndex, (e) => pushEv(state, events, e));
 }
 
 export function isContinuousSkipped(actor: FighterState, queueIndex: number, card: CardDef): boolean {
@@ -378,8 +447,12 @@ export function applyFatigueIfArmed(state: CombatState, events: CombatEvent[]): 
   const damage =
     COMBAT_RULES.fatigueBaseDamage +
     (state.fatigueRoundsElapsed - 1) * COMBAT_RULES.fatigueStepDamage;
-  state.player.hp -= damage;
-  state.enemy.hp -= damage;
+  applyHpLossWithEmergencyProtocol(state.player, damage, state.roundIndex, (e) =>
+    pushEv(state, events, e),
+  );
+  applyHpLossWithEmergencyProtocol(state.enemy, damage, state.roundIndex, (e) =>
+    pushEv(state, events, e),
+  );
   pushEv(state, events, {
     type: 'fatigue_tick',
     round: state.roundIndex,

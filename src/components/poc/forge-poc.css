@@ -673,17 +673,13 @@
   z-index: 1;
 }
 
-.forge-poc__slot-art--core-reactor {
+.forge-poc__slot-art--cropped {
   background: #000;
-  --bgi-zoom: 3.35;
-  --bgi-px: 0.54;
-  --bgi-py: 0.4;
+  --bgi-zoom: var(--bgi-zoom-base, 3.35);
 }
 
-.forge-poc__slot:hover .forge-poc__slot-art--core-reactor {
-  --bgi-zoom: 3.95;
-  --bgi-px: 0.5;
-  --bgi-py: 0.35;
+.forge-poc__slot:hover .forge-poc__slot-art--cropped {
+  --bgi-zoom: calc(var(--bgi-zoom-base, 3.35) * 1.18);
 }
 
 .forge-poc__slot-art-void {
@@ -712,12 +708,16 @@
   object-position: calc(var(--bgi-px, 0.5) * 100%) calc(var(--bgi-py, 0.4) * 100%);
   display: block;
   pointer-events: none;
-  filter: url(#poc-knockout-card-art) drop-shadow(0 2px 7px rgba(0, 0, 0, 0.42));
+  filter: drop-shadow(0 2px 7px rgba(0, 0, 0, 0.42));
   transition:
     left 0.42s ease,
     top 0.42s ease,
     width 0.42s ease,
     height 0.42s ease;
+}
+
+.forge-poc__slot-art--keyed .forge-poc__slot-art-bgi-img {
+  filter: url(#poc-knockout-card-art) drop-shadow(0 2px 7px rgba(0, 0, 0, 0.42));
 }
 
 .forge-poc__slot-gloss {
@@ -1193,17 +1193,20 @@
   cursor: grabbing;
 }
 
-.forge-poc__libcard--dragging {
+.forge-poc__libcard--dragging,
+.forge-poc__libcard--dragging:hover {
   opacity: 0.35;
   transform: scale(0.97);
   filter: saturate(0.7);
 }
 
-.forge-poc__libcard--merge-target {
+.forge-poc__libcard--merge-target,
+.forge-poc__libcard--merge-target:hover {
   outline: 2px solid #ffd700;
   box-shadow: 0 0 12px 3px #ffd70088;
   transform: scale(1.05);
   z-index: 2;
+  transition: transform 140ms ease, box-shadow 140ms ease, outline-color 140ms ease;
 }
 
 /* Draft screen: click-to-pick (no drag) */
@@ -1252,19 +1255,15 @@
   background-repeat: no-repeat;
 }
 
-/* Core sacrifice: knockout filter on <img> (browsers do not key background-image reliably). */
-.forge-poc__fc-art--core-reactor {
+/* Shared plate / reactor crops: knockout filter on <img> (browsers do not key background-image reliably). */
+.forge-poc__fc-art--cropped {
   background: #000;
-  --bgi-zoom: 2.68;
-  --bgi-px: 0.52;
-  --bgi-py: 0.38;
+  --bgi-zoom: var(--bgi-zoom-base, 2.68);
 }
 
-.forge-poc__libcard:hover .forge-poc__fc-art--core-reactor,
-.forge-poc__popover-card:hover .forge-poc__fc-art--core-reactor {
-  --bgi-zoom: 3.25;
-  --bgi-px: 0.48;
-  --bgi-py: 0.33;
+.forge-poc__libcard:hover .forge-poc__fc-art--cropped,
+.forge-poc__popover-card:hover .forge-poc__fc-art--cropped {
+  --bgi-zoom: calc(var(--bgi-zoom-base, 2.68) * 1.2);
 }
 
 .forge-poc__fc-art-void {
@@ -1293,12 +1292,16 @@
   object-position: calc(var(--bgi-px, 0.5) * 100%) calc(var(--bgi-py, 0.4) * 100%);
   display: block;
   pointer-events: none;
-  filter: url(#poc-knockout-card-art) drop-shadow(0 2px 7px rgba(0, 0, 0, 0.42));
+  filter: drop-shadow(0 2px 7px rgba(0, 0, 0, 0.42));
   transition:
     left 0.42s ease,
     top 0.42s ease,
     width 0.42s ease,
     height 0.42s ease;
+}
+
+.forge-poc__fc-art--keyed .forge-poc__fc-art-bgi-img {
+  filter: url(#poc-knockout-card-art) drop-shadow(0 2px 7px rgba(0, 0, 0, 0.42));
 }
 
 .forge-poc__fc-art-scrim {

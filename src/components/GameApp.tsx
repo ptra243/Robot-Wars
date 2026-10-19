@@ -1,6 +1,6 @@
 import '../App.css';
 import { PhaserDeckBuilder } from './PhaserDeckBuilder';
-import { BattlePOC } from '../features/battle/BattlePOC';
+import { BattleView } from './phaser-battle/BattleView';
 import { TravelView } from './TravelView';
 import { RetryAssistView } from './RetryAssistView';
 import { RewardView } from './RewardView';
@@ -96,7 +96,7 @@ export function GameApp() {
               onSeedStep={handleSeedStep}
             />
           ) : (
-            <BattlePOC
+            <BattleView
               key={resultKey}
               combatResult={combatResult}
               seed={run.seed}

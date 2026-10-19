@@ -1,0 +1,55 @@
+@keyframes ui-fade-up {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.landing__panel,
+.pilot-select-screen,
+.run-loop--travel,
+.forge-poc {
+  animation: ui-fade-up 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.landing__nav .landing__btn {
+  animation: ui-fade-up 380ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.landing__nav .landing__btn:nth-child(1) { animation-delay: 40ms; }
+.landing__nav .landing__btn:nth-child(2) { animation-delay: 80ms; }
+.landing__nav .landing__btn:nth-child(3) { animation-delay: 120ms; }
+.landing__nav .landing__btn:nth-child(4) { animation-delay: 160ms; }
+.landing__nav .landing__btn:nth-child(5) { animation-delay: 200ms; }
+
+.landing__btn:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.pilot-card-new {
+  animation: ui-fade-up 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.pilot-faction-tab:active,
+.pilot-faction-tab--active:active {
+  transform: translateY(1px);
+}
+
+.run-loop__offer:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing__panel,
+  .landing__nav .landing__btn,
+  .pilot-select-screen,
+  .pilot-card-new,
+  .run-loop--travel,
+  .forge-poc {
+    animation: none;
+  }
+}

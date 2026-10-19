@@ -1,4 +1,4 @@
-import { CARD_TAG_HELP, KEYWORD_TYPE_HELP } from '../../../ui/keywordTagGlossary';
+import { CARD_TAG_HELP, KEYWORD_TYPE_HELP, formatKeywordTypeLabel } from '../../../ui/keywordTagGlossary';
 import { CardDescriptionRich } from '../../CardDescriptionRich';
 import { ForgeCardFaceArt, ForgeCardFaceText } from './ForgeCardFaceParts';
 import type { ForgeCard, HoverState } from './types';
@@ -179,7 +179,7 @@ function PopoverCard({
           ))}
           {card.keywords.map((k, i) => (
             <span key={`${k.type}-${String(i)}`} className="forge-poc__popover-chip forge-poc__popover-chip--kw">
-              {k.type} {k.value}
+              {formatKeywordTypeLabel(k.type)} {k.value}
             </span>
           ))}
         </div>
@@ -231,7 +231,7 @@ function PopoverGlossary({ card }: { card: ForgeCard }) {
             {card.keywords.map((k, i) => (
               <li key={`${k.type}-${String(k.value)}-${String(i)}`} className="forge-poc__gloss-item">
                 <div className="forge-poc__gloss-label">
-                  {k.type} {k.value}
+                  {formatKeywordTypeLabel(k.type)} {k.value}
                 </div>
                 <p className="forge-poc__gloss-text">{KEYWORD_TYPE_HELP[k.type]}</p>
               </li>

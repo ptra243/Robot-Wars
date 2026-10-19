@@ -1,4 +1,13 @@
-import type { AuraTrigger, CardDef, CombatState, FighterState } from '../../types';
+import { applyHpLossWithEmergencyProtocol } from '../../combat/emergencyProtocol';
+import type { AuraTrigger, CardDef, CombatEvent, CombatState, FighterState } from '../../types';
+
+/** Heap Ballast: while junk is tall, reduce incoming HP loss. */
+export function applyHeapBallastToIncoming(target: FighterState, hpLoss: number): number {
+  if (hpLoss <= 0) return hpLoss;
+  const ballast = target.heapBallast;
+  if (!ballast || target.junk < ballast.minJunk || ballast.reduceBy <= 0) return hpLoss;
+  return Math.max(0, hpLoss - ballast.reduceBy);
+}
 
 export interface RunnerDamageContext {
   resolvingCard?: CardDef;
@@ -8,6 +17,7 @@ export interface RunnerDamageContext {
     target: FighterState,
     trigger: AuraTrigger,
   ) => void;
+  pushEv?: (event: Omit<CombatEvent, 'snapshot'>) => void;
 }
 
 export interface RunnerDamageFrame {
@@ -80,7 +90,8 @@ export function dealDirectHpDamage(
   }
   const bulkMit = Math.min(target.bulkStacks, hpLoss);
   hpLoss -= bulkMit;
-  target.hp -= hpLoss;
+  hpLoss = applyHeapBallastToIncoming(target, hpLoss);
+  applyHpLossWithEmergencyProtocol(target, hpLoss, state.roundIndex, ctx.pushEv);
   if (dispatchDamageAura && damage > 0) {
     ctx.dispatchAuraTrigger(state, target, actor, 'OnDamageTaken');
   }
@@ -95,7 +106,7 @@ export function maybeMirrorCoreSelfDamageLoss(loss: number, frame: RunnerDamageF
     return;
   }
   const card = ctx.resolvingCard;
-  if (!card || !card.keywords.some((k) => k.type === 'CoreParts')) {
+  if (!card || !card.keywords.some((k) => k.type === 'FactoryReset')) {
     return;
   }
   dealDirectHpDamage(loss, false, frame, true);

@@ -104,6 +104,24 @@ function fighterToSnapshot(fighter: FighterState): CombatFighterSnapshot {
     exposeDamage: fighter.exposeDamage,
     virusStacks: fighter.virusStacks && fighter.virusStacks > 0 ? fighter.virusStacks : undefined,
     weakenStacks: fighter.weakenStacks > 0 ? fighter.weakenStacks : undefined,
+    scrapEngineCount:
+      fighter.scrapEngineCount && fighter.scrapEngineCount > 0 ? fighter.scrapEngineCount : undefined,
+    scrapHoundAttackStacks:
+      fighter.scrapHoundAttackStacks && fighter.scrapHoundAttackStacks > 0
+        ? fighter.scrapHoundAttackStacks
+        : undefined,
+    scrapHoundShieldStacks:
+      fighter.scrapHoundShieldStacks && fighter.scrapHoundShieldStacks > 0
+        ? fighter.scrapHoundShieldStacks
+        : undefined,
+    scrapEnergyEngineStacks:
+      fighter.scrapEnergyEngineStacks && fighter.scrapEnergyEngineStacks > 0
+        ? fighter.scrapEnergyEngineStacks
+        : undefined,
+    scrapExposeEngineStacks:
+      fighter.scrapExposeEngineStacks && fighter.scrapExposeEngineStacks > 0
+        ? fighter.scrapExposeEngineStacks
+        : undefined,
     deckWraps: fighter.deckWraps,
     stunnedTurnsLeft: stun && stun.turnsLeft > 0 ? stun.turnsLeft : undefined,
   };

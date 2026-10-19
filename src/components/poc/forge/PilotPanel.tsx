@@ -1,3 +1,4 @@
+import { publicUrl } from '../../../assetUrl';
 import { getPilotById, getPilotPortraitUrl } from '../../../core/pilots';
 import { TRAIT_REGISTRY } from '../../../core/traits';
 import { GLINT_TRAITS } from './constants';
@@ -63,7 +64,7 @@ export function PilotPanel({
         <div className="forge-poc__corner forge-poc__corner--bl" />
         <div className="forge-poc__corner forge-poc__corner--br" />
         <img
-          src={viewMode === 'enemy' ? '/poc/poc-pilot-enemy.png' : portraitUrl}
+          src={viewMode === 'enemy' ? publicUrl('/poc/poc-pilot-enemy.png') : portraitUrl}
           alt={name}
           className="forge-poc__pilot-img"
         />

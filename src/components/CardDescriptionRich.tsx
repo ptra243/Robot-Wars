@@ -8,6 +8,10 @@ const PHRASE_HELP: Record<string, string> = {
   'Factory Reset': KEYWORD_TYPE_HELP.FactoryReset,
   'Refined Scrap':
     'Refined scrap (core scrap): a combat resource some cards spend or gain — not junk.',
+  'Scrap Engine':
+    'Combat counter from Spend/Graft install cards. Each Scrap Engine grants +1 Junk at the start of each of your turns. Dynamo Peal deals damage per Scrap Engine.',
+  'Emergency Protocol':
+    'End of your turn: take self-damage equal to your Emergency Protocol stacks. Whenever you would hit 0 HP (from enemies, cards, backlash, etc.), spend 1 stack, gain +1 potency, and survive at 1 HP.',
 };
 
 function tooltipForHighlightedTerm(part: string): string | undefined {
@@ -62,7 +66,7 @@ const TAG_TYPES: CardTag[] = [
 ];
 
 /** Multi-word game terms (matched before single tokens). */
-const PHRASE_TERMS: string[] = ['Factory Reset', 'Refined Scrap'];
+const PHRASE_TERMS: string[] = ['Factory Reset', 'Refined Scrap', 'Scrap Engine', 'Emergency Protocol'];
 
 const ALL_BOLD_PARTS = [...PHRASE_TERMS, ...KEYWORD_TYPES, ...TAG_TYPES].sort(
   (a, b) => b.length - a.length,

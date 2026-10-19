@@ -71,14 +71,14 @@ describe('effect pipeline', () => {
       );
       return ev?.snapshot?.playerQueue?.[0];
     };
-    // 5 direct to enemy (t1)
-    expect(firstCoreTapEnemyHp(run(0))).toBe(40 - 5);
+    // 6 direct to enemy (t1; junk fold-in)
+    expect(firstCoreTapEnemyHp(run(0))).toBe(40 - 6);
     expect(firstCoreTapQueue0(run(0))).toBe('neutral_basic_strike_t1');
-    expect(firstCoreTapEnemyHp(run(1))).toBe(40 - 5);
+    expect(firstCoreTapEnemyHp(run(1))).toBe(40 - 6);
     expect(firstCoreTapQueue0(run(1))).toBe('neutral_basic_strike_t1');
   });
 
-  it('Core Sacrifice: self + junk + bulk + strike + factory (no refined-scrap branch)', () => {
+  it('Core Sacrifice: self + bulk + strike + factory (no refined-scrap branch)', () => {
     const sim = new CombatSimulator(content, 1);
     const run = (core: number) => {
       const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], ['deep_core_tap_t1']);
@@ -91,16 +91,16 @@ describe('effect pipeline', () => {
       result.events.find(
         (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Core Sacrifice'),
       );
-    // Strike 7 base (t1)
-    expect(sacEv(run(0))?.snapshot?.enemy.hp).toBe(40 - 7);
+    // Strike 8 base (t1; junk fold-in)
+    expect(sacEv(run(0))?.snapshot?.enemy.hp).toBe(40 - 8);
     expect(sacEv(run(0))?.snapshot?.playerQueue?.[0]).toBe('neutral_basic_strike_t1');
-    expect(sacEv(run(3))?.snapshot?.enemy.hp).toBe(40 - 7);
+    expect(sacEv(run(3))?.snapshot?.enemy.hp).toBe(40 - 8);
     expect(sacEv(run(3))?.snapshot?.player.coreScrap).toBe(3);
     expect(sacEv(run(3))?.snapshot?.player.bulkStacks).toBe(1);
     expect(sacEv(run(3))?.snapshot?.playerQueue?.[0]).toBe('neutral_basic_strike_t1');
   });
 
-  it('Core Rebirth: self + junk + factory + replace Neutral Basic with CoreParts card', () => {
+  it('Core Rebirth: self + Scrap Engine + factory + replace Neutral Basic with CoreParts card', () => {
     const sim = new CombatSimulator(content, 42);
     const player = makeTestFighter('Player', ['neutral_basic_strike_t1'], [
       'core_rebirth_t1',
@@ -112,7 +112,7 @@ describe('effect pipeline', () => {
     const ev = result.events.find(
       (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Core Rebirth'),
     );
-    expect(ev?.snapshot?.player.junk).toBeGreaterThanOrEqual(1);
+    expect(result.finalState.player.scrapEngineCount).toBeGreaterThanOrEqual(1);
     const upgrades = result.events.filter(
       (e) => e.type === 'core_rebirth_queue' && e.actor === 'Player' && e.text.includes('→'),
     );
@@ -144,9 +144,10 @@ describe('effect pipeline', () => {
     );
     expect(upgrades.length).toBeGreaterThanOrEqual(2);
     const q = ev?.snapshot?.playerQueue ?? [];
-    expect(q[0]).toBe('neutral_basic_strike_t2');
+    // Factory Reset rematerializes the resolved slot as a blank (Neutral Basic Strike t1).
+    expect(q[0]).toBe('neutral_basic_strike_t1');
     const basicCount = q.filter((id) => id === 'neutral_basic_strike_t1').length;
-    expect(basicCount).toBe(6);
+    expect(basicCount).toBe(7);
   });
 
   it('Core-parts self-damage mirrors to the enemy when mirror is active (Core bleed echo)', () => {
@@ -159,8 +160,8 @@ describe('effect pipeline', () => {
     const ev = result.events.find(
       (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Core Tap'),
     );
-    // 5 direct + 5 mirrored from self = 10 to enemy (t1).
-    expect(ev?.snapshot?.enemy.hp).toBe(40 - 10);
+    // 6 direct + 5 mirrored from self = 11 to enemy (t1).
+    expect(ev?.snapshot?.enemy.hp).toBe(40 - 11);
   });
 
   it('Corebleed Oath sets mirror on the fighter after the pipeline (last effect)', () => {

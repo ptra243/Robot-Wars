@@ -665,6 +665,7 @@ describe('CombatSimulator', () => {
     const interdictResolve = result.events.find(
       (e) => e.type === 'resolve' && e.actor === 'Player' && e.text.includes('Prime Interdict'),
     );
+    expect(primeFaithResolve).toBeTruthy();
     expect(result.finalState.player.faithStacks).toBe(1);
     expect(interdictResolve?.text).toMatch(/dealt=8/);
   });

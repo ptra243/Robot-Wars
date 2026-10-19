@@ -6,6 +6,8 @@
  * trait use `TRAIT_REGISTRY[traitId]` from that module.
  */
 
+import { publicUrl } from '../assetUrl';
+
 export interface PilotDef {
   id: string;
   name: string;
@@ -140,17 +142,29 @@ export function getPilotById(id: string): PilotDef | undefined {
 
 /** Pilot portrait for UI (paths under /public). */
 export const PILOT_PORTRAITS: Record<string, string> = {
-  glint: '/poc/poc-glint.png',
-  baron_von_boar: '/poc/poc-baron-von-boar.png',
-  rust_ranger: '/poc/poc-rust-ranger.png',
-  seiryu: '/poc/poc-card-cyberpunk-dragon.png',
-  suzaku: '/poc/poc-card-cyberpunk-bird.png',
-  byakko: '/poc/poc-card-cyberpunk-tiger.png',
-  genbu: '/poc/poc-card-cyberpunk-tortoise.png',
-  father_time: '/placeholder-clockwork-pilot-select.webp',
-  theorem_rook: '/placeholder-clockwork-pilot-select.webp',
-  canon_verity: '/placeholder-clockwork-pilot-select.webp',
+  glint: publicUrl('/poc/poc-glint.png'),
+  baron_von_boar: publicUrl('/poc/poc-baron-von-boar.png'),
+  rust_ranger: publicUrl('/poc/poc-rust-ranger.png'),
+  seiryu: publicUrl('/poc/poc-seiryu.jpg'),
+  suzaku: publicUrl('/poc/poc-card-cyberpunk-bird.png'),
+  byakko: publicUrl('/poc/poc-card-cyberpunk-tiger.png'),
+  genbu: publicUrl('/poc/poc-card-cyberpunk-tortoise.png'),
+  father_time: publicUrl('/poc/poc-father-time.jpg'),
+  theorem_rook: publicUrl('/placeholder-clockwork-pilot-select.webp'),
+  canon_verity: publicUrl('/placeholder-clockwork-pilot-select.webp'),
 };
+
+/** Full-body mech hero plates for art direction / card casting (not battle sprites). */
+export const PILOT_MECH_HEROES: Record<string, string> = {
+  glint: publicUrl('/poc/poc-mech-glint.png'),
+  rust_ranger: publicUrl('/RustRanger_Mech.png'),
+  father_time: publicUrl('/FatherTime_Mech.jpg'),
+  seiryu: publicUrl('/Seiryu_Mech.jpg'),
+};
+
+export function getPilotMechHeroUrl(pilotId: string): string | undefined {
+  return PILOT_MECH_HEROES[pilotId];
+}
 
 export function getPilotPortraitUrl(pilotId: string): string {
   return PILOT_PORTRAITS[pilotId] ?? PILOT_PORTRAITS.glint;
@@ -158,16 +172,16 @@ export function getPilotPortraitUrl(pilotId: string): string {
 
 /** Full-screen backgrounds for pilot select & travel (paths under /public). */
 export const PILOT_SELECT_BACKGROUNDS: Record<string, string> = {
-  glint: '/pilot-select-bg.png',
-  baron_von_boar: '/baron-pilot-select-bg.png',
-  rust_ranger: '/rust-ranger-pilot-select-bg.png',
-  seiryu: '/pilot-select-bg.png',
-  suzaku: '/pilot-select-bg.png',
-  byakko: '/pilot-select-bg.png',
-  genbu: '/pilot-select-bg.png',
-  father_time: '/placeholder-clockwork-pilot-select.webp',
-  theorem_rook: '/placeholder-clockwork-pilot-select.webp',
-  canon_verity: '/placeholder-clockwork-pilot-select.webp',
+  glint: publicUrl('/pilot-select-bg.png'),
+  baron_von_boar: publicUrl('/baron-pilot-select-bg.png'),
+  rust_ranger: publicUrl('/rust-ranger-pilot-select-bg.png'),
+  seiryu: publicUrl('/pilot-select-bg.png'),
+  suzaku: publicUrl('/pilot-select-bg.png'),
+  byakko: publicUrl('/pilot-select-bg.png'),
+  genbu: publicUrl('/pilot-select-bg.png'),
+  father_time: publicUrl('/placeholder-clockwork-pilot-select.webp'),
+  theorem_rook: publicUrl('/placeholder-clockwork-pilot-select.webp'),
+  canon_verity: publicUrl('/placeholder-clockwork-pilot-select.webp'),
 };
 
 export function getPilotSelectBackgroundUrl(pilotId: string): string {
@@ -176,17 +190,17 @@ export function getPilotSelectBackgroundUrl(pilotId: string): string {
 
 /** Player mech sprite in battle POC (paths under /public). */
 export const PILOT_MECH_SPRITES: Record<string, string> = {
-  glint: '/poc/poc-mech-glint-sprite.png',
-  baron_von_boar: '/poc/poc-mech-baron-von-boar-sprite.png',
+  glint: publicUrl('/poc/poc-mech-glint-sprite.png'),
+  baron_von_boar: publicUrl('/poc/poc-mech-baron-von-boar-sprite.png'),
   /** Placeholder until Rust Ranger battle sprite exists. */
-  rust_ranger: '/poc/poc-mech-glint-sprite.png',
-  seiryu: '/poc/poc-mech-enemy-sprite.png',
-  suzaku: '/poc/poc-mech-enemy-sprite.png',
-  byakko: '/poc/poc-mech-enemy-sprite.png',
-  genbu: '/poc/poc-mech-enemy-sprite.png',
-  father_time: '/poc/poc-mech-glint-sprite.png',
-  theorem_rook: '/poc/poc-mech-glint-sprite.png',
-  canon_verity: '/poc/poc-mech-glint-sprite.png',
+  rust_ranger: publicUrl('/poc/poc-mech-glint-sprite.png'),
+  seiryu: publicUrl('/poc/poc-mech-enemy-sprite.png'),
+  suzaku: publicUrl('/poc/poc-mech-enemy-sprite.png'),
+  byakko: publicUrl('/poc/poc-mech-enemy-sprite.png'),
+  genbu: publicUrl('/poc/poc-mech-enemy-sprite.png'),
+  father_time: publicUrl('/poc/poc-mech-glint-sprite.png'),
+  theorem_rook: publicUrl('/poc/poc-mech-glint-sprite.png'),
+  canon_verity: publicUrl('/poc/poc-mech-glint-sprite.png'),
 };
 
 export function getPilotMechSpriteUrl(pilotId: string): string {

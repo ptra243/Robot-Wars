@@ -17,7 +17,7 @@ export type LibraryFilterId =
   | 'bulk'
   | 'junk'
   | 'potency'
-  | 'core'
+  | 'factoryReset'
   | 'chargeGain'
   | 'chargeCost';
 
@@ -36,7 +36,7 @@ export const LIBRARY_FILTER_ORDER: LibraryFilterId[] = [
   'bulk',
   'junk',
   'potency',
-  'core',
+  'factoryReset',
   'chargeGain',
   'chargeCost',
 ];
@@ -62,7 +62,7 @@ export const LIBRARY_TAG_FILTER_ORDER: LibraryTagFilterId[] = [
   'bulk',
   'junk',
   'potency',
-  'core',
+  'factoryReset',
   'chargeGain',
   'chargeCost',
 ];
@@ -83,7 +83,7 @@ export const LIBRARY_FILTER_LABELS: Record<LibraryFilterId, string> = {
   bulk: 'Bulk',
   junk: 'Junk',
   potency: 'Potency',
-  core: 'Core parts',
+  factoryReset: 'Factory Reset',
   chargeGain: '+Energy',
   chargeCost: 'Costs EN',
 };
@@ -125,12 +125,8 @@ export function cardMatchesLibraryFilter(card: CardDef, filter: LibraryFilterId)
         (card.strike_potency_gain ?? 0) > 0 ||
         (card.shield_potency_gain ?? 0) > 0
       );
-    case 'core':
-      return (
-        (card.gain_core ?? 0) > 0 ||
-        (card.spend_core ?? 0) > 0 ||
-        card.keywords.some((k) => k.type === 'CoreParts')
-      );
+    case 'factoryReset':
+      return card.keywords.some((k) => k.type === 'FactoryReset');
     case 'chargeGain':
       return (
         card.tags.includes('Energy') ||

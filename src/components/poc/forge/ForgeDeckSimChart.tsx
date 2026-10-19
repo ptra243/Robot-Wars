@@ -23,7 +23,9 @@ export interface ForgeDeckSimSeriesDef {
 export type ForgeDeckSimRow = {
   round: number;
   programCardId: string | null;
-} & Record<string, number | string | null>;
+  /** Series metrics + optional extras (e.g. programCardIds) looked up dynamically. */
+  [key: string]: unknown;
+};
 
 const DEFAULT_SERIES_DEFS: ForgeDeckSimSeriesDef[] = [
   { key: 'energy', label: 'Energy', color: '#58aec7', cumulative: 'delta' },
@@ -142,7 +144,7 @@ export function ForgeDeckSimChart({
       return { rounds: [] as ForgeDeckSimRow[], initial: {} as Record<string, number> };
     }
     return {
-      rounds: sim.rounds as ForgeDeckSimRow[],
+      rounds: sim.rounds as unknown as ForgeDeckSimRow[],
       initial: {
         energy: sim.initialPlayer.energy,
         shields: sim.initialPlayer.shields,

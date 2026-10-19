@@ -11,7 +11,6 @@ import { CardHoverPopover } from './CardHoverPopover';
 import { ContextMenu } from './ContextMenu';
 import { QUEUE_SIZE } from './constants';
 import {
-  forgeCardFromDef,
   forgeCardFromDefWithTraits,
   getCardBaseId,
   pickRandomForgeLayout,

@@ -317,7 +317,7 @@ const E_ELITE_0: OpponentPoolSlice = {
     'neutral_capacitor_feed_t1',
   ],
   secondary: [
-    'sacrif_lumen_t1',
+    'sacrif_plate_t1',
     'neutral_urgent_repairs_t1',
     'gutter_offering_t1',
     'field_diode_t1',
@@ -340,7 +340,7 @@ const E_BOSS_0: OpponentPoolSlice = {
     'field_diode_t1',
     'neutral_multi_strike_t1',
   ],
-  secondary: ['gutter_offering_t1', 'neutral_basic_strike_t1', 'sacrif_echo_t1', 'sacrif_lumen_t1'],
+  secondary: ['gutter_offering_t1', 'neutral_basic_strike_t1', 'sacrif_echo_t1', 'sacrif_rift_t1'],
   dud: ['neutral_basic_strike_t1'],
 };
 

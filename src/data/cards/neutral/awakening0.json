@@ -1261,6 +1261,150 @@
 					"turns": 1
 				}
 			]
+		},
+		{
+			"id": "neutral_scrap_pickup_t1",
+			"name": "Scrap Pickup",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "neutral_scrap_pickup_t2",
+			"effects": [
+				{
+					"type": "GainJunk",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "neutral_scrap_pickup_t2",
+			"name": "Scrap Pickup+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Junk"
+			],
+			"merge_to": "neutral_scrap_pickup_t3",
+			"effects": [
+				{
+					"type": "GainJunk",
+					"amount": 2
+				}
+			]
+		},
+		{
+			"id": "neutral_scrap_pickup_t3",
+			"name": "Scrap Pickup++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Junk"
+			],
+			"effects": [
+				{
+					"type": "GainJunk",
+					"amount": 2
+				}
+			]
+		},
+		{
+			"id": "neutral_scrap_dump_t1",
+			"name": "Scrap Dump",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 1,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Junk",
+				"Energy"
+			],
+			"merge_to": "neutral_scrap_dump_t2",
+			"effects": [
+				{
+					"type": "SpendJunk",
+					"amount": 2
+				},
+				{
+					"type": "GainCharge",
+					"amount": 1
+				}
+			]
+		},
+		{
+			"id": "neutral_scrap_dump_t2",
+			"name": "Scrap Dump+",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 2,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Junk",
+				"Energy"
+			],
+			"merge_to": "neutral_scrap_dump_t3",
+			"effects": [
+				{
+					"type": "SpendJunk",
+					"amount": 2
+				},
+				{
+					"type": "GainCharge",
+					"amount": 2
+				}
+			]
+		},
+		{
+			"id": "neutral_scrap_dump_t3",
+			"name": "Scrap Dump++",
+			"faction": "neutral",
+			"neutral": true,
+			"awakening_min": 0,
+			"card_tier": 3,
+			"charge_cost": 0,
+			"base_damage": 0,
+			"base_block": 0,
+			"tags": [
+				"Junk",
+				"Energy",
+				"Potency"
+			],
+			"effects": [
+				{
+					"type": "SpendJunk",
+					"amount": 2
+				},
+				{
+					"type": "GainCharge",
+					"amount": 2
+				},
+				{
+					"type": "AddStrikePotency",
+					"amount": 1
+				}
+			]
 		}
 	]
 }

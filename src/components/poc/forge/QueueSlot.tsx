@@ -1,4 +1,5 @@
-import type { DragEvent as ReactDragEvent, MouseEvent as ReactMouseEvent } from 'react';
+import type { CSSProperties, DragEvent as ReactDragEvent, MouseEvent as ReactMouseEvent } from 'react';
+import { artCropCssVars } from '../../../ui/cardArtPlates';
 import { PrimeSlotMark } from '../../../ui/PrimeSlotMark';
 import type { ForgeCard } from './types';
 
@@ -125,15 +126,29 @@ export function QueueSlot({
       </div>
       <div
         className={`forge-poc__slot-art${
-          card.artFocus === 'core-reactor' ? ' forge-poc__slot-art--core-reactor' : ''
+          card.artFocus === 'cropped' && card.artCrop ? ' forge-poc__slot-art--cropped' : ''
+        }${
+          card.artFocus === 'cropped' && card.artCrop && card.artKeyed
+            ? ' forge-poc__slot-art--keyed'
+            : ''
         }`}
-        style={card.artFocus === 'core-reactor' ? undefined : { backgroundImage: `url(${card.art})` }}
+        style={
+          card.artFocus === 'cropped' && card.artCrop
+            ? ({ backgroundImage: 'none', ...artCropCssVars(card.artCrop) } as CSSProperties)
+            : ({
+                backgroundImage: `url(${card.art})`,
+                '--bgi-px': undefined,
+                '--bgi-py': undefined,
+                '--bgi-zoom-base': undefined,
+              } as CSSProperties)
+        }
       >
-        {card.artFocus === 'core-reactor' ? (
+        {card.artFocus === 'cropped' && card.artCrop ? (
           <>
             <div className="forge-poc__slot-art-void" aria-hidden />
             <div className="forge-poc__slot-art-bgi">
               <img
+                key={card.art}
                 className="forge-poc__slot-art-bgi-img"
                 src={card.art}
                 alt=""

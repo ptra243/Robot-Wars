@@ -46,6 +46,10 @@ export function expandEffectSteps(
         (step.stance === 'tortoise' && actor.activatedTortoiseThisCombat);
       const inner = active ? step.thenSteps : step.elseSteps;
       out.push(...expandEffectSteps(inner, actor, junkSnapshot));
+    } else if (step.type === 'BranchIfMissingHpGte') {
+      const missing = Math.max(0, (actor.maxHp || 0) - actor.hp);
+      const inner = missing >= step.minMissing ? step.thenSteps : step.elseSteps;
+      out.push(...expandEffectSteps(inner, actor, junkSnapshot));
     } else if (step.type === 'ConditionalSpendCharge') {
       out.push({
         ...step,

@@ -526,18 +526,14 @@
   border-bottom: 1px solid var(--bp-border);
 }
 
-/* Core sacrifice: <img> + same knockout filter as stage mech sprites. */
-.battle-poc__chip-art--core-reactor {
+/* Shared plate / reactor crops: <img> + same knockout filter as stage mech sprites. */
+.battle-poc__chip-art--cropped {
   background: #000;
-  --bgi-zoom: 3.1;
-  --bgi-px: 0.52;
-  --bgi-py: 0.36;
+  --bgi-zoom: var(--bgi-zoom-base, 3.1);
 }
 
-.battle-poc__chip:hover .battle-poc__chip-art--core-reactor {
-  --bgi-zoom: 3.7;
-  --bgi-px: 0.48;
-  --bgi-py: 0.31;
+.battle-poc__chip:hover .battle-poc__chip-art--cropped {
+  --bgi-zoom: calc(var(--bgi-zoom-base, 3.1) * 1.2);
 }
 
 .battle-poc__chip-art-void {
@@ -566,12 +562,16 @@
   object-position: calc(var(--bgi-px, 0.5) * 100%) calc(var(--bgi-py, 0.4) * 100%);
   display: block;
   pointer-events: none;
-  filter: url(#poc-knockout-card-art) drop-shadow(0 2px 7px rgba(0, 0, 0, 0.42));
+  filter: drop-shadow(0 2px 7px rgba(0, 0, 0, 0.42));
   transition:
     left 0.45s ease,
     top 0.45s ease,
     width 0.45s ease,
     height 0.45s ease;
+}
+
+.battle-poc__chip-art--keyed .battle-poc__chip-art-bgi-img {
+  filter: url(#poc-knockout-card-art) drop-shadow(0 2px 7px rgba(0, 0, 0, 0.42));
 }
 
 .battle-poc__chip-meta {
@@ -1273,6 +1273,9 @@
 }
 
 .battle-poc__aura-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -1285,6 +1288,24 @@
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.45);
 }
 
+.battle-poc__aura-chip--icon {
+  padding: 2px 6px 2px 2px;
+  letter-spacing: 0.04em;
+}
+
+.battle-poc__aura-chip-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 232, 200, 0.25);
+}
+
+.battle-poc__aura-chip-label {
+  line-height: 1;
+}
+
 .battle-poc__aura-row--buff .battle-poc__aura-chip {
   border-color: var(--bp-ally);
   color: #ffe8c8;
@@ -1295,6 +1316,70 @@
   border-color: var(--bp-enemy);
   color: #ffd6ec;
   text-shadow: 0 0 8px var(--bp-enemy-glow);
+}
+
+/* Scrap Hound companion — sits at the player's feet while stacks remain. */
+.battle-poc__scrap-hound {
+  position: absolute;
+  left: 8%;
+  bottom: 6%;
+  width: clamp(56px, 7vw, 96px);
+  aspect-ratio: 1;
+  z-index: 3;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55));
+}
+
+.battle-poc__scrap-hound-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.battle-poc__scrap-hound--summon {
+  animation: bp-scrap-hound-summon 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.battle-poc__scrap-hound--idle {
+  animation: bp-scrap-hound-idle 2.4s ease-in-out infinite;
+}
+
+.battle-poc__scrap-hound--attack {
+  animation: bp-scrap-hound-attack 420ms cubic-bezier(0.25, 0.85, 0.35, 1) both;
+}
+
+@keyframes bp-scrap-hound-summon {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bp-scrap-hound-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes bp-scrap-hound-attack {
+  0% {
+    transform: translateX(0) scale(1);
+  }
+  35% {
+    transform: translateX(28%) scale(1.08);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+  }
 }
 
 .battle-poc__mech {

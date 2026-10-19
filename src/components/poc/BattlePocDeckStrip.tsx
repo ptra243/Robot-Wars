@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { isPrimeSlotForTraitPlanning, primeSlotHoverText } from '../../core/clockwork';
+import { artCropCssVars } from '../../ui/cardArtPlates';
 import { PrimeSlotMark } from '../../ui/PrimeSlotMark';
 import type { BattleCard } from './battlePocCardModel';
 import { CardDescriptionRich } from '../CardDescriptionRich';
@@ -93,21 +94,28 @@ export function BattlePocDeckStrip({
               <div
                 className={[
                   'battle-poc__chip-art',
-                  !card.fog && !card.locked && card.artFocus === 'core-reactor' ? 'battle-poc__chip-art--core-reactor' : '',
+                  !card.fog && !card.locked && card.artFocus === 'cropped' && card.artCrop
+                    ? 'battle-poc__chip-art--cropped'
+                    : '',
+                  !card.fog &&
+                  !card.locked &&
+                  card.artFocus === 'cropped' &&
+                  card.artCrop &&
+                  card.artKeyed
+                    ? 'battle-poc__chip-art--keyed'
+                    : '',
                 ]
                   .filter(Boolean)
                   .join(' ')}
                 style={
-                  card.locked
+                  card.locked || card.fog
                     ? { backgroundImage: 'none' }
-                    : card.fog
-                      ? { backgroundImage: 'none' }
-                      : card.artFocus === 'core-reactor'
-                        ? { backgroundImage: 'none' }
-                        : { backgroundImage: `url(${card.art})` }
+                    : card.artFocus === 'cropped' && card.artCrop
+                      ? ({ backgroundImage: 'none', ...artCropCssVars(card.artCrop) } as CSSProperties)
+                      : { backgroundImage: `url(${card.art})` }
                 }
               >
-                {!card.fog && !card.locked && card.artFocus === 'core-reactor' ? (
+                {!card.fog && !card.locked && card.artFocus === 'cropped' && card.artCrop ? (
                   <>
                     <div className="battle-poc__chip-art-void" aria-hidden />
                     <div className="battle-poc__chip-art-bgi">

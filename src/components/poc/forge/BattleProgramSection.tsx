@@ -1,6 +1,6 @@
 import type { MutableRefObject, MouseEvent as ReactMouseEvent } from 'react';
 import { isPrimeSlotForTraitPlanning } from '../../../core/clockwork';
-import type { DragPayload, ForgeCard } from './types';
+import type { DragPayload, ForgeCard, HoverState } from './types';
 import { QueueSlot } from './QueueSlot';
 
 interface BattleProgramSectionProps {
@@ -12,7 +12,7 @@ interface BattleProgramSectionProps {
   dragPayloadRef: MutableRefObject<DragPayload | null>;
   setDragging: (p: DragPayload | null) => void;
   setDragOverSlot: (n: number | null) => void;
-  setHover: (h: { card: ForgeCard; x: number; y: number } | null) => void;
+  setHover: (h: HoverState | null) => void;
   setHoverCardAt: (card: ForgeCard | null, ev?: { clientX: number; clientY: number }) => void;
   clearSlot: (idx: number) => void;
   onQueueContextMenu: (e: ReactMouseEvent<HTMLElement>, slotIndex: number | null) => void;

@@ -6,8 +6,10 @@ import { blankCardIdForTraits } from '../../run/combatSetup';
 import { COMBAT_RULES } from '../../rules';
 import { isPrimeSlotForActor } from '../../clockwork';
 import type { EffectStep, FighterState, StanceType } from '../../types';
+import { applyHpLossWithEmergencyProtocol } from '../../combat/emergencyProtocol';
 import {
   applyEmergencyJunkShieldPreMitigation,
+  applyHeapBallastToIncoming,
   applyOutgoingWeaken,
   dealDirectHpDamage,
   maybeMirrorCoreSelfDamageLoss,
@@ -24,6 +26,47 @@ function clearContinuousForSlot(actor: FighterState, queueIndex: number): void {
 
 function junkPlusCore(actor: FighterState): number {
   return actor.junk + actor.coreScrap;
+}
+
+/** Soften self-damage while Heap Padding is online; never reduces below dealing 0 if amount was positive and floor allows. */
+function applyHeapPaddingToSelfDamage(actor: FighterState, amount: number): number {
+  const pad = actor.heapPadding;
+  if (!pad || amount <= 0) return amount;
+  if (actor.junk < pad.minJunk) return amount;
+  return Math.max(0, amount - pad.reduceBy);
+}
+
+function applyBloodToScrapFromSelfDamage(loss: number, frame: PipelineFrame): void {
+  const per = frame.actor.bloodToScrapJunkPerSelfDamage ?? 0;
+  if (loss <= 0 || per <= 0) return;
+  gainJunkWithCap(
+    frame.actor,
+    frame.target,
+    loss * per,
+    frame.state.roundIndex,
+    (e) => frame.ctx.pushEv(e),
+  );
+}
+
+function applyScrapAnestheticFromSelfDamage(actor: FighterState, loss: number): void {
+  const a = actor.scrapAnesthetic;
+  if (!a || loss <= 0 || a.blockPerHpLost <= 0) return;
+  const block = Math.min(a.capPerHit, loss * a.blockPerHpLost);
+  if (block > 0) actor.block += block;
+}
+
+function applyStrikeResolveBonusJunk(frame: PipelineFrame): void {
+  const { actor, target, state, ctx } = frame;
+  let gain = actor.strikeResolveBonusJunk ?? 0;
+  const anemic = actor.strikeResolveBonusJunkIfHpFractionAtMost;
+  if (anemic && anemic.amount > 0) {
+    const cap = Math.max(1, actor.maxHp || COMBAT_RULES.startingHp);
+    if (actor.hp <= cap * anemic.maxHpFraction) {
+      gain += anemic.amount;
+    }
+  }
+  if (gain <= 0) return;
+  gainJunkWithCap(actor, target, gain, state.roundIndex, (e) => ctx.pushEv(e));
 }
 
 function markActivatedStance(actor: FighterState, stance: StanceType): void {
@@ -96,20 +139,29 @@ export const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
       actor.hp = Math.min(actor.hp + step.amount, cap);
     }
   },
+  GainMaxHp: (step, { actor }) => {
+    if (step.amount > 0) {
+      actor.maxHp = Math.max(1, actor.maxHp + step.amount);
+    }
+  },
   SelfDamage: (step, frame) => {
     if (step.amount <= 0) return;
-    const { actor } = frame;
-    const before = actor.hp;
-    actor.hp = Math.max(0, actor.hp - step.amount);
-    const loss = before - actor.hp;
+    const { actor, state, ctx } = frame;
+    const amount = applyHeapPaddingToSelfDamage(actor, step.amount);
+    const loss = applyHpLossWithEmergencyProtocol(actor, amount, state.roundIndex, (e) => ctx.pushEv(e));
+    applyScrapAnestheticFromSelfDamage(actor, loss);
+    applyBloodToScrapFromSelfDamage(loss, frame);
     maybeMirrorCoreSelfDamageLoss(loss, frame);
   },
   SelfDamageRespectFloor1: (step, frame) => {
     if (step.amount <= 0) return;
     const { actor } = frame;
+    const amount = applyHeapPaddingToSelfDamage(actor, step.amount);
     const room = Math.max(0, actor.hp - 1);
-    const loss = Math.min(step.amount, room);
+    const loss = Math.min(amount, room);
     if (loss > 0) actor.hp -= loss;
+    applyScrapAnestheticFromSelfDamage(actor, loss);
+    applyBloodToScrapFromSelfDamage(loss, frame);
     maybeMirrorCoreSelfDamageLoss(loss, frame);
   },
   GainEmergencyProtocolStacks: (step, { actor }) => {
@@ -201,8 +253,10 @@ export const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
     }
     const bulkMit = Math.min(target.bulkStacks, hpLoss);
     hpLoss -= bulkMit;
-    target.hp -= hpLoss;
+    hpLoss = applyHeapBallastToIncoming(target, hpLoss);
+    applyHpLossWithEmergencyProtocol(target, hpLoss, state.roundIndex, (e) => ctx.pushEv(e));
     actor.strikeResolutionsThisCombat += 1;
+    applyStrikeResolveBonusJunk(frame);
     if (damage > 0) ctx.dispatchAuraTrigger(state, target, actor, 'OnDamageTaken');
   },
   ShieldBlock: (step, { actor }) => {
@@ -282,14 +336,14 @@ export const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
           c.faction === 'scavengers' &&
           c.card_tier === tier &&
           c.awakening_min <= 1 &&
-          c.keywords.some((k) => k.type === 'CoreParts'),
+          c.keywords.some((k) => k.type === 'FactoryReset'),
       );
       if (pool.length === 0) {
         ctx.pushEv({
           type: 'core_rebirth_queue',
           round: state.roundIndex,
           actor: actor.name,
-          text: `${actor.name}: Core Rebirth has no CoreParts scavenger card for tier ${String(tier)}.`,
+          text: `${actor.name}: Core Rebirth has no Factory Reset scavenger card for tier ${String(tier)}.`,
         });
         break;
       }
@@ -310,6 +364,7 @@ export const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
   },
   BranchIfCoreGte: (_step, _frame) => {},
   BranchIfJunkGte: (_step, _frame) => {},
+  BranchIfMissingHpGte: (_step, _frame) => {},
   BranchIfChargeGte: (_step, _frame) => {},
   BranchIfFaithGte: (_step, _frame) => {},
   BranchIfOnPrimeSlot: (_step, _frame) => {},
@@ -461,6 +516,97 @@ export const effectHandlers: { [T in EffectType]: EffectHandler<T> } = {
     }
   },
   ShieldBlockAfterRounds: (_step, _frame) => {},
+  SetBloodToScrapJunkPerSelfDamage: (step, { actor }) => {
+    if (step.amount > 0) actor.bloodToScrapJunkPerSelfDamage = step.amount;
+  },
+  SetHeapPadding: (step, { actor }) => {
+    if (step.minJunk >= 0 && step.reduceBy > 0) {
+      actor.heapPadding = { minJunk: step.minJunk, reduceBy: step.reduceBy };
+    }
+  },
+  SetHeapBallast: (step, { actor }) => {
+    if (step.minJunk >= 0 && step.reduceBy > 0) {
+      actor.heapBallast = { minJunk: step.minJunk, reduceBy: step.reduceBy };
+    }
+  },
+  SetScrapAnesthetic: (step, { actor }) => {
+    if (step.blockPerHpLost > 0 && step.capPerHit > 0) {
+      actor.scrapAnesthetic = {
+        blockPerHpLost: step.blockPerHpLost,
+        capPerHit: step.capPerHit,
+      };
+    }
+  },
+  ConvertScrapEngines: (step, { actor, state, ctx }) => {
+    if (step.maxEngines <= 0) return;
+    if (step.spendJunk != null && step.spendJunk > 0) {
+      if (actor.junk < step.spendJunk) return;
+      actor.junk -= step.spendJunk;
+    }
+    const have = actor.scrapEngineCount ?? 0;
+    const n = Math.min(have, step.maxEngines);
+    if (n <= 0) return;
+    const atkBefore = actor.scrapHoundAttackStacks ?? 0;
+    const shdBefore = actor.scrapHoundShieldStacks ?? 0;
+    actor.scrapEngineCount = have - n;
+    if (step.into === 'attack') {
+      actor.scrapHoundAttackStacks = atkBefore + n;
+      if (atkBefore <= 0 && shdBefore <= 0) {
+        ctx.pushEv({
+          type: 'scrap_hound_summon',
+          round: state.roundIndex,
+          actor: actor.name,
+          text: `${actor.name} summons a Scrap Hound (attack ×${String(n)}).`,
+        });
+      }
+    } else if (step.into === 'shield') {
+      actor.scrapHoundShieldStacks = shdBefore + n;
+      if (atkBefore <= 0 && shdBefore <= 0) {
+        ctx.pushEv({
+          type: 'scrap_hound_summon',
+          round: state.roundIndex,
+          actor: actor.name,
+          text: `${actor.name} summons a Scrap Hound (shield ×${String(n)}).`,
+        });
+      }
+    } else if (step.into === 'energy') {
+      actor.scrapEnergyEngineStacks = (actor.scrapEnergyEngineStacks ?? 0) + n;
+    } else if (step.into === 'expose') {
+      actor.scrapExposeEngineStacks = (actor.scrapExposeEngineStacks ?? 0) + n;
+    }
+    ctx.pushEv({
+      type: 'scrap_engine_convert',
+      round: state.roundIndex,
+      actor: actor.name,
+      text: `${actor.name} converts ${String(n)} Scrap Engine(s) into ${step.into}.`,
+    });
+  },
+  SetStrikeResolveBonusJunk: (step, { actor }) => {
+    if (step.amount > 0) actor.strikeResolveBonusJunk = (actor.strikeResolveBonusJunk ?? 0) + step.amount;
+  },
+  SetStrikeResolveBonusJunkIfHpFractionAtMost: (step, { actor }) => {
+    if (step.amount > 0 && step.maxHpFraction > 0) {
+      actor.strikeResolveBonusJunkIfHpFractionAtMost = {
+        maxHpFraction: step.maxHpFraction,
+        amount: step.amount,
+      };
+    }
+  },
+  SetFirstCardOfCycleBonusCharge: (step, { actor }) => {
+    if (step.amount > 0) {
+      actor.firstCardOfCycleBonusCharge = (actor.firstCardOfCycleBonusCharge ?? 0) + step.amount;
+    }
+  },
+  GainScrapEngine: (step, { actor }) => {
+    if (step.amount > 0) actor.scrapEngineCount = (actor.scrapEngineCount ?? 0) + step.amount;
+  },
+  DirectHpDamagePerScrapEngine: (step, frame) => {
+    const engines = frame.actor.scrapEngineCount ?? 0;
+    if (engines <= 0 || step.damagePerEngine <= 0) return;
+    let damage = engines * step.damagePerEngine;
+    if (step.useStrikePotency) damage += frame.actor.potency;
+    dealDirectHpDamage(damage, step.pierce === true, frame, true);
+  },
   Keyword: (step, { ctx }) => {
     const strikesBefore = ctx.strikeDamageStepsThisPipeline ?? 0;
     ctx.applyKeyword(step.spec);
@@ -476,6 +622,10 @@ export function getSpendPrerequisites(steps: EffectStep[]): { junk: number; core
   for (const step of steps) {
     if (step.type === 'SpendJunk') {
       junk += step.amount;
+      continue;
+    }
+    if (step.type === 'ConvertScrapEngines' && step.spendJunk != null && step.spendJunk > 0) {
+      junk += step.spendJunk;
       continue;
     }
     if (step.type === 'SpendCore') {

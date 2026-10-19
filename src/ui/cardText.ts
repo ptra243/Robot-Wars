@@ -58,7 +58,7 @@ export function keywordEffectLine(spec: KeywordSpec): string {
     case 'FactoryReset':
       return 'Factory Reset: destroy this card; the slot rematerializes as an empty/blank (Basic Strike, or relic-upgraded blanks).';
     case 'CoreParts':
-      return `Core parts: marks a core-parts card (filter; Core Rebirth upgrades the next Neutral Basic Strike(s) in queue order into one of these at the same tier).`;
+      return 'Legacy CoreParts marker (unused on current prints).';
     case 'UniqueDeck':
       return `UniqueDeck: your deck may include at most one copy of any card with this keyword (hand + fatigue deck combined).`;
     case 'Persistent':
@@ -131,6 +131,65 @@ function summarizeEffectStep(step: EffectStep): string | null {
       return `+${String(step.amount)} **Junk**`;
     case 'GainCore':
       return `+${String(step.amount)} **Refined Scrap**`;
+    case 'SpendJunk':
+      return `Spend ${String(step.amount)} **Junk**`;
+    case 'SpendCore':
+      return `Spend ${String(step.amount)} **Refined Scrap**`;
+    case 'GainMaxHp':
+      return `+${String(step.amount)} max HP`;
+    case 'SetBloodToScrapJunkPerSelfDamage':
+      return `**Persistent**: when you take card self-damage, gain ${String(step.amount)} **Junk** per HP lost`;
+    case 'SetHeapPadding':
+      return `**Persistent**: while **Junk** ≥ ${String(step.minJunk)}, reduce card self-damage by ${String(step.reduceBy)}`;
+    case 'SetHeapBallast':
+      return `**Persistent**: while **Junk** ≥ ${String(step.minJunk)}, reduce incoming damage by ${String(step.reduceBy)}`;
+    case 'SetScrapAnesthetic':
+      return `**Persistent**: when you take card self-damage, gain up to ${String(step.capPerHit)} Shield (${String(step.blockPerHpLost)} per HP lost)`;
+    case 'ConvertScrapEngines': {
+      const junk =
+        step.spendJunk != null && step.spendJunk > 0
+          ? `Spend ${String(step.spendJunk)} **Junk**, `
+          : '';
+      const label =
+        step.into === 'attack'
+          ? 'Scrap Hound (attack)'
+          : step.into === 'shield'
+            ? 'Scrap Hound (shield)'
+            : step.into === 'energy'
+              ? 'Energy Engine'
+              : 'Expose Engine';
+      return `${junk}convert up to ${String(step.maxEngines)} **Scrap Engine**(s) into **${label}**`;
+    }
+    case 'SetStrikeResolveBonusJunk':
+      return `**Persistent**: Strikes grant +${String(step.amount)} **Junk**`;
+    case 'SetStrikeResolveBonusJunkIfHpFractionAtMost':
+      return `**Persistent**: while at ≤${String(Math.round(step.maxHpFraction * 100))}% HP, Strikes grant +${String(step.amount)} **Junk**`;
+    case 'SetFirstCardOfCycleBonusCharge':
+      return `**Persistent**: first card each program cycle gains +${String(step.amount)} **Energy**`;
+    case 'GainScrapEngine':
+      return `Gain ${String(step.amount)} **Scrap Engine** (+1 **Junk** at the start of each of your turns per engine)`;
+    case 'DirectHpDamagePerScrapEngine':
+      return `Deal ${String(step.damagePerEngine)} **direct** damage per **Scrap Engine**`;
+    case 'BranchIfMissingHpGte': {
+      const thenText = summarizeEffectSteps(step.thenSteps);
+      const elseText = summarizeEffectSteps(step.elseSteps);
+      if (thenText && elseText) {
+        return `If missing ≥${String(step.minMissing)} HP: ${thenText}; otherwise ${elseText}`;
+      }
+      if (thenText) return `If missing ≥${String(step.minMissing)} HP: ${thenText}`;
+      return null;
+    }
+    case 'BranchIfJunkGte': {
+      const thenText = summarizeEffectSteps(step.thenSteps);
+      if (!thenText) return null;
+      return `**Junk** ≥ ${String(step.minJunk)}: ${thenText}`;
+    }
+    case 'TransformCurrentQueueSlot':
+      return 'Factory Reset';
+    case 'ReplaceRandomNeutralBasicWithCorePartsCard':
+      return 'Replace the next Neutral Basic Strike(s) in queue with a **Factory Reset** card of this card’s tier';
+    case 'GainEmergencyProtocolStacks':
+      return `Gain ${String(step.amount)} **Emergency Protocol** (end of your turn: take self-damage equal to stacks; whenever you would hit 0 HP, spend 1 stack, +1 potency, survive at 1 HP)`;
     case 'ScheduleEffectAfterRounds': {
       const inner = summarizeEffectSteps(step.steps);
       return inner ? `Delayed ${String(step.delayRounds)} → ${inner}` : `Delayed ${String(step.delayRounds)}`;
@@ -138,10 +197,57 @@ function summarizeEffectStep(step: EffectStep): string | null {
     case 'Keyword':
       if (step.spec.type === 'Overclock') return '**Overclock**';
       if (step.spec.type === 'Pierce') return '**Pierce**';
+      if (step.spec.type === 'Continuous') return `**Continuous** ${String(step.spec.value)}`;
+      if (step.spec.type === 'Persistent') return null; // printed via Set* install lines
+      if (step.spec.type === 'CoreParts') return null; // filter chip; body prints real effects
       return `**${step.spec.type}** ${String(step.spec.value)}`;
     default:
       return null;
   }
+}
+
+/** True when this step installs a rest-of-battle Persistent rule (body text already says Persistent). */
+function isPersistentInstallStep(step: EffectStep): boolean {
+  return (
+    step.type === 'SetBloodToScrapJunkPerSelfDamage' ||
+    step.type === 'SetHeapPadding' ||
+    step.type === 'SetHeapBallast' ||
+    step.type === 'SetScrapAnesthetic' ||
+    step.type === 'SetStrikeResolveBonusJunk' ||
+    step.type === 'SetStrikeResolveBonusJunkIfHpFractionAtMost' ||
+    step.type === 'SetFirstCardOfCycleBonusCharge'
+  );
+}
+
+/**
+ * Generic effect-pipeline body lines for cards that are not pinned / clockwork-special-cased.
+ * Skips bare Continuous Keyword steps when `continuous_min_junk` is set (Heap Battery) — those use a custom line.
+ */
+function buildEffectPipelineBodyLines(card: CardDef): string[] {
+  const lines: string[] = [];
+  const effects = card.effects ?? [];
+  const heapBattery =
+    card.continuous_min_junk !== undefined &&
+    (card.keywords ?? []).some((k) => k.type === 'Continuous');
+  if (heapBattery) {
+    const interval = card.keywords.find((k) => k.type === 'Continuous')?.value ?? 3;
+    const charge = card.continuous_charge_per_tick ?? 1;
+    const junk = card.continuous_junk_per_tick ?? 1;
+    const junkBit = junk > 0 ? `, **Junk** ${String(junk)}` : '';
+    lines.push(
+      `**Continuous** ${String(interval)}: while **Junk** ≥ ${String(card.continuous_min_junk)}, **Energy** ${String(charge)}${junkBit}.`,
+    );
+    return lines;
+  }
+  for (const step of effects) {
+    if (step.type === 'Keyword' && step.spec.type === 'Continuous') {
+      // Continuous keyword on keywords[] is enough; avoid double-print from effects Keyword copy.
+      continue;
+    }
+    const text = summarizeEffectStep(step);
+    if (text) lines.push(`${text}.`);
+  }
+  return lines;
 }
 
 function summarizeEffectSteps(steps: readonly EffectStep[]): string {
@@ -569,23 +675,38 @@ export function buildCardDescription(
     return bonus ? `${base}\n${bonus}` : base;
   }
 
+  /* Data-driven effect pipelines (Scavenger glue, Graft packages, etc.). */
+  const pipelineBody = buildEffectPipelineBodyLines(card);
+  const usePipelineBody =
+    pipelineBody.length > 0 &&
+    (pipelineBody.some((l) => l.includes('**Persistent**')) ||
+      pipelineBody.some(
+        (l) =>
+          l.includes('Scrap Engine') ||
+          l.includes('Factory Reset') ||
+          l.includes('Emergency Protocol'),
+      ) ||
+      pipelineBody.some((l) => l.includes('max HP') || l.includes('**Continuous**')) ||
+      /^core_|^deep_core_|^sacrif_|^gutter_|^graft_|^hot_swap_|^hollow_|^chassis_|^scrap_|^dynamo_|^anemic_|^blood_|^heap_|^fr_hound_|^neutral_scrap_/.test(
+        card.id,
+      ));
+  if (usePipelineBody) {
+    const body = pipelineBody.join('\n');
+    const withTags =
+      !omit && card.tags.length > 0 ? `${body}\nTags: ${card.tags.join(', ')}.` : body;
+    const base = stripSelfHpPlayCostFromDescriptionText(withTags, card);
+    const bonus = cyberpunkNeutralTraitBonusLine(card, options?.activeTraitIds);
+    return bonus ? `${base}\n${bonus}` : base;
+  }
+
   const coreTapBranchText = /^core_tap_t[123]$/.test(card.id);
   const coreSacrificeText = /^deep_core_tap_t[123]$/.test(card.id);
   const coreRefactoringText = /^core_refactoring_t[123]$/.test(card.id);
   const coreRebirthText = /^core_rebirth_t[123]$/.test(card.id);
-  const sacrifCustomText = /^sacrif_(lumen|spike|plate|probe|tether|echo|cinder|forge|rift|suture)_t[123]$/.test(
-    card.id,
-  );
-  const sacrifLumenText = /^sacrif_lumen_t[123]$/.test(card.id);
-  const sacrifSpikeText = /^sacrif_spike_t[123]$/.test(card.id);
+  const sacrifCustomText = /^sacrif_(plate|echo|rift)_t[123]$/.test(card.id);
   const sacrifPlateText = /^sacrif_plate_t[123]$/.test(card.id);
-  const sacrifProbeText = /^sacrif_probe_t[123]$/.test(card.id);
-  const sacrifTetherText = /^sacrif_tether_t[123]$/.test(card.id);
   const sacrifEchoText = /^sacrif_echo_t[123]$/.test(card.id);
-  const sacrifCinderText = /^sacrif_cinder_t[123]$/.test(card.id);
-  const sacrifForgeText = /^sacrif_forge_t[123]$/.test(card.id);
   const sacrifRiftText = /^sacrif_rift_t[123]$/.test(card.id);
-  const sacrifSutureText = /^sacrif_suture_t[123]$/.test(card.id);
 
   const junkSurgeText = card.id === 'field_diode_t1';
   const junkLoaderText = /^junk_loader_t[123]$/.test(card.id);
@@ -625,61 +746,14 @@ export function buildCardDescription(
     parts.push('Emergency Protocol 1');
   }
 
-  if (sacrifLumenText) {
-    const t = card.card_tier;
-    parts.push('Lose 2 HP (minimum 1).');
-    if (t === 1) {
-      parts.push('+2 Junk.');
-      parts.push('+1 strike potency.');
-    } else if (t === 2) {
-      parts.push('+2 Junk.');
-      parts.push('+2 strike potency.');
-    } else {
-      parts.push('+3 Junk.');
-      parts.push('+2 strike potency.');
-    }
-  }
-  if (sacrifSpikeText) {
-    const d = card.card_tier === 3 ? 6 : card.card_tier === 2 ? 5 : 4;
-    const j = card.card_tier === 3 ? 2 : 1;
-    parts.push('Lose 5 HP (minimum 1).');
-    parts.push(`+${String(j)} Junk.`);
-    parts.push(`Deal ${String(d)} direct damage to the enemy.`);
-    parts.push('Factory Reset');
-    parts.push('Emergency Protocol 1');
-  }
   if (sacrifPlateText) {
     const b = card.card_tier === 3 ? 6 : card.card_tier === 2 ? 5 : 4;
     const j = card.card_tier === 3 ? 2 : 1;
-    parts.push('Lose 5 HP (minimum 1).');
-    parts.push(`+${String(b)} shield.`);
+    const d = card.card_tier === 3 ? 3 : 2;
+    parts.push('Lose 4 HP (minimum 1).');
     parts.push(`+${String(j)} Junk.`);
-    parts.push('Factory Reset');
-    parts.push('Emergency Protocol 1');
-  }
-  if (sacrifProbeText) {
-    if (card.card_tier === 1) {
-      parts.push('Lose 1 HP (minimum 1).');
-      parts.push('+1 Energy.');
-      parts.push('Expose 1');
-      parts.push('+1 Junk');
-    } else {
-      const ex = card.card_tier === 3 ? 2 : 1;
-      const j = card.card_tier === 3 ? 2 : 1;
-      parts.push('Lose 5 HP (minimum 1).');
-      parts.push('+1 Energy.');
-      parts.push(`Expose ${String(ex)}`);
-      parts.push(`+${String(j)} Junk.`);
-      parts.push('Factory Reset');
-      parts.push('Emergency Protocol 1');
-    }
-  }
-  if (sacrifTetherText) {
-    const j = card.card_tier === 3 ? 4 : card.card_tier === 2 ? 4 : 3;
-    const e = card.card_tier === 3 ? 2 : 1;
-    parts.push('Lose 1 HP (minimum 1).');
-    parts.push(`+${String(j)} Junk.`);
-    parts.push(`+${String(e)} Energy.`);
+    parts.push(`Gain ${String(b)} Shield.`);
+    parts.push(`Deal ${String(d)} direct damage.`);
   }
   if (sacrifEchoText) {
     const j = card.card_tier === 1 ? 2 : 3;
@@ -694,46 +768,14 @@ export function buildCardDescription(
       'Persistent: for the rest of the fight, Core-parts self-damage you take also deals that much non-Strike damage to the enemy (after this card resolves).',
     );
   }
-  if (sacrifCinderText) {
-    const b = card.card_tier;
-    const d = card.card_tier === 3 ? 8 : card.card_tier === 2 ? 7 : 6;
-    const j = card.card_tier === 3 ? 2 : 1;
-    parts.push('Lose 5 HP (minimum 1).');
-    parts.push(`+${String(j)} Junk.`);
-    parts.push(`Bulk ${String(b)}`);
-    parts.push(`Deal ${String(d)} direct damage to the enemy.`);
-    parts.push('Factory Reset');
-    parts.push('Emergency Protocol 1');
-  }
-  if (sacrifForgeText) {
-    const n = card.card_tier === 3 ? 2 : 1;
-    const j = card.card_tier === 1 ? 1 : 2;
-    const slotPhrase = n === 1 ? 'slot' : 'slots';
-    parts.push('Lose 5 HP (minimum 1).');
-    parts.push(`+${String(j)} Junk.`);
-    parts.push('Factory Reset');
-    parts.push(
-      `Replace next ${String(n)} Neutral Basic Strike ${slotPhrase} with random Core-parts cards (same tier).`,
-    );
-    parts.push('Emergency Protocol 1');
-  }
   if (sacrifRiftText) {
-    const s = card.card_tier === 3 ? 6 : card.card_tier === 2 ? 5 : 4;
-    const d = card.card_tier === 3 ? 11 : card.card_tier === 2 ? 9 : 7;
+    const shield = card.card_tier === 3 ? 3 : 2;
+    const d = card.card_tier === 3 ? 9 : card.card_tier === 2 ? 8 : 7;
     const j = card.card_tier === 3 ? 3 : 2;
-    parts.push(`Lose ${String(s)} HP (self-damage, not floored to 1).`);
+    parts.push('Lose 4 HP.');
+    parts.push(`Gain ${String(shield)} Shield.`);
     parts.push(`+${String(j)} Junk.`);
-    parts.push(`Deal ${String(d)} direct damage to the enemy.`);
-  }
-  if (sacrifSutureText) {
-    const h = card.card_tier === 1 ? 2 : 3;
-    const j = card.card_tier === 3 ? 3 : 2;
-    parts.push('Lose 3 HP (minimum 1).');
-    parts.push(`+${String(j)} Junk.`);
-    parts.push(`Heal ${String(h)} HP.`);
-    if (card.card_tier === 3) {
-      parts.push('+1 strike potency.');
-    }
+    parts.push(`Deal ${String(d)} direct damage.`);
   }
 
   const gatheringStrikeText = /^neutral_gathering_strike_t[123]$/.test(card.id);
@@ -756,9 +798,13 @@ export function buildCardDescription(
     parts.push(`Strike: ${String(n)} damage, Shield: ${String(n)} block\nEnemy Energy -1: Energy 1`);
   }
 
-  const gutterOfferingText = card.id === 'gutter_offering_t1';
+  const gutterOfferingText = /^gutter_offering_t[123]$/.test(card.id);
   if (gutterOfferingText) {
-    parts.push('Self damage 3 (floor 1 HP)\nGain 3 Junk');
+    const shield = card.card_tier === 3 ? 3 : 2;
+    const junk = card.card_tier === 3 ? 5 : card.card_tier === 2 ? 4 : 3;
+    parts.push('Lose 3 HP (minimum 1).');
+    parts.push(`Gain ${String(shield)} Shield.`);
+    parts.push(`+${String(junk)} Junk.`);
   }
 
   const neutralFeintText = card.id === 'neutral_feint_t1';
@@ -1008,6 +1054,12 @@ export function buildCardDescription(
         continue;
       }
       if (shieldConditioningText && kw.type === 'Persistent') {
+        continue;
+      }
+      if (kw.type === 'Persistent' && (card.effects ?? []).some(isPersistentInstallStep)) {
+        continue;
+      }
+      if (kw.type === 'Continuous' && card.continuous_min_junk !== undefined) {
         continue;
       }
       if (KEYWORDS_COVERED_BY_EFFECT_RIDERS.has(kw.type)) {

@@ -1,7 +1,7 @@
 import '../App.css';
 import { useEffect } from 'react';
 import { PhaserDeckBuilder } from './PhaserDeckBuilder';
-import { BattlePOC } from '../features/battle/BattlePOC';
+import { BattleView } from './phaser-battle/BattleView';
 import { DeckCycleReportModal } from './DeckCycleReportModal';
 import { useRunCardContent } from '../hooks/useRunCardContent';
 import { useBattlePlayback } from '../hooks/useBattlePlayback';
@@ -43,7 +43,7 @@ export function BattleSimulationApp() {
       <div className="game-viewport">
         <div className={`arena-panel ${isBattle ? 'arena-panel--battle' : 'arena-panel--deck'}`}>
           {isBattle ? (
-            <BattlePOC
+            <BattleView
               key={resultKey}
               combatResult={combatResult}
               seed={run.seed}
