@@ -1,7 +1,7 @@
 import { publicUrl } from '../../assetUrl';
 import { CardContentService } from '../../core/content';
 import { buildCardDescription } from '../../ui/cardText';
-import { plateArtForCardId, type CardArtCrop } from '../../ui/cardArtPlates';
+import { resolveCardArt, type CardArtCrop } from '../../ui/cardArtPlates';
 import { cardArtUrlFromDef } from './forge/forgeCardModel';
 import { hpPlayCostAmountForUi } from '../../ui/hpPlayCost';
 
@@ -42,7 +42,7 @@ export function battleCardFromId(id: string, content: CardContentService): Battl
     const defV = card.base_block > 0 ? card.base_block : 0;
     const primary = statKind === 'shield' ? defV || atkV : atkV || defV;
     const hpPlay = hpPlayCostAmountForUi(card) ?? undefined;
-    const plate = plateArtForCardId(id);
+    const resolved = resolveCardArt(id);
     return {
       id,
       name: card.name,
@@ -51,10 +51,10 @@ export function battleCardFromId(id: string, content: CardContentService): Battl
       atk: primary,
       def: statKind === 'shield' && defV > 0 ? defV : undefined,
       text: buildCardDescription(card, { omitTagsAndKeywords: true }),
-      art: plate?.url ?? cardArtUrlFromDef(card),
-      artFocus: plate ? 'cropped' : 'default',
-      artCrop: plate?.crop,
-      artKeyed: plate?.keyed,
+      art: resolved?.url ?? cardArtUrlFromDef(card),
+      artFocus: resolved?.crop ? 'cropped' : 'default',
+      artCrop: resolved?.crop,
+      artKeyed: resolved?.keyed,
       statKind,
     };
   } catch {

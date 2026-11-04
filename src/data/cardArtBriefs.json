@@ -1,0 +1,182 @@
+{
+  "$comment": "One-line art brief per base card id: what the card's image shows. `cast` names a mech from cardArtStyle.json `casts` when a specific mech appears. Seeded from the crop notes in docs/card-art-plates.md; cards missing here get a DRAFT subject from their name and rules text.",
+  "cards": {
+    "neutral_basic_strike": {
+      "subject": "A single purple electric gauntlet punching toward the viewer, impact flash at the knuckles",
+      "cast": "glint"
+    },
+    "neutral_barrier": {
+      "subject": "A glowing teal hexagonal energy shield raised on a brass arm, blocking a hit",
+      "cast": "father_time"
+    },
+    "neutral_delayed_burst": {
+      "subject": "A charge of energy gathering in a sphere, about to burst, dust swirling around it"
+    },
+    "neutral_delayed_shell": {
+      "subject": "A ring of dust and faint shield shimmer rising around a mech's feet"
+    },
+    "neutral_multi_strike": {
+      "subject": "A barrage of several purple gauntlet punches with motion afterimages",
+      "cast": "glint"
+    },
+    "neutral_capacitor_feed": {
+      "subject": "A backpack of three glowing cyan capacitor canisters feeding power through cables",
+      "cast": "rust_ranger"
+    },
+    "neutral_overdrive_slam": {
+      "subject": "Two huge fists raised overhead for a crushing slam, purple lightning around them",
+      "cast": "baron"
+    },
+    "neutral_feint": {
+      "subject": "A mech dodging sideways leaving a glowing blue afterimage where it stood",
+      "cast": "seiryu"
+    },
+    "neutral_servo": {
+      "subject": "A servo joint on a mech limb being tuned with a wrench, small sparks"
+    },
+    "neutral_urgent_repairs": {
+      "subject": "A welding torch spark repairing a cracked, dented armour plate"
+    },
+    "neutral_bulk_up": {
+      "subject": "Heavy armour plates being bolted onto a mech's shoulder"
+    },
+    "neutral_perpetual_motion": {
+      "subject": "Interlocking spinning flywheels and dynamos glowing with energy"
+    },
+    "neutral_overclock": {
+      "subject": "An overheating mech core glowing red-hot, steam venting, gauges in the red"
+    },
+    "neutral_expose_wiring": {
+      "subject": "An armour panel torn open revealing a cluster of sparking wires"
+    },
+    "neutral_expose_drone_uplink": {
+      "subject": "A small hovering drone scanning an exposed armour panel with a targeting beam"
+    },
+    "neutral_static_clamp": {
+      "subject": "A crackling electric clamp locked around a mech's limb joint"
+    },
+    "neutral_capitalising_strike": {
+      "subject": "A finishing punch driving into an exposed glowing weak point"
+    },
+    "neutral_harassing_strike": {
+      "subject": "A quick jab poking at a glowing weak point on an armour plate"
+    },
+    "neutral_shield_reinforcement": {
+      "subject": "Thick layered energy shield plates stacking up in front of a mech"
+    },
+    "neutral_shield_conditioning": {
+      "subject": "A soft glowing field conditioning a mech's shield, gentle light ripples"
+    },
+    "neutral_siphoning_strike": {
+      "subject": "A punch landing while an energy line drains back into the attacker's shield"
+    },
+    "neutral_gathering_strike": {
+      "subject": "A fist glowing brighter with tally-mark notches of stored strikes"
+    },
+    "junk_spigot": {
+      "subject": "A rusty industrial spigot pouring a stream of scrap parts onto a pile"
+    },
+    "junk_loader": {
+      "subject": "A scrap loader claw arm scooping up a load of junk"
+    },
+    "field_diode": {
+      "subject": "A crackling surge diode gizmo injecting cyan energy into scrap"
+    },
+    "junk_ladder": {
+      "subject": "A ladder built from scrap with glowing gizmos on each rung"
+    },
+    "junk_bulwark": {
+      "subject": "A wall of welded scrap plates forming a bulwark"
+    },
+    "junk_gasket": {
+      "subject": "A large brass gasket ring glowing faintly cyan"
+    },
+    "junk_rivet": {
+      "subject": "Oversized rivets being hammered into scrap armour"
+    },
+    "junk_coil": {
+      "subject": "A coiled copper spring cable crackling with cyan energy"
+    },
+    "junk_crown": {
+      "subject": "A crown made of welded scrap and gears sitting atop a junk pile"
+    },
+    "junk_aegis": {
+      "subject": "A shield face-plate made from riveted scrap with a cyan glowing core"
+    },
+    "junk_generator": {
+      "subject": "A sputtering scrap-built generator half-buried in a heap, cyan glow"
+    },
+    "junk_recycle": {
+      "subject": "A grinding recycling engine chewing scrap into glowing parts"
+    },
+    "heap_battery": {
+      "subject": "A cluster of glowing cyan battery cells wedged in a scrap heap"
+    },
+    "salvage_mantle": {
+      "subject": "A mantle of salvaged plates draped over a mech's shoulders like a cloak"
+    },
+    "heap_padding": {
+      "subject": "Padding of scrap cushions and tyres strapped onto a mech chassis"
+    },
+    "gutter_offering": {
+      "subject": "A mech offering a leaking wound of energy that forms a nascent shield"
+    },
+    "sacrif_rift": {
+      "subject": "A glass-like rift cut through the air, shards glinting"
+    },
+    "sacrif_plate": {
+      "subject": "A plated cutting edge slicing through armour"
+    },
+    "blood_to_scrap": {
+      "subject": "Leaking energy from a wound turning into floating junk motes"
+    },
+    "anemic_dividend": {
+      "subject": "A damaged mech frame with sparks turning into small scrap rewards"
+    },
+    "hollow_frame": {
+      "subject": "A badly damaged hollow mech frame still standing defiantly"
+    },
+    "hot_swap": {
+      "subject": "A mech swapping a glowing component under a raised shield"
+    },
+    "core_tap": {
+      "subject": "A reactor core venting a burst of energy from a punch"
+    },
+    "deep_core_tap": {
+      "subject": "A reactor core opened wide, sacrifice energy blooming outward"
+    },
+    "core_refactoring": {
+      "subject": "Tool arms reworking rings around a glowing reactor core"
+    },
+    "core_rebirth": {
+      "subject": "A reactor core reigniting, energy blooming upward"
+    },
+    "sacrif_echo": {
+      "subject": "A core bleeding echoing rings of energy outward"
+    },
+    "scrap_dividend": {
+      "subject": "A chute pouring out a dividend of shiny scrap parts"
+    },
+    "scrap_dynamo": {
+      "subject": "A spinning scrap-built dynamo throwing sparks"
+    },
+    "scrap_transfusion": {
+      "subject": "A hose transfusing glowing energy between two mech parts"
+    },
+    "chassis_refinance": {
+      "subject": "A mech chassis in a repair bay being rebuilt bigger"
+    },
+    "dynamo_peal": {
+      "subject": "A dynamo releasing a ringing blast wave"
+    },
+    "needle_driver": {
+      "subject": "A precise needle-driver tool punching through armour"
+    },
+    "strip_mine": {
+      "subject": "Giant strip-mining claws tearing into a scrap seam"
+    },
+    "salvage_strike": {
+      "subject": "A heavy weapon made of salvage swinging in a hit"
+    }
+  }
+}

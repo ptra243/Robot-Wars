@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CardContentService } from '../core/content';
 import { forgeCardFromDef } from '../components/poc/forge/forgeCardModel';
+import { perCardArtPath } from '../ui/cardArtPlates';
 
 describe('forge card art resolution', () => {
   const content = CardContentService.loadDefault(1);
@@ -11,7 +12,8 @@ describe('forge card art resolution', () => {
     expect(servo.artFocus).toBe('default');
   });
 
-  it('gives Junk Gasket and Junk Crown distinct S1 crops', () => {
+  // Plate crops are legacy: once either card has per-card art, cardArtResolve.test.ts covers it.
+  it.skipIf(Boolean(perCardArtPath('junk_gasket') ?? perCardArtPath('junk_crown')))('gives Junk Gasket and Junk Crown distinct S1 crops', () => {
     const gasket = forgeCardFromDef(content.get('junk_gasket_t1'));
     const crown = forgeCardFromDef(content.get('junk_crown_t1'));
     expect(gasket.art).toBe('/art/plates/s1-junk-hoard.jpg');

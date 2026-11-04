@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Card art tooling output (npm run art:prompts / art:sheet)
+art-out
