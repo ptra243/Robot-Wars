@@ -1,5 +1,7 @@
 # Card art plates (hero kits → Neutral + Scavenger)
 
+> **Legacy.** New card art is one image per card: see [card-art-guide.md](card-art-guide.md). Most plate crops missed their subject (checked on the contact sheet, Nov 2026); each crop in `src/ui/cardArtPlates.ts` is now marked `keep` or `replace`. The hero kits, palettes and casting rules below still apply and feed `src/data/cardArtStyle.json`.
+
 Art pipeline for **shared master plates** with per-card crops. Neutrals cast cross-faction mechs; Scavenger plates own scrap/junk identity.
 
 **Aesthetic:** **anime / 2D key visual** — stylized, cel-shaded or clean anime illustration. Match the locked Rust Ranger look. **Not** photoreal, cinematic live-action, or Western concept-art realism.

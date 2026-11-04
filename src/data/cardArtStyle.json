@@ -1,0 +1,51 @@
+{
+  "$comment": "Card art style bible, read by `npm run art:prompts`. Change wording here, not in individual prompts, so every card keeps the same style. See docs/card-art-guide.md.",
+  "generator": {
+    "name": "Grok Imagine",
+    "aspectRatio": "1:1",
+    "resolution": "2K",
+    "maxReferenceImages": 3
+  },
+  "shared": {
+    "style": "Anime 2D key visual, clean cel-shaded illustration with crisp ink linework, bold readable silhouette, strong rim light, painterly soft background with shallow depth of field.",
+    "framing": "Square image. One clear subject, centred, filling the middle 60% of the frame, with empty margin on every side so it can be cropped to landscape or portrait. Subject seen whole, not cut off by the edges.",
+    "avoid": "No text, letters, numbers, signs, logos or watermarks. No card frame, border or UI. Not photoreal, not a 3D render, not Western realistic concept art. No extra characters unless named."
+  },
+  "factions": {
+    "scavengers": {
+      "label": "Scavengers",
+      "palette": "Weathered bright orange and rust armour plates, charcoal and dark grey joints, pistons and wiring, electric cyan-blue energy slits and cores, brown leather and tattered reddish-brown cloth.",
+      "backdrop": "Warm amber desert scrapyard, dusty haze, soft out-of-focus junk piles, a few sparks.",
+      "references": ["public/RustRanger_Mech.png", "public/poc/poc-mech-glint.png"],
+      "anchor": null
+    },
+    "clockwork": {
+      "label": "Clockwork Collective",
+      "palette": "Antique brass and gold filigree over deep teal, warm candlelight rim, stained-glass accents.",
+      "backdrop": "Candlelit brass cathedral interior, deep teal shadows, soft bokeh of clock faces and gears.",
+      "references": ["public/FatherTime_Mech.jpg"],
+      "anchor": null
+    },
+    "cyberpunk": {
+      "label": "Cyberpunk",
+      "palette": "Black carbon and charcoal frames with restrained electric cyan and azure neon, dragon motifs.",
+      "backdrop": "Rain-hazed night city, restrained cyan and azure neon bokeh, dark carbon tones.",
+      "references": ["public/Seiryu_Mech.jpg"],
+      "anchor": null
+    },
+    "neutral": {
+      "label": "Neutral",
+      "palette": "Cross-faction: orange copper plates with purple electric gauntlets (Glint) or brass and teal (Father Time); keep the faction colours of whichever mech appears.",
+      "backdrop": "Dusty robot fighting arena under floodlights, blurred stands, dust in the air.",
+      "references": ["public/poc/poc-mech-glint.png", "public/FatherTime_Mech.jpg"],
+      "anchor": null
+    }
+  },
+  "casts": {
+    "glint": { "description": "Glint: slim orange copper mech with rabbit-ear antennae, cyan visor and purple gauntlets crackling with electricity.", "reference": "public/poc/poc-mech-glint.png" },
+    "rust_ranger": { "description": "Rust Ranger: weathered orange gunslinger mech with a cowboy hat, tattered duster and dual sci-fi revolvers.", "reference": "public/RustRanger_Mech.png" },
+    "father_time": { "description": "Father Time: brass cathedral automaton with a chest clock, kite shield arm and teal stained-glass panes.", "reference": "public/FatherTime_Mech.jpg" },
+    "seiryu": { "description": "Seiryu: sleek charcoal mech with a dragon crest, energy blade arm and cyan backpack fins.", "reference": "public/Seiryu_Mech.jpg" },
+    "baron": { "description": "Baron von Boar: hulking boar-headed brawler mech in a ragged white coat.", "reference": "public/poc/poc-baron-von-boar.png" }
+  }
+}

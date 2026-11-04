@@ -3,7 +3,7 @@ import type { CardContentService } from '../../../core/content';
 import { SeededRandom } from '../../../core/content';
 import type { CardDef } from '../../../core/types';
 import { buildCardDescription } from '../../../ui/cardText';
-import { plateArtForCardId, type CardArtCrop } from '../../../ui/cardArtPlates';
+import { resolveCardArt, type CardArtResolve } from '../../../ui/cardArtPlates';
 import { hpPlayCostAmountForUi } from '../../../ui/hpPlayCost';
 import { QUEUE_SIZE } from './constants';
 import type { ForgeCard, ForgeFaction } from './types';
@@ -48,10 +48,8 @@ function tagFallbackArt(card: CardDef): string {
   return ART.overclock;
 }
 
-function resolveArt(card: CardDef): { url: string; crop?: CardArtCrop; keyed?: boolean } {
-  const plate = plateArtForCardId(card.id);
-  if (plate) return { url: plate.url, crop: plate.crop, keyed: plate.keyed };
-  return { url: tagFallbackArt(card) };
+function resolveArt(card: CardDef): CardArtResolve {
+  return resolveCardArt(card.id) ?? { url: tagFallbackArt(card) };
 }
 
 /** Public for Phaser mini cards / battle strip — same URLs as {@link forgeCardFromDef}. */

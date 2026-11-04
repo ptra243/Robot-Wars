@@ -1,0 +1,4 @@
+{
+  "$comment": "Per-card art, keyed by base card id (tiers share art). Written by `npm run art:sync` from the files in public/art/cards/. Do not edit by hand.",
+  "cards": {}
+}

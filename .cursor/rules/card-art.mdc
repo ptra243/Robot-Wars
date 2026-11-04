@@ -1,0 +1,16 @@
+---
+description: Card art, sprites, Grok prompts, art plates and crops. Use when making or changing card images or anything in public/art, cardArtPlates.ts or the cardArt*.json data.
+globs: public/art/**,src/ui/cardArtPlates.ts,src/data/cardArt*.json,scripts/cardArt.ts,docs/card-art-*.md
+alwaysApply: false
+---
+
+# Card art
+
+Read `docs/card-art-guide.md` before doing card art work. Summary:
+
+- **One image per card**, square, subject centred, saved as `public/art/cards/<base_id>.png` (tiers share art). Do not create new master plates or new crop entries.
+- **Never invent crop coordinates** or claim an image shows something you have not looked at. The old plate crops were guessed from a design doc and most missed their subject.
+- **Prompts come from the tool, not from scratch:** `npm run art:prompts -- <base_id>` prints the Grok prompt, settings and reference images. The style wording lives in `src/data/cardArtStyle.json`; per-card subjects in `src/data/cardArtBriefs.json`. Improve those files instead of hand-writing one-off prompts.
+- A card with no brief gets a DRAFT subject. Write a one-line brief (what the image shows, recognisable at card size) before anyone generates it.
+- After images are added: run `npm run art:sync`, then `npm run art:sheet`, and ask the person to open `art-out/contact-sheet.html` to check them. Do not hand-edit `src/data/cardArt.json`.
+- Run `npm test` afterwards: the manifest test fails if an entry points at a missing file or an unknown card id.
